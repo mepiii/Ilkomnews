@@ -1,7 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-body{
-    font-family: 'Inter', sans-serif;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -10,6 +7,57 @@ body{
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f7fb;
+    color: #0f172a;
+}
+
+img {
+    display: block;
+}
+
+.card-soft {
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+.article-copy p {
+    margin: 0 0 1.8rem;
+    font-size: 1.075rem;
+    line-height: 2;
+    color: #1e293b;
+}
+
+.article-copy p:first-child::first-letter {
+    float: left;
+    margin-right: 0.45rem;
+    padding-top: 0.2rem;
+    font-size: 3.7rem;
+    line-height: 0.9;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.article-copy blockquote {
+    margin: 0 0 1.8rem;
+    border-left: 4px solid #0f172a;
+    border-radius: 0 18px 18px 0;
+    background: #eaf1fd;
+    padding: 1.5rem;
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: #334155;
+}
+
+@media (max-width: 768px) {
+    .article-copy p:first-child::first-letter {
+        font-size: 3rem;
+    }
 }
