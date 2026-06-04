@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Phone, Mail, Send, ChevronRight, Link as LinkIcon, MessageCircle, Bell } from 'lucide-react'
+import { MapPin, Phone, Mail, ChevronRight } from 'lucide-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFacebookF, faTwitter, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
-import logo from '../../assets/logo.png'
+import logo from '../../assets/BEM.png'
 
 const Footer = () => {
   const footerRef = useRef(null)
@@ -23,9 +23,7 @@ const Footer = () => {
     const elements = document.querySelectorAll('.footer-animate')
     elements.forEach((el) => observer.observe(el))
 
-    return () => {
-      elements.forEach((el) => observer.unobserve(el))
-    }
+    return () => observer.disconnect()
   }, [])
 
   const socialLinks = [
@@ -35,152 +33,177 @@ const Footer = () => {
     { icon: faYoutube, href: '#', color: 'hover:bg-[#FF0000]', name: 'YouTube' },
   ]
 
-  const quickLinks = [
-    { name: 'Beranda', path: '/', icon: ChevronRight },
-    { name: 'Berita', path: '/news', icon: ChevronRight },
-    { name: 'Artikel', path: '/articles', icon: ChevronRight },
-    { name: 'Event', path: '/events', icon: ChevronRight },
-    { name: 'Ilkom Star', path: '/ilkom-star', icon: ChevronRight },
-    { name: 'Tentang', path: '/about', icon: ChevronRight },
+  const navLinks = [
+    { name: 'BERANDA', path: '/' },
+    { name: 'BERITA', path: '/news' },
+    { name: 'ARTIKEL', path: '/articles' },
+    { name: 'EVENT', path: '/events' },
+    { name: 'TENTANG', path: '/about' },
+  ]
+
+  const contactItems = [
+    {
+      icon: MapPin,
+      label: 'ALAMAT',
+      value: 'Jl. Dipati Ukur No.116, Bandung'
+    },
+    {
+      icon: Phone,
+      label: 'TELEPON',
+      value: '(022) 1234567'
+    },
+    {
+      icon: Mail,
+      label: 'EMAIL',
+      value: 'info@ilkomnews.com'
+    }
   ]
 
   return (
-    <footer ref={footerRef} className="bg-gradient-to-br from-[#1a0630] to-[#300B55] text-white mt-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+    <footer
+      ref={footerRef}
+      className="relative overflow-hidden bg-gradient-to-br from-[#0a0418] via-[#120a2a] to-[#1a0533]"
+    >
+      {/* Background Pattern */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(139,92,246,0.04)_1px,transparent_1px),linear-gradient(0deg,rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        
+        {/* Dot Matrix */}
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(139,92,246,0.05)_1px,transparent_1px)] bg-[size:25px_25px]"></div>
+        
+        {/* Diagonal Lines */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: `repeating-linear-gradient(115deg, rgba(139,92,246,0.03) 0px, rgba(139,92,246,0.03) 1px, transparent 1px, transparent 40px)`
+        }}></div>
+      </div>
+
+      {/* Glow Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl animate-pulse-slow animation-delay-1500"></div>
+      </div>
+
+      {/* Top Border Line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent"></div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
+        
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
           
-          {/* About Section - Dengan Logo */}
-          <div className="footer-animate transition-all duration-700 translate-y-10 opacity-0">
-            <div className="flex items-center gap-3 mb-4 group">
+          {/* Brand Section - Left */}
+          <div className="lg:col-span-5 footer-animate transition-all duration-700 translate-y-10 opacity-0">
+            <div className="flex items-center gap-3 mb-5 group">
               <div className="relative">
                 <img 
                   src={logo} 
                   alt="ILKOM NEWS Logo" 
-                  className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                  className="h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 rounded-full bg-[#FFC148]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
               <div>
-                {/* ILKOM NEWS - Warna PUTIH */}
-                <h3 className="text-xl font-bold text-white group-hover:text-[#FFC148] transition-colors duration-300">
+                <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-purple-300 transition-colors duration-300">
                   ILKOM NEWS
                 </h3>
-                {/* FAKULTAS ILMU KOMPUTER - Warna GOLD */}
-                <p className="text-[#FFC148] text-[10px] font-medium tracking-wider">
+                <p className="text-[10px] md:text-[11px] tracking-wider text-[#FFC148] font-semibold">
                   FAKULTAS ILMU KOMPUTER
                 </p>
               </div>
             </div>
             
-            <p className="text-white text-sm leading-relaxed mb-4">
-              Portal berita dan informasi terkini untuk mahasiswa Ilmu Komputer UNIKOM.
+            <p className="text-gray-400 text-sm md:text-[15px] leading-relaxed mb-6 max-w-md">
+              Portal berita dan informasi terkini untuk mahasiswa Ilmu Komputer UNIKOM dengan tampilan modern, cepat, dan informatif.
             </p>
             
-            {/* Social Media Icons dengan Font Awesome */}
-            <div className="flex gap-3">
+            {/* Social Media */}
+            <div className="flex items-center gap-3">
               {socialLinks.map((social, index) => (
                 <a
                   key={index}
                   href={social.href}
-                  className={`w-9 h-9 rounded-full bg-white/10 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-1 ${social.color} group overflow-hidden relative`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.name}
+                  className={`w-9 h-9 rounded-full bg-purple-500/10 border border-purple-400/20 flex items-center justify-center text-purple-300 transition-all duration-300 hover:-translate-y-1 hover:scale-110 ${social.color}`}
                 >
-                  <FontAwesomeIcon icon={social.icon} className="text-white text-sm transition-transform duration-300 group-hover:scale-110" />
-                  <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
+                  <FontAwesomeIcon icon={social.icon} className="text-sm transition-transform duration-300 hover:scale-110" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links - Icon Link/Chain */}
-          <div className="footer-animate transition-all duration-700 delay-100 translate-y-10 opacity-0">
-            <div className="flex items-center gap-2 mb-4">
-              <LinkIcon size={18} className="text-[#FFC148]" />
-              <h3 className="text-lg font-semibold text-white">Link Cepat</h3>
-            </div>
-            <ul className="space-y-3">
-              {quickLinks.map((link) => {
-                const Icon = link.icon
+          {/* Navigation Section - Center */}
+          <div className="lg:col-span-3 footer-animate transition-all duration-700 delay-100 translate-y-10 opacity-0">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-5 tracking-wide">
+              NAVIGASI
+            </h3>
+            <ul className="space-y-2">
+              {navLinks.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    to={link.path}
+                    className="group flex items-center justify-between py-2 text-gray-400 hover:text-purple-300 text-sm font-medium transition-all duration-300"
+                  >
+                    <span className="relative">
+                      {link.name}
+                      <span className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-purple-400 to-purple-300 group-hover:w-full transition-all duration-300"></span>
+                    </span>
+                    <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Section - Right */}
+          <div className="lg:col-span-4 footer-animate transition-all duration-700 delay-200 translate-y-10 opacity-0">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-5 tracking-wide">
+              KONTAK
+            </h3>
+            <div className="space-y-3">
+              {contactItems.map((item, index) => {
+                const Icon = item.icon
                 return (
-                  <li key={link.path}>
-                    <Link 
-                      to={link.path} 
-                      className="group flex items-center gap-2 text-white hover:text-[#FFC148] transition-all duration-300 hover:translate-x-2"
-                    >
-                      <Icon size={14} className="opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                      <span>{link.name}</span>
-                    </Link>
-                  </li>
+                  <div key={index} className="flex items-start gap-3 group">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-400/20 flex items-center justify-center group-hover:bg-purple-500/20 group-hover:scale-105 transition-all duration-300">
+                      <Icon size={14} className="text-purple-300" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-purple-300/60 mb-0.5">
+                        {item.label}
+                      </p>
+                      <p className="text-sm text-gray-300 group-hover:text-white transition-colors duration-300">
+                        {item.value}
+                      </p>
+                    </div>
+                  </div>
                 )
               })}
-            </ul>
-          </div>
-
-          {/* Contact Info - Icon MessageCircle */}
-          <div className="footer-animate transition-all duration-700 delay-200 translate-y-10 opacity-0">
-            <div className="flex items-center gap-2 mb-4">
-              <MessageCircle size={18} className="text-[#FFC148]" />
-              <h3 className="text-lg font-semibold text-white">Kontak Kami</h3>
             </div>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3 text-white group hover:text-[#FFC148] transition-colors duration-300">
-                <MapPin size={18} className="flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-sm leading-relaxed">Jl. Dipati Ukur No.116, Bandung</span>
-              </li>
-              <li className="flex items-center gap-3 text-white group hover:text-[#FFC148] transition-colors duration-300">
-                <Phone size={16} className="group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-sm">(022) 1234567</span>
-              </li>
-              <li className="flex items-center gap-3 text-white group hover:text-[#FFC148] transition-colors duration-300">
-                <Mail size={16} className="group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-sm">info@ilkomnews.com</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter - Icon Bell */}
-          <div className="footer-animate transition-all duration-700 delay-300 translate-y-10 opacity-0">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell size={18} className="text-[#FFC148]" />
-              <h3 className="text-lg font-semibold text-white">Newsletter</h3>
-            </div>
-            <p className="text-white text-sm mb-4">Dapatkan update terbaru dari kami langsung ke email Anda.</p>
-            <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
-              <div className="relative group">
-                <input
-                  type="email"
-                  placeholder="Masukkan email Anda"
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-[#FFC148] transition-all duration-300 group-hover:bg-white/20"
-                  required
-                />
-              </div>
-              <button 
-                type="submit"
-                className="group relative bg-gradient-to-r from-[#FFC148] to-[#FFD580] text-[#300B55] px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden hover:shadow-lg hover:shadow-[#FFC148]/30 hover:-translate-y-0.5"
-              >
-                <span className="relative z-10">Subscribe</span>
-                <Send size={16} className="relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
-                <span className="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500"></span>
-              </button>
-            </form>
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="footer-animate transition-all duration-700 delay-400 translate-y-10 opacity-0">
-          <div className="border-t border-white/20 mt-10 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-white text-sm">
-                &copy; {new Date().getFullYear()} ILKOM NEWS. All rights reserved.
-              </p>
-              <div className="flex gap-6">
-                <Link to="/about" className="text-white text-sm hover:text-[#FFC148] transition-colors duration-300">Tentang Kami</Link>
-                <Link to="/privacy" className="text-white text-sm hover:text-[#FFC148] transition-colors duration-300">Kebijakan Privasi</Link>
-                <Link to="/terms" className="text-white text-sm hover:text-[#FFC148] transition-colors duration-300">Syarat & Ketentuan</Link>
-              </div>
+        {/* Bottom Watermark */}
+        <div className="footer-animate transition-all duration-700 delay-300 translate-y-10 opacity-0 mt-10 pt-8 border-t border-purple-500/20">
+          <div className="flex flex-col items-center justify-center gap-3">
+            {/* Decorative Line */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-px bg-gradient-to-r from-transparent to-purple-500/40"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-500/60"></div>
+              <div className="w-12 h-px bg-gradient-to-l from-transparent to-purple-500/40"></div>
             </div>
+            
+            {/* Watermark Text */}
+            <p className="text-gray-500 text-[11px] tracking-[0.3em] font-mono">
+              DEVELOPED BY RISET PTI 2026
+            </p>
+            
+            {/* Copyright */}
+            <p className="text-gray-600 text-[10px] tracking-wide">
+              &copy; {new Date().getFullYear()} ILKOM NEWS. ALL RIGHTS RESERVED.
+            </p>
           </div>
         </div>
       </div>
@@ -193,6 +216,25 @@ const Footer = () => {
         .in-view {
           transform: translateY(0) !important;
           opacity: 1 !important;
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.15;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.3;
+            transform: scale(1.05);
+          }
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 5s ease-in-out infinite;
+        }
+        
+        .animation-delay-1500 {
+          animation-delay: 1.5s;
         }
       `}</style>
     </footer>

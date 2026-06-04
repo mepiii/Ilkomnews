@@ -153,7 +153,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-5 justify-center">
               <Link 
                 to="/news" 
-                className="group relative bg-purple-800 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 hover:bg-purple-600 hover:shadow-2xl hover:shadow-purple-500/40 hover:-translate-y-1 hover:scale-105 overflow-hidden"
+                className="group relative bg-white text-purple-600 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 hover:bg-purple-200 hover:shadow-2xl hover:shadow-white hover:-translate-y-1 hover:scale-105 overflow-hidden"
               >
                 <span className="relative z-10 group-hover:scale-105 transition-transform duration-300">Jelajahi Berita</span>
                 <ArrowRight size={18} className="relative z-10 group-hover:translate-x-2 group-hover:rotate-12 transition-all duration-300" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, MapPin, Users, Clock, X, Calendar as CalendarIcon, CalendarX, Eye, Info } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, Users, Clock, X, Calendar as CalendarIcon, CalendarX, Eye, Info, Zap, Activity, TrendingUp, Star } from 'lucide-react'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 const UpcomingEvents = () => {
@@ -13,7 +13,7 @@ const UpcomingEvents = () => {
   const [showNoEventToast, setShowNoEventToast] = useState(false)
   const [toastDate, setToastDate] = useState(null)
   const [isVisible, setIsVisible] = useState({
-    'section-header': true, // Default true biar langsung keliatan
+    'section-header': true,
     'calendar-nav': true,
     'calendar-grid': true,
     'legend': true,
@@ -36,7 +36,6 @@ const UpcomingEvents = () => {
   }, [])
 
   useEffect(() => {
-    // Data event contoh
     setTimeout(() => {
       const sampleEvents = [
         {
@@ -46,7 +45,8 @@ const UpcomingEvents = () => {
           location: 'Gedung FASILKOM Lt. 3',
           registered: 45,
           capacity: 100,
-          description: 'Pelajari dasar-dasar AI dan implementasinya'
+          description: 'Pelajari dasar-dasar AI dan implementasinya',
+          level: 'Beginner'
         },
         {
           id: 2,
@@ -55,7 +55,8 @@ const UpcomingEvents = () => {
           location: 'Lab Komputer 1',
           registered: 30,
           capacity: 50,
-          description: 'Bootcamp full-stack web development'
+          description: 'Bootcamp full-stack web development',
+          level: 'Intermediate'
         },
         {
           id: 3,
@@ -64,7 +65,8 @@ const UpcomingEvents = () => {
           location: 'Aula FASILKOM',
           registered: 80,
           capacity: 150,
-          description: 'Seminar keamanan siber bersama praktisi'
+          description: 'Seminar keamanan siber bersama praktisi',
+          level: 'All Levels'
         },
         {
           id: 4,
@@ -73,7 +75,8 @@ const UpcomingEvents = () => {
           location: 'Innovation Hub',
           registered: 25,
           capacity: 40,
-          description: 'Workshop desain antarmuka pengguna'
+          description: 'Workshop desain antarmuka pengguna',
+          level: 'Beginner'
         },
         {
           id: 5,
@@ -82,7 +85,8 @@ const UpcomingEvents = () => {
           location: 'Online (Zoom)',
           registered: 120,
           capacity: 200,
-          description: 'Kompetisi data science tingkat nasional'
+          description: 'Kompetisi data science tingkat nasional',
+          level: 'Advanced'
         },
         {
           id: 6,
@@ -91,7 +95,8 @@ const UpcomingEvents = () => {
           location: 'Lab Mobile',
           registered: 18,
           capacity: 30,
-          description: 'Belajar membuat aplikasi mobile dengan React Native'
+          description: 'Belajar membuat aplikasi mobile dengan React Native',
+          level: 'Intermediate'
         },
         {
           id: 7,
@@ -100,7 +105,8 @@ const UpcomingEvents = () => {
           location: 'Aula FASILKOM',
           registered: 55,
           capacity: 80,
-          description: 'Workshop strategi digital marketing'
+          description: 'Workshop strategi digital marketing',
+          level: 'Beginner'
         },
         {
           id: 8,
@@ -109,7 +115,8 @@ const UpcomingEvents = () => {
           location: 'Gedung FASILKOM Lt. 2',
           registered: 40,
           capacity: 100,
-          description: 'Seminar tentang teknologi cloud computing'
+          description: 'Seminar tentang teknologi cloud computing',
+          level: 'Intermediate'
         }
       ]
       
@@ -118,42 +125,34 @@ const UpcomingEvents = () => {
     }, 500)
   }, [])
 
-  // Get days in month
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate()
   }
 
-  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
   const getFirstDayOfMonth = (year, month) => {
     return new Date(year, month, 1).getDay()
   }
 
-  // Get month name
   const getMonthName = (date) => {
     return date.toLocaleDateString('id-ID', { month: 'long' })
   }
 
-  // Get year
   const getYear = (date) => {
     return date.getFullYear()
   }
 
-  // Navigate to previous month
   const prevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
   }
 
-  // Navigate to next month
   const nextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
   }
 
-  // Go to today
   const goToToday = () => {
     setCurrentDate(new Date())
   }
 
-  // Get events for a specific date
   const getEventsForDate = (year, month, day) => {
     return events.filter(event => {
       const eventDate = new Date(event.date)
@@ -163,7 +162,6 @@ const UpcomingEvents = () => {
     })
   }
 
-  // Handle date click
   const handleDateClick = (year, month, day) => {
     const eventsOnDate = getEventsForDate(year, month, day)
     
@@ -182,12 +180,10 @@ const UpcomingEvents = () => {
     }
   }
 
-  // Check if date has events
   const hasEvents = (year, month, day) => {
     return getEventsForDate(year, month, day).length > 0
   }
 
-  // Check if date is today
   const isToday = (year, month, day) => {
     const today = new Date()
     return today.getFullYear() === year && 
@@ -195,7 +191,6 @@ const UpcomingEvents = () => {
            today.getDate() === day
   }
 
-  // Render calendar grid
   const renderCalendar = () => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -256,10 +251,33 @@ const UpcomingEvents = () => {
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-white relative overflow-hidden">
+        {/* Background Pattern - Light Futuristic */}
+        <div className="absolute inset-0">
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(0deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
           
-          {/* Section Header - Scroll Animation */}
+          {/* Dot Pattern */}
+          <div className="absolute inset-0 bg-[radial-gradient(rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+          
+          {/* Diagonal Lines */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, rgba(139,92,246,0.02) 0px, rgba(139,92,246,0.02) 2px, transparent 2px, transparent 8px)`
+          }}></div>
+        </div>
+
+        {/* Animated Glow Orbs - Light version */}
+        <div className="absolute top-20 -left-20 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-20 -right-20 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-100/30 rounded-full blur-3xl"></div>
+
+        {/* Animated Border Lines */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-300/50 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-300/50 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          
+          {/* Section Header */}
           <div
             data-animate
             id="section-header"
@@ -269,21 +287,22 @@ const UpcomingEvents = () => {
                 : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="inline-flex items-center gap-2 bg-purple-100 rounded-full px-4 py-1.5 mb-4 hover:bg-purple-200 transition-all duration-300 hover:scale-105 hover:shadow-md cursor-default">
-              <CalendarIcon size={16} className="text-purple-600" />
-              <span className="text-purple-700 text-sm font-medium">Jangan Lewatkan</span>
+            <div className="inline-flex items-center gap-2 bg-purple-100 rounded-full px-5 py-2 mb-5 border border-purple-200 hover:border-purple-300 transition-all duration-300">
+              <Zap size={14} className="text-purple-600 animate-pulse" />
+              <span className="text-purple-700 text-sm font-medium">Upcoming Events</span>
+              <Activity size={14} className="text-indigo-500" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-              <span className="hover:text-purple-600 transition-all duration-300 hover:scale-105 inline-block">Event</span>{' '}
-              <span className="text-purple-600 hover:text-purple-700 transition-all duration-300 hover:scale-105 inline-block">Mendatang</span>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+              <span className="hover:text-purple-600 transition-all duration-300">Event</span>{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">Mendatang</span>
             </h2>
-            <div className="w-20 h-1 bg-purple-600 mx-auto rounded-full transition-all duration-500 hover:w-32 hover:bg-purple-700"></div>
-            <p className="text-gray-500 mt-4 max-w-lg mx-auto hover:text-purple-600 transition-colors duration-300">
+            <div className="w-24 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5"></div>
+            <p className="text-gray-500 mt-4 max-w-lg mx-auto">
               Klik tanggal untuk melihat event yang tersedia
             </p>
           </div>
 
-          {/* Calendar Navigation - Scroll Animation */}
+          {/* Calendar Navigation */}
           <div
             data-animate
             id="calendar-nav"
@@ -308,18 +327,18 @@ const UpcomingEvents = () => {
               </button>
               <button
                 onClick={goToToday}
-                className="ml-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                className="ml-2 px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:scale-105"
               >
                 Hari Ini
               </button>
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 hover:text-purple-600 transition-colors duration-300 cursor-default">
+            <h3 className="text-2xl font-bold text-gray-800">
               {getMonthName(currentDate)} {getYear(currentDate)}
             </h3>
             <div className="w-24"></div>
           </div>
 
-          {/* Calendar Grid - Scroll Animation */}
+          {/* Calendar Grid */}
           <div
             data-animate
             id="calendar-grid"
@@ -329,7 +348,7 @@ const UpcomingEvents = () => {
                 : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 hover:shadow-2xl transition-shadow duration-500">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 hover:border-purple-300 transition-all duration-500">
               {/* Week Days Header */}
               <div className="grid grid-cols-7 gap-0">
                 {weekDays.map((day, idx) => (
@@ -358,11 +377,10 @@ const UpcomingEvents = () => {
                           min-h-[100px] p-2 border border-gray-100 transition-all duration-300
                           cursor-pointer hover:bg-purple-50
                           ${!day.isCurrentMonth ? 'bg-gray-50/50' : 'bg-white'}
-                          ${isTodayDate ? 'ring-2 ring-purple-400 ring-inset' : ''}
+                          ${isTodayDate ? 'ring-2 ring-purple-500 ring-inset shadow-glow' : ''}
                         `}
                       >
                         <div className="flex flex-col h-full">
-                          {/* Date Number */}
                           <div className={`
                             text-sm mb-1 flex items-center justify-between
                             ${!day.isCurrentMonth ? 'text-gray-400' : 'text-gray-700'}
@@ -370,17 +388,19 @@ const UpcomingEvents = () => {
                           `}>
                             <span>{day.day}</span>
                             {hasEvent && (
-                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                              </span>
                             )}
                           </div>
                           
-                          {/* Event Indicators */}
                           {hasEvent && eventsOnDate.length > 0 && (
                             <div className="mt-1 space-y-1">
                               {eventsOnDate.slice(0, 2).map((event, idx) => (
                                 <div
                                   key={idx}
-                                  className="text-xs bg-purple-50 text-purple-700 rounded px-1.5 py-0.5 truncate hover:bg-purple-100 transition-all duration-200"
+                                  className="text-xs bg-purple-50 text-purple-700 rounded px-1.5 py-0.5 truncate border border-purple-200 hover:bg-purple-100 transition-all duration-200"
                                 >
                                   {event.title.length > 18 ? event.title.substring(0, 16) + '...' : event.title}
                                 </div>
@@ -401,7 +421,7 @@ const UpcomingEvents = () => {
             </div>
           </div>
 
-          {/* Legend - Scroll Animation */}
+          {/* Legend */}
           <div
             data-animate
             id="legend"
@@ -412,11 +432,11 @@ const UpcomingEvents = () => {
             }`}
           >
             <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-3 h-3 bg-purple-500 rounded-full group-hover:scale-125 transition-all duration-300"></div>
+              <div className="w-3 h-3 bg-purple-500 rounded-full group-hover:scale-125 transition-all duration-300 shadow-glow"></div>
               <span className="text-sm text-gray-600 group-hover:text-purple-600 transition-colors duration-300">Ada Event</span>
             </div>
             <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-3 h-3 ring-2 ring-purple-400 rounded-full group-hover:scale-125 transition-all duration-300"></div>
+              <div className="w-3 h-3 ring-2 ring-purple-500 rounded-full group-hover:scale-125 transition-all duration-300"></div>
               <span className="text-sm text-gray-600 group-hover:text-purple-600 transition-colors duration-300">Hari Ini</span>
             </div>
             <div className="flex items-center gap-2 group cursor-pointer">
@@ -425,7 +445,7 @@ const UpcomingEvents = () => {
             </div>
           </div>
 
-          {/* Link Button - Scroll Animation */}
+          {/* Link Button */}
           <div
             data-animate
             id="link-button"
@@ -437,11 +457,12 @@ const UpcomingEvents = () => {
           >
             <Link 
               to="/events" 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 group"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-purple-500/40 transition-all duration-300 group relative overflow-hidden"
             >
-              <Eye size={18} className="group-hover:scale-110 transition-transform duration-300" />
-              <span>Lihat Semua Event</span>
-              <ChevronLeft size={18} className="rotate-180 group-hover:translate-x-1 transition-transform duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <Eye size={18} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
+              <span className="relative z-10">Lihat Semua Event</span>
+              <TrendingUp size={18} className="relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
           </div>
         </div>
@@ -455,12 +476,12 @@ const UpcomingEvents = () => {
               <div className="absolute inset-0 opacity-5">
                 <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    <pattern id="toastPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                      <line x1="0" y1="0" x2="0" y2="40" stroke="#7c3aed" strokeWidth="1" />
-                      <line x1="0" y1="0" x2="40" y2="0" stroke="#7c3aed" strokeWidth="1" />
+                    <pattern id="toastPatternLight" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <line x1="0" y1="0" x2="0" y2="40" stroke="#a855f7" strokeWidth="1" />
+                      <line x1="0" y1="0" x2="40" y2="0" stroke="#a855f7" strokeWidth="1" />
                     </pattern>
                   </defs>
-                  <rect width="100%" height="100%" fill="url(#toastPattern)" />
+                  <rect width="100%" height="100%" fill="url(#toastPatternLight)" />
                 </svg>
               </div>
               
@@ -485,7 +506,7 @@ const UpcomingEvents = () => {
               </div>
               
               <div className="h-0.5 bg-gray-100">
-                <div className="h-full bg-purple-500 animate-progress-shrink rounded-full"></div>
+                <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 animate-progress-shrink rounded-full"></div>
               </div>
             </div>
           </div>
@@ -495,8 +516,8 @@ const UpcomingEvents = () => {
       {/* Modal Detail Event */}
       {showModal && selectedDateEvents.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex justify-between items-center rounded-t-2xl">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-purple-200">
+            <div className="sticky top-0 bg-white border-b border-purple-200 p-5 flex justify-between items-center rounded-t-2xl">
               <div>
                 <h3 className="text-xl font-bold text-gray-800">
                   Event pada {selectedDate.day} {getMonthName(new Date(selectedDate.year, selectedDate.month))} {selectedDate.year}
@@ -505,9 +526,9 @@ const UpcomingEvents = () => {
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-300"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:rotate-90"
               >
-                <X size={20} className="text-gray-400" />
+                <X size={20} className="text-gray-400 hover:text-purple-600" />
               </button>
             </div>
             
@@ -518,6 +539,13 @@ const UpcomingEvents = () => {
                 const daysLeft = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24))
                 const isFull = event.registered >= event.capacity
                 
+                const levelColors = {
+                  'Beginner': 'from-green-500 to-emerald-500',
+                  'Intermediate': 'from-yellow-500 to-orange-500',
+                  'Advanced': 'from-red-500 to-pink-500',
+                  'All Levels': 'from-blue-500 to-cyan-500'
+                }
+                
                 return (
                   <Link
                     key={event.id}
@@ -527,7 +555,7 @@ const UpcomingEvents = () => {
                   >
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="md:w-20 flex-shrink-0">
-                        <div className="bg-purple-600 rounded-xl text-center py-2 shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl text-center py-2 shadow-lg group-hover:scale-105 transition-transform duration-300">
                           <div className="text-white text-2xl font-bold">{eventDate.getDate()}</div>
                           <div className="text-purple-200 text-xs">
                             {getMonthName(eventDate)}
@@ -536,9 +564,15 @@ const UpcomingEvents = () => {
                       </div>
                       
                       <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                          {event.title}
-                        </h4>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <h4 className="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                            {event.title}
+                          </h4>
+                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${levelColors[event.level]} text-white text-xs font-medium`}>
+                            <Star size={10} />
+                            {event.level}
+                          </div>
+                        </div>
                         
                         <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
@@ -560,7 +594,7 @@ const UpcomingEvents = () => {
                             <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                               <div 
                                 className={`rounded-full h-1.5 transition-all duration-700 ${
-                                  isFull ? 'bg-red-500' : 'bg-purple-600'
+                                  isFull ? 'bg-gradient-to-r from-red-500 to-pink-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'
                                 }`}
                                 style={{ width: `${(event.registered / event.capacity) * 100}%` }}
                               ></div>
@@ -569,8 +603,8 @@ const UpcomingEvents = () => {
                               {isFull ? 'Kuota penuh' : `${event.capacity - event.registered} kursi tersisa`}
                             </span>
                           </div>
-                          <span className="text-purple-600 text-sm font-medium group-hover:translate-x-1 transition-transform duration-300">
-                            Lihat Detail →
+                          <span className="text-purple-600 text-sm font-medium group-hover:translate-x-1 transition-transform duration-300 flex items-center gap-1">
+                            Lihat Detail <ChevronRight size={14} />
                           </span>
                         </div>
                       </div>
@@ -605,6 +639,17 @@ const UpcomingEvents = () => {
           to { width: 0%; }
         }
         
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.4;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+          }
+        }
+        
         .animate-fade-in {
           animation: fade-in 0.3s ease-out forwards;
         }
@@ -615,6 +660,18 @@ const UpcomingEvents = () => {
         
         .animate-progress-shrink {
           animation: progress-shrink 3s linear forwards;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .animation-delay-1000 {
+          animation-delay: 1s;
+        }
+        
+        .shadow-glow {
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
         }
       `}</style>
     </>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, Home, Newspaper, BookOpen, Calendar, Image, Info, ChevronRight, ChevronDown, ExternalLink, Users } from 'lucide-react'
-import logo from '../../assets/logo.png'
+import logo from '../../assets/BEM.png'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)

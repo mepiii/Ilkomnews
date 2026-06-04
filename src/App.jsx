@@ -37,11 +37,11 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/news" element={<NewsPage />} />
-          <Route path="/news/:id" element={<DetailPage type="news" />} />
+          <Route path="/news/:slug" element={<DetailPage type="news" />} />
           <Route path="/events" element={<EventsPage />} />
-          <Route path="/events/:id" element={<DetailPage type="event" />} />
+          <Route path="/events/:slug" element={<DetailPage type="events" />} />
           <Route path="/articles" element={<ArticlesPage />} />
-          <Route path="/articles/:id" element={<DetailPage type="article" />} />
+          <Route path="/articles/:slug" element={<DetailPage type="articles" />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/ilkomgallery" element={<IlkomGalleryPage />} />
         </Routes>
