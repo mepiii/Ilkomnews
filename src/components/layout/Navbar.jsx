@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Home, Newspaper, BookOpen, Calendar, Image, Info, ChevronRight, ChevronDown, ExternalLink, Users } from 'lucide-react'
+import { Menu, X, Home, Newspaper, Image, Info, ChevronRight, ChevronDown, ExternalLink, Users } from 'lucide-react'
 import logo from '../../assets/BEM.png'
 
 const Navbar = () => {
@@ -37,7 +37,6 @@ const Navbar = () => {
         setIsOpen(false)
       }
 
-      // Close dropdown if click outside
       if (
         dropdownOpen &&
         dropdownRef.current &&
@@ -75,33 +74,30 @@ const Navbar = () => {
   const isHomePage = location.pathname === '/'
   const isHeroSection = isHomePage && isAtTop
 
+  // Menu yang tersisa: Beranda, Berita, Ilkom Gallery
   const navItems = [
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Berita', path: '/news', icon: Newspaper },
-    { name: 'Artikel', path: '/articles', icon: BookOpen },
-    { name: 'Event', path: '/events', icon: Calendar },
     { name: 'Ilkom Gallery', path: '/ilkomgallery', icon: Image },
-    { name: 'Tentang', path: '/about', icon: Info },
   ]
 
   const bemAppsDropdown = [
     { 
       name: 'SAPA', 
-      url: 'https://sapa.bemfasilkomunsri.org/', // Ganti dengan URL yang sesuai
+      url: 'https://sapa.bemfasilkomunsri.org/',
       icon: Users 
     },
     { 
       name: 'BEM Official', 
-      url: 'https://bemfasilkomunsri.org/', // Ganti dengan URL yang sesuai
+      url: 'https://bemfasilkomunsri.org/',
       icon: ExternalLink 
     },
   ]
 
   const isActive = (path) => location.pathname === path
 
-  // Fungsi untuk navigasi tanpa membuka tab baru
   const handleNavigation = (url) => {
-    window.location.href = url // Ini akan mengganti halaman di tab yang sama
+    window.location.href = url
   }
 
   return (
@@ -135,7 +131,7 @@ const Navbar = () => {
                 <span className={`text-[10px] font-medium tracking-wider transition-colors duration-300 ${
                   !scrolled && isHeroSection ? 'text-white/70' : 'text-[#FFC148]'
                 }`}>
-                  FAKULTAS ILMU KOMPUTER
+                  BEM FASILKOM UNSRI
                 </span>
               </div>
             </Link>

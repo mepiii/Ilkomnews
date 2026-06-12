@@ -33,29 +33,28 @@ const Footer = () => {
     { icon: faYoutube, href: '#', color: 'hover:bg-[#FF0000]', name: 'YouTube' },
   ]
 
+  // Updated navigation links - hanya Beranda, Berita, Ilkom Gallery
   const navLinks = [
     { name: 'BERANDA', path: '/' },
     { name: 'BERITA', path: '/news' },
-    { name: 'ARTIKEL', path: '/articles' },
-    { name: 'EVENT', path: '/events' },
-    { name: 'TENTANG', path: '/about' },
+    { name: 'ILKOM GALLERY', path: '/ilkomgallery' },
   ]
 
   const contactItems = [
     {
       icon: MapPin,
       label: 'ALAMAT',
-      value: 'Jl. Dipati Ukur No.116, Bandung'
+      value: 'Jl. Srijaya Negara, Bukit Besar, Kec. Ilir Barat I, Kota Palembang, Sumatera Selatan 30128.'
     },
     {
       icon: Phone,
       label: 'TELEPON',
-      value: '(022) 1234567'
+      value: '(0711) 581125'
     },
     {
       icon: Mail,
       label: 'EMAIL',
-      value: 'info@ilkomnews.com'
+      value: 'bemfasilkomunsri@gmail.com'
     }
   ]
 
@@ -108,13 +107,13 @@ const Footer = () => {
                   ILKOM NEWS
                 </h3>
                 <p className="text-[10px] md:text-[11px] tracking-wider text-[#FFC148] font-semibold">
-                  FAKULTAS ILMU KOMPUTER
+                  BEM FASILKOM UNSRI
                 </p>
               </div>
             </div>
             
             <p className="text-gray-400 text-sm md:text-[15px] leading-relaxed mb-6 max-w-md">
-              Portal berita dan informasi terkini untuk mahasiswa Ilmu Komputer UNIKOM dengan tampilan modern, cepat, dan informatif.
+              Pusat informasi dan berita terkini mahasiswa Fasilkom UNSRI. Modern, cepat, dan selalu informatif.
             </p>
             
             {/* Social Media */}

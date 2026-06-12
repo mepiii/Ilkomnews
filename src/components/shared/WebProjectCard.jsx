@@ -1,90 +1,79 @@
 // components/ilkomgallery/shared/WebProjectCard.jsx
-import React, { useState } from 'react'
-import { ExternalLink, Code2, User, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
-import { FaGithub } from 'react-icons/fa'
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { Play, Globe } from 'lucide-react'
+
+// Fungsi untuk membuat slug dari judul
+const createSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, '-')
+}
 
 const WebProjectCard = ({ project }) => {
-  const [expanded, setExpanded] = useState(false)
+  const slug = createSlug(project.title)
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100">
-      <img 
-        src={project.thumbnail} 
-        alt={project.title}
-        className="w-full h-48 object-cover"
-      />
+    <Link 
+      to={`/ilkomgallery/web/${slug}`}
+      className="group relative block rounded-xl overflow-hidden aspect-video cursor-pointer"
+    >
+      {/* Background Image - Full */}
+      <div className="absolute inset-0">
+        <img 
+          src={project.thumbnail} 
+          alt={project.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+      </div>
       
-      <div className="p-5">
-        <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{project.title}</h3>
+      {/* Content Overlay */}
+      <div className="relative h-full flex flex-col justify-end p-5">
+        {/* Category Badge */}
+        <div className="mb-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+            <Globe size={12} />
+            <span>Web Project</span>
+          </span>
+        </div>
         
-        <div className="flex items-center text-sm text-text-gray mb-3 space-x-4">
-          <div className="flex items-center space-x-1">
-            <User size={14} />
-            <span>{project.creator}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Calendar size={14} />
-            <span>Angkatan {project.angkatan}</span>
+        {/* Title */}
+        <h3 className="text-white text-xl font-bold mb-1 line-clamp-1 group-hover:text-blue-300 transition-colors">
+          {project.title}
+        </h3>
+        
+        {/* Creator & Year */}
+        <div className="flex items-center gap-3 text-white/70 text-xs mb-3">
+          <span>{project.creator}</span>
+          <span>•</span>
+          <span>Angkatan {project.angkatan}</span>
+          <span>•</span>
+          <div className="flex items-center gap-1">
+            <Globe size={10} />
+            <span>Web App</span>
           </div>
         </div>
         
-        <p className={`text-text-gray ${expanded ? '' : 'line-clamp-2'} mb-3`}>
+        {/* Description */}
+        <p className="text-white/80 text-sm mb-4 line-clamp-2 max-w-md">
           {project.description}
         </p>
         
-        <button 
-          onClick={() => setExpanded(!expanded)}
-          className="text-primary text-sm flex items-center space-x-1 mb-3 hover:underline"
-        >
-          {expanded ? (
-            <>
-              <ChevronUp size={14} />
-              <span>Sembunyikan</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown size={14} />
-              <span>Baca Selengkapnya</span>
-            </>
-          )}
-        </button>
-        
-        <div className="mb-4">
-          <div className="text-xs font-semibold text-text-gray mb-2 flex items-center gap-1">
-            <Code2 size={12} />
-            <span>Tech Stack:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {project.techStack.map((tech, idx) => (
-              <span key={idx} className="px-2 py-1 bg-gray-100 text-xs rounded-full text-gray-700">
-                {tech}
-              </span>
-            ))}
-          </div>
-        </div>
-        
-        <div className="flex space-x-3">
-          <a 
-            href={project.liveDemo}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center space-x-2 bg-primary text-white px-3 py-2 rounded-lg hover:bg-opacity-90 transition"
-          >
-            <ExternalLink size={16} />
-            <span>Live Demo</span>
-          </a>
-          <a 
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center space-x-2 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
-          >
-            <FaGithub size={16} />
-            <span>Repo</span>
-          </a>
+        {/* Netflix Style Button */}
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-5 py-2 bg-white text-gray-900 rounded-md font-medium hover:bg-white/90 transition-all group-hover:gap-3">
+            <Play size={16} fill="currentColor" />
+            <span>Detail Project</span>
+          </button>
         </div>
       </div>
-    </div>
+      
+      {/* Bottom Gradient Line */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+    </Link>
   )
 }
 

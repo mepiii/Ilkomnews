@@ -1,5 +1,6 @@
+// src/components/home/LatestNews.jsx
 import React, { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'  // ← TAMBAHKAN useNavigate
 import { ChevronRight, Calendar, TrendingUp, Zap, Sparkles, Globe, Newspaper, Bell, Radio } from 'lucide-react'
 import LoadingSpinner from '../common/LoadingSpinner'
 import { newsService } from '../../services/api'
@@ -12,6 +13,7 @@ const LatestNews = () => {
   const [hoveredId, setHoveredId] = useState(null)
 
   const sectionRef = useRef(null)
+  const navigate = useNavigate()  // ← TAMBAHKAN
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -34,6 +36,18 @@ const LatestNews = () => {
 
     fetchNews()
   }, [])
+
+  // ⭐ Fungsi untuk handle klik berita
+  const handleNewsClick = (slug) => {
+    // Scroll ke atas dulu
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant'
+    })
+    // Kemudian pindah halaman
+    navigate(`/news/${slug}`)
+  }
 
   const formatDate = (date) => {
     if (!date) return 'Terbaru'
@@ -135,14 +149,15 @@ const LatestNews = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 mb-12">
           {news.map((item) => {
             const isHovered = hoveredId === item.id
+            const slug = generateSlug(item.title)
 
             return (
-              <Link
+              <div
                 key={item.id}
-                to={`/news/${generateSlug(item.title)}`}
-                className="group block"
+                className="group block cursor-pointer"
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
+                onClick={() => handleNewsClick(slug)}  // ← TAMBAHKAN onClick
               >
                 <div
                   className={`
@@ -222,7 +237,7 @@ const LatestNews = () => {
                   {/* Hover Shine Effect */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none"></div>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>
@@ -231,6 +246,7 @@ const LatestNews = () => {
         <div className="text-center">
           <Link
             to="/news"
+            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}  // ← TAMBAHKAN onClick
             className="group inline-flex items-center gap-2 px-6 md:px-8 lg:px-10 py-3 md:py-3.5 lg:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/40 text-sm md:text-base relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

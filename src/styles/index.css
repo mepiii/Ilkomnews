@@ -8,12 +8,12 @@
 /* ========== BASE STYLES ========== */
 @layer base {
   body {
-    @apply bg-bg-light text-gray-800;
+    @apply bg-white text-gray-800;
     font-family: 'Inter', sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-primary;
+    @apply font-bold;
   }
   
   /* Smooth scrolling */
@@ -105,8 +105,10 @@
 .stagger-children.visible > *:nth-child(4) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
 .stagger-children.visible > *:nth-child(5) { transition-delay: 0.25s; opacity: 1; transform: translateY(0); }
 .stagger-children.visible > *:nth-child(6) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+.stagger-children.visible > *:nth-child(7) { transition-delay: 0.35s; opacity: 1; transform: translateY(0); }
+.stagger-children.visible > *:nth-child(8) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
 
-/* ========== HOVER EFFECTS (CSS MURNI) ========== */
+/* ========== HOVER EFFECTS ========== */
 .card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -201,25 +203,10 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Gradient border */
-.gradient-border {
-  position: relative;
-  background: white;
-  border-radius: 0.5rem;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 0.5rem;
-  padding: 2px;
-  background: linear-gradient(135deg, #7A47A6, #FFC148);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+.glass-effect-dark {
+  background: rgba(26, 5, 51, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ========== LOADING ANIMATION ========== */
@@ -272,21 +259,28 @@
 
 /* ========== SCROLLBAR CUSTOM ========== */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFEDCA;
-  border-radius: 5px;
+  background: #f1f1f1;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7A47A6;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #300B55;
+  background: linear-gradient(135deg, #6d28d9, #9333ea);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7c3aed #f1f1f1;
 }
 
 /* ========== INTRO SCREEN ANIMATIONS ========== */
@@ -305,7 +299,7 @@
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
-/* Loading bar animation - DIPERPANJANG untuk match dengan durasi intro */
+/* Loading bar animation */
 @keyframes loading-bar {
   0% {
     width: 0%;
@@ -325,10 +319,10 @@
 }
 
 .animate-loading-bar {
-  animation: loading-bar 7.5s ease-in-out forwards;
+  animation: loading-bar 2s ease-in-out forwards;
 }
 
-/* Character fade in animation untuk title - DIPERLAMBAT */
+/* Character fade in animation untuk title */
 @keyframes char-fade {
   0% {
     opacity: 0;
@@ -350,7 +344,7 @@
   opacity: 0;
 }
 
-/* Character fade up animation untuk subtitle - DIPERLAMBAT */
+/* Character fade up animation untuk subtitle */
 @keyframes char-fade-up {
   0% {
     opacity: 0;
@@ -435,6 +429,20 @@
   opacity: 0;
 }
 
+/* Pulse animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* Pulse slow animation */
 @keyframes pulse-slow {
   0%, 100% {
@@ -468,6 +476,36 @@
   opacity: 0;
 }
 
+/* Slide down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
 /* Ping animation untuk circle */
 @keyframes ping {
   0% {
@@ -484,21 +522,60 @@
   animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-/* Pulse untuk logo */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+/* Blink animation untuk cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-blink {
+  animation: blink 0.7s step-end infinite;
 }
 
-/* Delay utilities */
+/* Bounce animation */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+.animate-bounce {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* ========== ANIMATED SEPARATOR ========== */
+@keyframes slide-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes slide-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.police-line {
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+.animate-slide-left {
+  animation: slide-left 15s linear infinite;
+}
+
+.animate-slide-right {
+  animation: slide-right 15s linear infinite;
+}
+
+.animate-shine {
+  animation: shine 3s infinite;
+}
+
+/* ========== DELAY UTILITIES ========== */
 .delay-100 {
   animation-delay: 100ms;
 }
@@ -509,6 +586,10 @@
 
 .delay-300 {
   animation-delay: 300ms;
+}
+
+.delay-400 {
+  animation-delay: 400ms;
 }
 
 .delay-500 {
@@ -531,7 +612,7 @@
   animation-delay: 2000ms;
 }
 
-/* Backdrop blur untuk glass effect */
+/* ========== GLASS EFFECT & BACKDROP ========== */
 .backdrop-blur-sm {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -542,10 +623,15 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Shadow glow untuk text */
+.backdrop-blur-lg {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ========== TEXT EFFECTS ========== */
 .text-glow {
-  text-shadow: 0 0 20px rgba(255, 193, 72, 0.5),
-               0 0 40px rgba(255, 193, 72, 0.3);
+  text-shadow: 0 0 20px rgba(124, 58, 237, 0.5),
+               0 0 40px rgba(124, 58, 237, 0.3);
 }
 
 .text-glow-white {
@@ -553,7 +639,31 @@
                0 0 40px rgba(255, 255, 255, 0.3);
 }
 
-/* Drop shadow untuk text yang lebih dramatis */
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(255, 193, 72, 0.5),
+               0 0 40px rgba(255, 193, 72, 0.3);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #FFC148, #FFD580, #FFE4A0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Drop shadow */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.5));
+}
+
 .drop-shadow-2xl {
   filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.5));
 }
@@ -576,6 +686,12 @@
     opacity: 1;
     transform: none;
   }
+  
+  /* Smaller padding on mobile */
+  .container-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
 /* ========== PRINT STYLES ========== */
@@ -592,5 +708,35 @@
   a {
     text-decoration: underline;
   }
+  
+  .break-print {
+    page-break-inside: avoid;
+  }
 }
 
+/* ========== CUSTOM SELECTION ========== */
+::selection {
+  background-color: #7c3aed;
+  color: white;
+}
+
+::-moz-selection {
+  background-color: #7c3aed;
+  color: white;
+}
+
+/* ========== FOCUS STYLES ========== */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ========== DISABLE SCROLL ON MODAL ========== */
+body.modal-open {
+  overflow: hidden;
+}

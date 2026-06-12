@@ -1,73 +1,65 @@
 // components/ilkomgallery/shared/AiProjectCard.jsx
 import React from 'react'
-import { Brain, ExternalLink, User, Calendar, Code2 } from 'lucide-react'
-import { FaGithub } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
+import { Play, Cpu } from 'lucide-react'
+
+// Fungsi untuk membuat slug dari judul
+const createSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '') // Hapus karakter spesial
+    .replace(/\s+/g, '-')    // Ganti spasi dengan -
+}
 
 const AiProjectCard = ({ project }) => {
+  const slug = createSlug(project.title)
+  
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100">
-      <div className="relative">
-        <img src={project.thumbnail} alt={project.title} className="w-full h-48 object-cover" />
-        <div className="absolute top-2 right-2">
-          <div className="px-2 py-1 bg-cyan-100 text-cyan-600 text-xs rounded-full flex items-center gap-1">
-            <Brain size={12} />
+    <Link 
+      to={`/ilkomgallery/project/${slug}`}  // ← PAKE SLUG BUKAN ID
+      className="group relative block rounded-xl overflow-hidden aspect-video cursor-pointer"
+    >
+      <div className="absolute inset-0">
+        <img 
+          src={project.thumbnail} 
+          alt={project.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+      </div>
+      
+      <div className="relative h-full flex flex-col justify-end p-5">
+        <div className="mb-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+            <Cpu size={12} />
             <span>AI Project</span>
+          </span>
+        </div>
+        
+        <h3 className="text-white text-xl font-bold mb-1 line-clamp-1">
+          {project.title}
+        </h3>
+        
+        <div className="flex items-center gap-3 text-white/70 text-xs mb-3">
+          <span>{project.creator}</span>
+          <span>•</span>
+          <span>Angkatan {project.angkatan}</span>
+        </div>
+        
+        <p className="text-white/80 text-sm mb-4 line-clamp-2 max-w-md">
+          {project.description}
+        </p>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-md font-medium hover:bg-white/90 transition-all group-hover:gap-3">
+            <Play size={14} fill="currentColor" />
+            <span>Detail Project</span>
           </div>
         </div>
       </div>
       
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xl font-bold text-primary line-clamp-1 flex-1">{project.title}</h3>
-        </div>
-        
-        <div className="flex items-center text-sm text-text-gray mb-3 space-x-4">
-          <div className="flex items-center space-x-1">
-            <User size={14} />
-            <span>{project.creator}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Calendar size={14} />
-            <span>Angkatan {project.angkatan}</span>
-          </div>
-        </div>
-        
-        <p className="text-text-gray text-sm mb-4 line-clamp-2">{project.description}</p>
-        
-        <div className="mb-4">
-          <div className="text-xs font-semibold text-text-gray mb-2 flex items-center gap-1">
-            <Code2 size={12} />
-            <span>Tech Stack:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {project.techStack.map((tech, idx) => (
-              <span key={idx} className="px-2 py-1 bg-gray-100 text-xs rounded-full">{tech}</span>
-            ))}
-          </div>
-        </div>
-        
-        <div className="flex space-x-3">
-          <a 
-            href={project.demoLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center space-x-2 bg-primary text-white px-3 py-2 rounded-lg hover:bg-opacity-90 transition"
-          >
-            <ExternalLink size={16} />
-            <span>Live Demo</span>
-          </a>
-          <a 
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center space-x-2 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
-          >
-            <FaGithub size={16} />
-            <span>GitHub</span>
-          </a>
-        </div>
-      </div>
-    </div>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+    </Link>
   )
 }
 

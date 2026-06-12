@@ -1,6 +1,7 @@
 // pages/IlkomGalleryPage.jsx
-import React, { useState } from 'react'
-import { Globe, Smartphone, Palette, Gamepad2, Sparkles } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Globe, Smartphone, Palette, Gamepad2, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import Breadcrumb from '../components/common/Breadcrumb'
 
 // Import komponen untuk setiap kategori
@@ -19,9 +20,70 @@ const tabs = [
 ]
 
 const IlkomGalleryPage = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('web')
+  const scrollContainerRef = useRef(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  // ⭐ Ambil tab dari URL atau localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tabParam = params.get('tab')
+    
+    if (tabParam && tabs.some(tab => tab.id === tabParam)) {
+      // Jika ada tab di URL, pakai itu
+      setActiveTab(tabParam)
+      // Simpan ke localStorage
+      localStorage.setItem('lastGalleryTab', tabParam)
+    } else {
+      // Jika tidak ada tab di URL, cek localStorage
+      const savedTab = localStorage.getItem('lastGalleryTab')
+      if (savedTab && tabs.some(tab => tab.id === savedTab)) {
+        setActiveTab(savedTab)
+        // Update URL tanpa reload
+        navigate(`/ilkomgallery?tab=${savedTab}`, { replace: true })
+      } else {
+        // Default ke web
+        setActiveTab('web')
+      }
+    }
+  }, [location.search])
+
+  // ⭐ Scroll ke atas saat halaman di-load atau tab berubah
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant'
+    })
+  }, [location.pathname, activeTab])
+
+  // ⭐ Update URL saat tab berubah (tanpa reload)
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    localStorage.setItem('lastGalleryTab', tabId)
+    navigate(`/ilkomgallery?tab=${tabId}`, { replace: true })
+  }
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component
+
+  // Scroll handlers untuk mobile
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
+      setCanScrollLeft(scrollLeft > 10)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 pt-10">
@@ -48,7 +110,7 @@ const IlkomGalleryPage = () => {
           </p>
         </div>
 
-        {/* Tab Navigation - Modern Pills Design */}
+        {/* Tab Navigation */}
         <div className="mb-8">
           {/* Desktop Tabs */}
           <div className="hidden md:flex items-center justify-center gap-3 bg-white/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg border border-purple-100">
@@ -58,7 +120,7 @@ const IlkomGalleryPage = () => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                     isActive
                       ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30'
@@ -66,37 +128,58 @@ const IlkomGalleryPage = () => {
                   }`}
                 >
                   <Icon size={18} className={isActive ? 'text-white' : 'text-gray-500'} />
-                  <span className="text-sm">{tab.name}</span>
+                  <span className="text-sm whitespace-nowrap">{tab.name}</span>
                 </button>
               )
             })}
           </div>
 
-          {/* Mobile Tabs - Dropdown Style */}
-          <div className="md:hidden">
-            <div className="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-5 py-4 font-semibold transition-all duration-300 border-b border-purple-100 last:border-b-0 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                        : 'text-gray-600 hover:bg-purple-50'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-lg ${
-                      isActive ? 'bg-white/20' : 'bg-purple-100'
-                    }`}>
-                      <Icon size={18} className={isActive ? 'text-white' : 'text-purple-600'} />
-                    </div>
-                    <span className="text-sm">{tab.name}</span>
-                  </button>
-                )
-              })}
+          {/* Mobile Tabs - Horizontal Scroll */}
+          <div className="md:hidden relative">
+            {canScrollLeft && (
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-purple-200 rounded-full shadow-md flex items-center justify-center hover:bg-purple-50 transition-all"
+              >
+                <ChevronLeft size={16} className="text-purple-600" />
+              </button>
+            )}
+            
+            {canScrollRight && (
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-purple-200 rounded-full shadow-md flex items-center justify-center hover:bg-purple-50 transition-all"
+              >
+                <ChevronRight size={16} className="text-purple-600" />
+              </button>
+            )}
+            
+            <div
+              ref={scrollContainerRef}
+              onScroll={checkScroll}
+              className="overflow-x-auto scrollbar-hide pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <div className="flex gap-2 px-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30'
+                          : 'bg-white/80 text-gray-600 hover:text-purple-600 hover:bg-purple-50 border border-purple-100'
+                      }`}
+                    >
+                      <Icon size={16} className={isActive ? 'text-white' : 'text-gray-500'} />
+                      <span className="text-xs whitespace-nowrap">{tab.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -121,6 +204,10 @@ const IlkomGalleryPage = () => {
         
         .animate-fade-in {
           animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>
