@@ -182,11 +182,11 @@ const TalkingMascot = () => {
             <Smile size={12} className="text-purple-600 md:w-3.5 md:h-3.5" />
           </div>
           <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-2 md:mb-3">
-            Sapa <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">Wolfy</span> si Serigala
+            Sapa <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">ArkaWolf</span>
           </h2>
           <div className="w-16 h-0.5 md:w-20 md:h-1 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-3 md:mb-4"></div>
           <p className="text-gray-600 text-xs md:text-sm lg:text-base max-w-md mx-auto px-4">
-            Klik Wolfy untuk mendengar fakta menarik tentang Fasilkom Unsri!
+            Klik ArkaWolf untuk mendengar fakta menarik tentang Fasilkom Unsri!
           </p>
         </div>
 
