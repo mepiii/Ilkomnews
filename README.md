@@ -198,25 +198,6 @@ cd backend
 php artisan test
 ```
 
-## Deployment
-
-### Hostinger Shared Hosting
-
-1. Build frontend:
-```bash
-cd frontend
-npm run build
-```
-
-2. Upload `backend/` folder ke `public_html/`
-
-3. Konfigurasi `.env` di server
-
-4. Jalankan migrations:
-```bash
-php artisan migrate --force
-```
-
 ## License
 
 MIT
