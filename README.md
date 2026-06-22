@@ -1,16 +1,59 @@
-# React + Vite
+# ILKOM News
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Portal berita dan galeri proyek untuk Fakultas Ilmu Komputer Universitas Sriwijaya (FASILKOM UNSRI).
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React 19 + Vite + Tailwind CSS + Framer Motion
+- **Backend:** Laravel 13 + Sanctum + MySQL
+- **Chatbot:** Google Gemini 2.0 Flash (RAG-based)
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- News (Berita) management with CRUD
+- Ilkom Gallery - student project submissions
+- Events calendar
+- AI Chatbot (Wolfy) for website Q&A
+- Admin dashboard with security center
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Clone
+git clone https://github.com/gerraddimas86-max/ilkomnews.git
+cd ilkomnews
+
+# Backend setup
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve --port=8000
+
+# Frontend setup (new terminal)
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+## Admin Accounts
+
+| Email | Password |
+|-------|----------|
+| superadmin@ilkom.id | Sup3r@dm1n#2026! |
+| riset.pti@ilkom.id | R1s3t!Pti#2026 |
+| akademik@ilkom.id | Ak@d3m1k!2026 |
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+- `GEMINI_API_KEY` - Google Gemini API key for chatbot
+- `DB_*` - Database configuration
+- `APP_KEY` - Generated via `php artisan key:generate`
+
+## License
+
+MIT
