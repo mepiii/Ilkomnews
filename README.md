@@ -161,7 +161,7 @@ VITE_USE_REAL_API=true
 ## Security Features
 
 - **Security Headers** - CSP, HSTS, X-Frame-Options, X-Content-Type-Options
-- **Rate Limiting** - 5 req/min, 20 req/hr, 50 req/day untuk chatbot
+- **Rate Limiting** - IP: 5 req/min, 20 req/hr, 50 req/day | Device: 2 req/min, 10 req/hr, 20 req/day
 - **Admin Lockout** - 5 gagal login = lock 15 menit
 - **Audit Logging** - Semua aktivitas admin tercatat
 - **Input Validation** - Validasi di semua endpoint

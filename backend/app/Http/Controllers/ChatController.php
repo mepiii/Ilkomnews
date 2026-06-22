@@ -261,9 +261,9 @@ PROMPT;
         ];
 
         if ($deviceId) {
-            $limits[] = ["chat:min:dev:{$deviceId}", 5, 60, 'Terlalu cepat! Tunggu {s} detik.'];
-            $limits[] = ["chat:hr:dev:{$deviceId}", 20, 3600, 'Batas per jam tercapai.'];
-            $limits[] = ["chat:day:dev:{$deviceId}", 50, 86400, 'Batas harian tercapai.'];
+            $limits[] = ["chat:min:dev:{$deviceId}", 2, 60, 'Terlalu cepat! Tunggu {s} detik.'];
+            $limits[] = ["chat:hr:dev:{$deviceId}", 10, 3600, 'Batas per jam tercapai.'];
+            $limits[] = ["chat:day:dev:{$deviceId}", 20, 86400, 'Batas harian tercapai.'];
         }
 
         foreach ($limits as [$key, $max, $ttl, $msg]) {
