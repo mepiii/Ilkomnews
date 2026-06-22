@@ -270,7 +270,7 @@ const SubmitProjectPage = () => {
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
                       {form.thumbnail ? (
                         <>
-                          <img src={form.thumbnail} alt="Preview" className="w-10 h-10 rounded-lg object-cover" />
+                          <img src={form.thumbnail} alt="Preview" loading="lazy" className="w-10 h-10 rounded-lg object-cover" />
                           <span className="text-sm text-green-600 dark:text-green-400 font-medium">Image selected</span>
                         </>
                       ) : (

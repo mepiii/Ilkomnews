@@ -8,13 +8,13 @@ const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => 
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="relative overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 p-5 transition-colors hover:border-neutral-700"
+    className="relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-color)]"
   >
     <div className={`absolute -top-6 -right-6 h-24 w-24 rounded-full ${color} opacity-20 blur-2xl`} />
     <div className="relative flex items-center justify-between">
       <div>
-        <p className="text-sm text-neutral-400">{label}</p>
-        <p className="mt-1 text-3xl font-bold text-white">{value ?? '-'}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{label}</p>
+        <p className="mt-1 text-3xl font-bold text-[var(--text-primary)]">{value ?? '-'}</p>
       </div>
       <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
         <Icon size={20} className={iconColor} />
@@ -23,35 +23,35 @@ const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => 
   </motion.div>
 )
 
-const SkeletonCard = () => (
-  <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5 animate-pulse">
-    <div className="flex items-center justify-between">
-      <div className="space-y-2">
-        <div className="h-4 w-20 rounded bg-neutral-800" />
-        <div className="h-7 w-12 rounded bg-neutral-800" />
-      </div>
-      <div className="h-11 w-11 rounded-xl bg-neutral-800" />
-    </div>
-  </div>
-)
-
 const ACTION_OPTIONS = [
   { value: '', label: 'Semua Aksi' },
-  { value: 'create', label: 'Create' },
-  { value: 'update', label: 'Update' },
-  { value: 'delete', label: 'Delete' },
+  { value: 'create', label: 'Tambah' },
+  { value: 'update', label: 'Ubah' },
+  { value: 'delete', label: 'Hapus' },
   { value: 'login', label: 'Login' },
   { value: 'logout', label: 'Logout' },
 ]
 
-const ENTITY_OPTIONS = [
-  { value: '', label: 'Semua Entity' },
-  { value: 'news', label: 'News' },
-  { value: 'project_submission', label: 'Project' },
-  { value: 'user', label: 'User' },
-]
+const ACTION_LABELS = {
+  create: 'Tambah',
+  update: 'Ubah',
+  delete: 'Hapus',
+  login: 'Login',
+  logout: 'Logout',
+}
 
-const PAGE_SIZE = 20
+const ENTITY_LABELS = {
+  news: 'Berita',
+  project_submission: 'Proyek',
+  user: 'Pengguna',
+}
+
+const ENTITY_OPTIONS = [
+  { value: '', label: 'Semua Entitas' },
+  { value: 'news', label: 'Berita' },
+  { value: 'project_submission', label: 'Proyek' },
+  { value: 'user', label: 'Pengguna' },
+]
 
 const formatDate = (d) => {
   if (!d) return '-'
@@ -96,6 +96,7 @@ export default function AuditLogsPage() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs()
   }, [fetchLogs])
 
@@ -112,12 +113,12 @@ export default function AuditLogsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
           <FileText size={24} className="text-emerald-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Audit Logs</h1>
-          <p className="text-sm text-neutral-400">Riwayat aktivitas sistem dan perubahan data</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Log Audit</h1>
+          <p className="text-sm text-[var(--text-secondary)]">Riwayat aktivitas sistem dan perubahan data</p>
         </div>
       </div>
 
@@ -152,7 +153,7 @@ export default function AuditLogsPage() {
         <select
           value={actionFilter}
           onChange={(e) => handleActionChange(e.target.value)}
-          className="px-4 py-2 border border-neutral-700 rounded-lg text-sm bg-neutral-900 text-neutral-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors"
+          className="px-4 py-2 border border-[var(--border-color)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
         >
           {ACTION_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -163,7 +164,7 @@ export default function AuditLogsPage() {
         <select
           value={entityFilter}
           onChange={(e) => handleEntityChange(e.target.value)}
-          className="px-4 py-2 border border-neutral-700 rounded-lg text-sm bg-neutral-900 text-neutral-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors"
+          className="px-4 py-2 border border-[var(--border-color)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
         >
           {ENTITY_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -182,35 +183,35 @@ export default function AuditLogsPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="rounded-xl border border-neutral-800 bg-neutral-900"
+        className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
       >
-        <div className="flex items-center gap-2 border-b border-neutral-800 px-5 py-4">
+        <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
           <FileText size={16} className="text-emerald-400" />
-          <h2 className="font-semibold text-white">Riwayat Aktivitas</h2>
+          <h2 className="font-semibold text-[var(--text-primary)]">Riwayat Aktivitas</h2>
         </div>
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-neutral-500 text-sm">Memuat...</div>
+            <div className="p-8 text-center text-[var(--text-muted)] text-sm">Memuat...</div>
           ) : logs.length === 0 ? (
             <div className="p-12 text-center">
-              <FileText size={48} className="mx-auto text-neutral-600 mb-3" />
-              <p className="text-neutral-500 text-sm">Tidak ada log ditemukan</p>
+              <FileText size={48} className="mx-auto text-[var(--text-muted)] mb-3" />
+              <p className="text-[var(--text-muted)] text-sm">Tidak ada log ditemukan</p>
             </div>
           ) : (
             <>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-800 text-left text-neutral-400">
+                  <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
                     <th className="px-5 py-3 font-medium">Aksi</th>
-                    <th className="px-5 py-3 font-medium hidden md:table-cell">User</th>
-                    <th className="px-5 py-3 font-medium hidden md:table-cell">Entity</th>
+                    <th className="px-5 py-3 font-medium hidden md:table-cell">Pengguna</th>
+                    <th className="px-5 py-3 font-medium hidden md:table-cell">Entitas</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell">IP Address</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell">Waktu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-800/50">
+                <tbody className="divide-y divide-[var(--border-color)]">
                   {logs.map((log) => (
-                    <tr key={log.id} className="transition-colors hover:bg-neutral-800/30">
+                    <tr key={log.id} className="transition-colors hover:bg-[var(--bg-secondary)]">
                       <td className="px-5 py-3">
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -222,22 +223,22 @@ export default function AuditLogsPage() {
                                   ? 'bg-red-500/20 text-red-400'
                                   : log.action === 'login'
                                     ? 'bg-purple-500/20 text-purple-400'
-                                    : 'bg-neutral-700 text-neutral-400'
+                                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
                           }`}
                         >
-                          {log.action}
+                          {ACTION_LABELS[log.action] || log.action}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-neutral-200 hidden md:table-cell">
+                      <td className="px-5 py-3 text-[var(--text-primary)] hidden md:table-cell">
                         {log.user?.name || log.user?.email || '-'}
                       </td>
-                      <td className="px-5 py-3 text-neutral-400 hidden md:table-cell">
-                        {log.entity_type || '-'}
+                      <td className="px-5 py-3 text-[var(--text-secondary)] hidden md:table-cell">
+                        {ENTITY_LABELS[log.entity_type] || log.entity_type || '-'}
                       </td>
-                      <td className="px-5 py-3 font-mono text-neutral-400 hidden lg:table-cell">
+                      <td className="px-5 py-3 font-mono text-[var(--text-secondary)] hidden lg:table-cell">
                         {log.ip_address || '-'}
                       </td>
-                      <td className="px-5 py-3 text-neutral-400 hidden lg:table-cell">
+                      <td className="px-5 py-3 text-[var(--text-secondary)] hidden lg:table-cell">
                         {formatDate(log.created_at)}
                       </td>
                     </tr>
@@ -246,22 +247,22 @@ export default function AuditLogsPage() {
               </table>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-neutral-800">
-                  <p className="text-xs text-neutral-400">
+                <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Halaman {page} dari {totalPages}
                   </p>
                   <div className="flex gap-1">
                     <button
                       onClick={() => setPage((p) => p - 1)}
                       disabled={page <= 1}
-                      className="px-3 py-1 text-xs border border-neutral-700 rounded-md disabled:opacity-40 hover:bg-neutral-800 transition-colors text-neutral-300"
+                      className="px-3 py-1 text-xs border border-[var(--border-color)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors text-[var(--text-secondary)]"
                     >
                       Sebelumnya
                     </button>
                     <button
                       onClick={() => setPage((p) => p + 1)}
                       disabled={page >= totalPages}
-                      className="px-3 py-1 text-xs border border-neutral-700 rounded-md disabled:opacity-40 hover:bg-neutral-800 transition-colors text-neutral-300"
+                      className="px-3 py-1 text-xs border border-[var(--border-color)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors text-[var(--text-secondary)]"
                     >
                       Berikutnya
                     </button>

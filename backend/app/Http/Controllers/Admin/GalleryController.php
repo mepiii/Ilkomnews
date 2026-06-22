@@ -13,15 +13,11 @@ class GalleryController extends Controller
     {
         $query = ProjectSubmission::query();
 
-        if ($request->has('status') && $request->status !== 'all') {
+        if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('category') && $request->category !== 'all') {
-            $query->where('category', $request->category);
-        }
-
-        if ($request->has('search')) {
+        if ($request->has('search') && $request->search !== '') {
             $search = addcslashes($request->search, '%_');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
@@ -30,16 +26,27 @@ class GalleryController extends Controller
             });
         }
 
-        return response()->json($query->latest()->paginate(15));
+        $projects = $query->latest()->paginate(15)->withQueryString();
+
+        // Stats for the view
+        $total_projects = ProjectSubmission::count();
+        $pending_count = ProjectSubmission::where('status', 'pending')->count();
+        $accepted_count = ProjectSubmission::where('status', 'accepted')->count();
+        $rejected_count = ProjectSubmission::where('status', 'rejected')->count();
+
+        return view('admin.projects.index', compact('projects', 'total_projects', 'pending_count', 'accepted_count', 'rejected_count'));
     }
 
-    public function show(ProjectSubmission $submission)
+    public function show($id)
     {
-        return response()->json($submission);
+        $project = ProjectSubmission::findOrFail($id);
+        return view('admin.projects.show', compact('project'));
     }
 
-    public function accept(ProjectSubmission $submission)
+    public function accept($id)
     {
+        $submission = ProjectSubmission::findOrFail($id);
+
         $submission->update([
             'status' => 'accepted',
             'reviewed_by' => auth()->id(),
@@ -63,16 +70,22 @@ class GalleryController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
-        return response()->json(['message' => 'Submission accepted', 'data' => $submission]);
+        return redirect()->route('admin.projects.show', $id)->with('success', 'Project accepted successfully!');
     }
 
-    public function reject(Request $request, ProjectSubmission $submission)
+    public function reject(Request $request, $id)
     {
-        $request->validate(['rejection_reason' => 'required|string']);
+        $submission = ProjectSubmission::findOrFail($id);
+
+        $validated = $request->validate([
+            'rejection_reason' => 'nullable|string|max:500',
+        ]);
+
+        $rejectionReason = $validated['rejection_reason'] ?? 'No reason provided';
 
         $submission->update([
             'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => $rejectionReason,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
@@ -81,7 +94,7 @@ class GalleryController extends Controller
             'tracking_id' => $submission->tracking_id,
             'type' => 'rejected',
             'title' => 'Project Ditolak',
-            'message' => "Project '{$submission->title}' tidak dapat diterima. Alasan: {$request->rejection_reason}",
+            'message' => "Project '{$submission->title}' tidak dapat diterima. Alasan: {$rejectionReason}",
         ]);
 
         AuditLog::create([
@@ -92,13 +105,13 @@ class GalleryController extends Controller
             'details' => [
                 'title' => $submission->title,
                 'tracking_id' => $submission->tracking_id,
-                'rejection_reason' => $request->rejection_reason,
+                'rejection_reason' => $rejectionReason,
             ],
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
 
-        return response()->json(['message' => 'Submission rejected', 'data' => $submission]);
+        return redirect()->route('admin.projects.show', $id)->with('success', 'Project rejected successfully!');
     }
 
     public function stats()

@@ -187,7 +187,8 @@ PROMPT;
             }
 
             $response = Http::timeout(15)
-                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
+                ->withHeaders(['x-goog-api-key' => $apiKey])
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", [
                     'system_instruction' => [
                         'parts' => [['text' => $systemPrompt]],
                     ],
@@ -198,10 +199,10 @@ PROMPT;
                         'topP' => 0.8,
                     ],
                     'safetySettings' => [
-                        ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => 'BLOCK_NONE'],
-                        ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => 'BLOCK_NONE'],
-                        ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_NONE'],
-                        ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_NONE'],
+                        ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                        ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                        ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                        ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
                     ],
                 ]);
 
@@ -454,8 +455,9 @@ PROMPT;
         return function ($query) use ($keywords, $columns) {
             $query->where(function ($q) use ($keywords, $columns) {
                 foreach ($keywords as $keyword) {
+                    $escaped = addcslashes($keyword, '%_');
                     foreach ($columns as $column) {
-                        $q->orWhere($column, 'LIKE', "%{$keyword}%");
+                        $q->orWhere($column, 'LIKE', "%{$escaped}%");
                     }
                 }
             });
@@ -530,8 +532,9 @@ PROMPT;
     {
         $results = ProjectSubmission::where(function ($q) use ($keywords) {
             foreach ($keywords as $keyword) {
-                $q->orWhere('title', 'LIKE', "%{$keyword}%");
-                $q->orWhere('creator_name', 'LIKE', "%{$keyword}%");
+                $escaped = addcslashes($keyword, '%_');
+                $q->orWhere('title', 'LIKE', "%{$escaped}%");
+                $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
             }
         })
             ->latest()

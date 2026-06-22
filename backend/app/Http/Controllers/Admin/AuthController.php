@@ -15,6 +15,11 @@ class AuthController extends Controller
     private const MAX_FAILED_ATTEMPTS = 5;
     private const LOCKOUT_MINUTES = 15;
 
+    public function showLoginForm()
+    {
+        return view('admin.login');
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -29,11 +34,9 @@ class AuthController extends Controller
         // Check account lockout
         if (Cache::has($lockKey)) {
             $remainingMinutes = Cache::get($lockKey);
-            return response()->json([
-                'message' => "Account locked. Try again in {$remainingMinutes} minutes.",
-                'locked' => true,
-                'retry_after' => $remainingMinutes * 60,
-            ], 429);
+            return back()->withErrors([
+                'email' => "Account locked. Try again in {$remainingMinutes} minutes."
+            ])->withInput($request->only('email'));
         }
 
         // Check rate limit (login throttling)
@@ -44,14 +47,12 @@ class AuthController extends Controller
 
             $this->logAttempt($email, $ip, false, 'lockout');
 
-            return response()->json([
-                'message' => "Too many failed attempts. Account locked for " . ceil($seconds / 60) . " minutes.",
-                'locked' => true,
-                'retry_after' => $seconds,
-            ], 429);
+            return back()->withErrors([
+                'email' => "Too many failed attempts. Account locked for " . ceil($seconds / 60) . " minutes."
+            ])->withInput($request->only('email'));
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
             RateLimiter::hit($throttleKey, self::LOCKOUT_MINUTES * 60);
 
             $this->logAttempt($email, $ip, false, 'invalid_credentials');
@@ -59,10 +60,9 @@ class AuthController extends Controller
             $attempts = RateLimiter::attempts($throttleKey);
             $remaining = self::MAX_FAILED_ATTEMPTS - $attempts;
 
-            return response()->json([
-                'message' => "Email or password incorrect. {$remaining} attempts remaining.",
-                'attempts_remaining' => $remaining,
-            ], 401);
+            return back()->withErrors([
+                'email' => "Email or password incorrect. {$remaining} attempts remaining."
+            ])->withInput($request->only('email'));
         }
 
         // Clear rate limiter on success
@@ -73,39 +73,36 @@ class AuthController extends Controller
         if (!$user->is_admin) {
             Auth::logout();
             $this->logAttempt($email, $ip, false, 'not_admin');
-            return response()->json(['message' => 'Access denied'], 403);
+            return back()->withErrors([
+                'email' => 'Access denied. Admin privileges required.'
+            ])->withInput($request->only('email'));
         }
 
-        // Regenerate session if available (session rotation)
-        if ($request->hasSession()) {
-            $request->session()->regenerate();
-        }
-
-        // Delete old tokens for this user (session rotation)
-        $user->tokens()->where('name', 'admin-token')->delete();
-
-        $token = $user->createToken('admin-token')->plainTextToken;
+        // Regenerate session (session fixation prevention)
+        $request->session()->regenerate();
 
         $this->logAttempt($email, $ip, true, 'success');
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
+        return redirect()->route('admin.dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
 
         AuditLog::create([
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'action' => 'logout',
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
 
-        return response()->json(['message' => 'Logged out']);
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login')->with('status', 'You have been logged out successfully.');
     }
 
     public function user(Request $request)

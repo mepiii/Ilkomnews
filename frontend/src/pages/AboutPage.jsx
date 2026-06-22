@@ -141,15 +141,17 @@ const AboutPage = () => {
               </div>
             </div>
             <div className="relative">
-              <img 
+              <img
                 src="/assets/gedungfasilkom2.jpg"
                 alt="Gedung FASILKOM UNSRI"
+                loading="lazy"
                 className="rounded-2xl shadow-2xl object-cover w-full h-64 md:h-80"
               />
               <div className="absolute -bottom-4 -right-4 bg-white rounded-xl p-2 shadow-lg">
-                <img 
+                <img
                   src="/assets/logo.png"
                   alt="Logo UNSRI"
+                  loading="lazy"
                   className="w-16 h-16 object-contain"
                 />
               </div>

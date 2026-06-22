@@ -65,8 +65,9 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')-
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // File upload
-    Route::post('/upload', [\App\Http\Controllers\UploadController::class, 'store']);
+    // File upload (stricter rate limit: 10 uploads per minute)
+    Route::post('/upload', [\App\Http\Controllers\UploadController::class, 'store'])
+        ->middleware('throttle:10,1');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'apiStats']);

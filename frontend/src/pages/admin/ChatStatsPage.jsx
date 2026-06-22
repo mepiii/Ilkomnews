@@ -8,13 +8,13 @@ const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => 
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="relative overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 p-5 transition-colors hover:border-neutral-700"
+    className="relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-color)]"
   >
     <div className={`absolute -top-6 -right-6 h-24 w-24 rounded-full ${color} opacity-20 blur-2xl`} />
     <div className="relative flex items-center justify-between">
       <div>
-        <p className="text-sm text-neutral-400">{label}</p>
-        <p className="mt-1 text-3xl font-bold text-white">{value ?? '-'}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{label}</p>
+        <p className="mt-1 text-3xl font-bold text-[var(--text-primary)]">{value ?? '-'}</p>
       </div>
       <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
         <Icon size={20} className={iconColor} />
@@ -24,13 +24,13 @@ const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => 
 )
 
 const SkeletonCard = () => (
-  <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5 animate-pulse">
+  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 animate-pulse">
     <div className="flex items-center justify-between">
       <div className="space-y-2">
-        <div className="h-4 w-20 rounded bg-neutral-800" />
-        <div className="h-7 w-12 rounded bg-neutral-800" />
+        <div className="h-4 w-20 rounded bg-[var(--bg-secondary)]" />
+        <div className="h-7 w-12 rounded bg-[var(--bg-secondary)]" />
       </div>
-      <div className="h-11 w-11 rounded-xl bg-neutral-800" />
+      <div className="h-11 w-11 rounded-xl bg-[var(--bg-secondary)]" />
     </div>
   </div>
 )
@@ -52,12 +52,12 @@ export default function ChatStatsPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
             <MessageSquare size={24} className="text-blue-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Chat Statistics</h1>
-            <p className="text-sm text-neutral-400">Statistik penggunaan chatbot Wolfy</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Statistik Chat</h1>
+            <p className="text-sm text-[var(--text-secondary)]">Statistik penggunaan chatbot Wolfy</p>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,12 +84,12 @@ export default function ChatStatsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
           <MessageSquare size={24} className="text-blue-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Chat Statistics</h1>
-          <p className="text-sm text-neutral-400">Statistik penggunaan chatbot Wolfy</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Statistik Chat</h1>
+          <p className="text-sm text-[var(--text-secondary)]">Statistik penggunaan chatbot Wolfy</p>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export default function ChatStatsPage() {
         />
         <StatCard
           icon={AlertCircle}
-          label="No Context"
+          label="Tanpa Konteks"
           value={data?.no_context}
           color="bg-amber-500/20"
           iconColor="text-amber-400"
@@ -128,7 +128,7 @@ export default function ChatStatsPage() {
         />
         <StatCard
           icon={Zap}
-          label="Rate Limited"
+          label="Dibatasi Rate Limit"
           value={data?.rate_limited}
           color="bg-purple-500/20"
           iconColor="text-purple-400"
@@ -149,11 +149,11 @@ export default function ChatStatsPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-xl border border-neutral-800 bg-neutral-900"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
         >
-          <div className="flex items-center gap-2 border-b border-neutral-800 px-5 py-4">
+          <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
             <MessageSquare size={16} className="text-blue-400" />
-            <h2 className="font-semibold text-white">Aktivitas Harian</h2>
+            <h2 className="font-semibold text-[var(--text-primary)]">Aktivitas Harian</h2>
           </div>
           <div className="p-5 space-y-3">
             {dailyBreakdown.map((day) => {
@@ -167,15 +167,15 @@ export default function ChatStatsPage() {
               return (
                 <div key={day.date} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-400 w-24">
+                    <span className="text-[var(--text-secondary)] w-24">
                       {new Date(day.date).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'short',
                       })}
                     </span>
-                    <span className="text-neutral-300 font-medium">{total}</span>
+                    <span className="text-[var(--text-secondary)] font-medium">{total}</span>
                   </div>
-                  <div className="h-6 w-full rounded-md bg-neutral-800 overflow-hidden">
+                  <div className="h-6 w-full rounded-md bg-[var(--bg-secondary)] overflow-hidden">
                     <div
                       className="h-full flex rounded-md overflow-hidden"
                       style={{ width: `${widthPct}%` }}
@@ -194,7 +194,7 @@ export default function ChatStatsPage() {
                 </div>
               )
             })}
-            <div className="flex items-center gap-4 pt-2 text-xs text-neutral-400">
+            <div className="flex items-center gap-4 pt-2 text-xs text-[var(--text-secondary)]">
               <div className="flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-sm bg-emerald-500/70" />
                 <span>Berhasil</span>
@@ -217,24 +217,24 @@ export default function ChatStatsPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="rounded-xl border border-neutral-800 bg-neutral-900"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
         >
-          <div className="flex items-center gap-2 border-b border-neutral-800 px-5 py-4">
+          <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
             <Zap size={16} className="text-purple-400" />
-            <h2 className="font-semibold text-white">Top IP Addresses</h2>
+            <h2 className="font-semibold text-[var(--text-primary)]">IP Address Teratas</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-neutral-800 text-left text-neutral-400">
+                <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
                   <th className="px-5 py-3 font-medium">IP Address</th>
                   <th className="px-5 py-3 font-medium text-right">Total Query</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-800/50">
+              <tbody className="divide-y divide-[var(--border-color)]">
                 {topIPs.map((ip, idx) => (
-                  <tr key={idx} className="transition-colors hover:bg-neutral-800/30">
-                    <td className="px-5 py-3 font-mono text-neutral-200">{ip.ip_address}</td>
+                  <tr key={idx} className="transition-colors hover:bg-[var(--bg-secondary)]">
+                    <td className="px-5 py-3 font-mono text-[var(--text-primary)]">{ip.ip_address}</td>
                     <td className="px-5 py-3 text-right">
                       <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
                         {ip.count}

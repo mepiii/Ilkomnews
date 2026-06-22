@@ -54,7 +54,7 @@
                     <div x-show="open" x-cloak x-transition
                          class="absolute right-0 mt-2 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
                          @click="open = false">
-                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50">Profile</a>
+                        <a href="{{ route('admin.profile.edit') }}" class="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50">Profile</a>
                         <a href="/" target="_blank" class="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50">Lihat Website</a>
                         <hr class="my-1 border-zinc-100">
                         <form method="POST" action="{{ route('logout') }}">

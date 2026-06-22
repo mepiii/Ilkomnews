@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Publishable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Event extends Model
 {
-    use HasFactory;
+    use HasFactory, Publishable;
+
     protected $fillable = [
         'title', 'slug', 'summary', 'content', 'category',
         'date', 'location', 'image', 'registered', 'capacity',
@@ -21,20 +22,6 @@ class Event extends Model
         'date' => 'date',
         'published' => 'boolean',
     ];
-
-    protected static function booted(): void
-    {
-        static::creating(function (Event $event) {
-            if (empty($event->slug)) {
-                $event->slug = Str::slug($event->title);
-            }
-        });
-    }
-
-    public function scopePublished($query)
-    {
-        return $query->where('published', true);
-    }
 
     public function scopeUpcoming($query)
     {

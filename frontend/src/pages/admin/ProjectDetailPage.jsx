@@ -5,13 +5,13 @@ import { ArrowLeft, Check, X, ExternalLink, GitFork, User, Tag, Calendar, Folder
 import { adminProjects } from '../../services/adminApi'
 
 const STATUS_STYLES = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  accepted: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
+  pending: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  accepted: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  rejected: 'bg-red-500/15 text-red-600 dark:text-red-400',
 }
 
 const STATUS_LABELS = {
-  pending: 'Pending',
+  pending: 'Menunggu',
   accepted: 'Diterima',
   rejected: 'Ditolak',
 }
@@ -41,24 +41,24 @@ function RejectModal({ open, onClose, onConfirm }) {
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
-            className="bg-white rounded-xl shadow-xl w-full max-w-md p-6"
+            className="bg-[var(--bg-card)] rounded-xl shadow-xl border border-[var(--border-color)] w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tolak Proyek</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Tolak Proyek</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Alasan Penolakan</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Alasan Penolakan</label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors"
+                className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors"
                 placeholder="Masukkan alasan penolakan..."
               />
             </div>
             <div className="flex justify-end gap-3 mt-5">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
               >
                 Batal
               </button>
@@ -127,7 +127,7 @@ export default function ProjectDetailPage() {
   if (error) {
     return (
       <div className="space-y-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm">
           <ArrowLeft size={16} /> Kembali
         </button>
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>
@@ -146,7 +146,7 @@ export default function ProjectDetailPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors"
+          className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors"
         >
           <ArrowLeft size={16} /> Kembali
         </button>
@@ -174,19 +174,19 @@ export default function ProjectDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6"
       >
         {/* Title + Status */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <h1 className="text-xl font-bold text-gray-900">{project.title}</h1>
-          <span className={`inline-flex self-start text-xs px-3 py-1 rounded-full font-medium ${STATUS_STYLES[project.status] || 'bg-gray-100 text-gray-600'}`}>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">{project.title}</h1>
+          <span className={`inline-flex self-start text-xs px-3 py-1 rounded-full font-medium ${STATUS_STYLES[project.status] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
             {STATUS_LABELS[project.status] || project.status}
           </span>
         </div>
 
         {/* Description */}
         {project.description && (
-          <p className="text-gray-600 text-sm leading-relaxed mb-6 whitespace-pre-line">{project.description}</p>
+          <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6 whitespace-pre-line">{project.description}</p>
         )}
 
         {/* Meta grid */}
@@ -206,10 +206,10 @@ export default function ProjectDetailPage() {
         {/* Tech stack tags */}
         {project.tech_stack && Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && (
           <div className="mb-6">
-            <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Tech Stack</p>
+            <p className="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Tech Stack</p>
             <div className="flex flex-wrap gap-2">
               {project.tech_stack.map((tech, i) => (
-                <span key={i} className="px-2.5 py-1 bg-purple-50 text-secondary text-xs rounded-full font-medium">
+                <span key={i} className="px-2.5 py-1 bg-secondary/10 text-secondary dark:text-purple-300 text-xs rounded-full font-medium">
                   {tech}
                 </span>
               ))}
@@ -225,7 +225,7 @@ export default function ProjectDetailPage() {
                 href={project.demo_url || project.link || project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary text-sm font-medium rounded-lg hover:bg-secondary/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-secondary/20 transition-colors"
               >
                 <ExternalLink size={14} /> Demo
               </a>
@@ -235,7 +235,7 @@ export default function ProjectDetailPage() {
                 href={project.github_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--border-color)] transition-colors"
               >
                 <GitFork size={14} /> GitHub
               </a>
@@ -258,12 +258,12 @@ export default function ProjectDetailPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+          className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6"
         >
-          <h2 className="font-semibold text-gray-900 mb-4">Screenshots</h2>
+          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Tangkapan Layar</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {screenshots.map((src, i) => (
-              <div key={i} className="rounded-lg overflow-hidden border border-gray-100">
+              <div key={i} className="rounded-lg overflow-hidden border border-[var(--border-color)]">
                 <img src={src} alt={`Screenshot ${i + 1}`} className="w-full h-48 object-cover" loading="lazy" />
               </div>
             ))}
@@ -284,12 +284,12 @@ export default function ProjectDetailPage() {
 function MetaItem({ icon: Icon, label, value }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-        <Icon size={14} className="text-gray-500" />
+      <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center flex-shrink-0">
+        <Icon size={14} className="text-[var(--text-muted)]" />
       </div>
       <div>
-        <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-        <p className="text-sm text-gray-700">{value}</p>
+        <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{value}</p>
       </div>
     </div>
   )

@@ -16,7 +16,10 @@ class AuditLogController extends Controller
         if ($request->has('user_id')) $query->where('user_id', $request->user_id);
         if ($request->has('from')) $query->where('created_at', '>=', $request->from);
         if ($request->has('to')) $query->where('created_at', '<=', $request->to);
-        return response()->json($query->latest()->paginate(20));
+
+        $logs = $query->latest()->paginate(20)->withQueryString();
+
+        return view('admin.audit.index', compact('logs'));
     }
 
     public function summary()

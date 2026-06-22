@@ -6,7 +6,7 @@ import { adminNews } from '../../services/adminApi'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
-  { value: 'published', label: 'Published' },
+  { value: 'published', label: 'Tayang' },
   { value: 'draft', label: 'Draft' },
 ]
 
@@ -42,6 +42,7 @@ export default function NewsListPage() {
     }
   }, [page, search, status])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchNews() }, [fetchNews])
 
   const handleSearch = (e) => {
@@ -82,11 +83,10 @@ export default function NewsListPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Berita</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Berita</h1>
         <Link
           to="/admin/news/create"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors"
-        >
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors"        >
           <Plus size={16} />
           Tambah Berita
         </Link>
@@ -95,24 +95,24 @@ export default function NewsListPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Cari berita..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors"
+            className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
           />
         </form>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1">
           {STATUS_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => handleStatusFilter(opt.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 status === opt.value
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {opt.label}
@@ -123,28 +123,28 @@ export default function NewsListPage() {
 
       {/* Error */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+        <div className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 rounded-lg text-red-600 dark:text-red-400 text-sm">{error}</div>
       )}
 
       {/* Table */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden"
       >
         {loading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">Memuat...</div>
+          <div className="p-8 text-center text-[var(--text-muted)] text-sm">Memuat...</div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <Newspaper size={48} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">Tidak ada berita ditemukan</p>
+            <Newspaper size={48} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
+            <p className="text-[var(--text-secondary)] text-sm">Tidak ada berita ditemukan</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-gray-500">
+                <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
                     <th className="px-5 py-3 font-medium">Judul</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Kategori</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell">Tanggal</th>
@@ -153,35 +153,37 @@ export default function NewsListPage() {
                     <th className="px-5 py-3 font-medium text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--border-color)]">
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={item.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
                       <td className="px-5 py-3 max-w-[250px]">
-                        <span className="font-medium text-gray-900 truncate block">{item.title}</span>
+                        <span className="font-medium text-[var(--text-primary)] truncate block">{item.title}</span>
                       </td>
-                      <td className="px-5 py-3 hidden md:table-cell text-gray-500">{item.category || '-'}</td>
-                      <td className="px-5 py-3 hidden lg:table-cell text-gray-500">
+                      <td className="px-5 py-3 hidden md:table-cell text-[var(--text-secondary)]">{item.category || '-'}</td>
+                      <td className="px-5 py-3 hidden lg:table-cell text-[var(--text-secondary)]">
                         {item.date ? new Date(item.date).toLocaleDateString('id-ID') : '-'}
                       </td>
-                      <td className="px-5 py-3 hidden lg:table-cell text-gray-500 text-right">{item.views ?? 0}</td>
+                      <td className="px-5 py-3 hidden lg:table-cell text-[var(--text-secondary)] text-right">{item.views ?? 0}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                          item.status === 'published'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                         }`}>
-                          {item.status === 'published' ? 'Published' : 'Draft'}
+                          {item.status === 'published' ? 'Tayang' : 'Draft'}
                         </span>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             to={`/admin/news/${item.id}/edit`}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-secondary hover:bg-purple-50 transition-colors"
+                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-secondary)] transition-colors"
                           >
                             <Edit size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -195,22 +197,22 @@ export default function NewsListPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)]">
+                <p className="text-xs text-[var(--text-muted)]">
                   Halaman {page} dari {totalPages}
                 </p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page <= 1}
-                    className="px-3 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    className="px-3 py-1 text-xs border border-[var(--border-color)] text-[var(--text-secondary)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors"
                   >
                     Sebelumnya
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    className="px-3 py-1 text-xs border border-[var(--border-color)] text-[var(--text-secondary)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors"
                   >
                     Berikutnya
                   </button>

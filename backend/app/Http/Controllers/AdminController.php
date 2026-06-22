@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RejectSubmissionRequest;
 use App\Models\ProjectSubmission;
 use Illuminate\Http\Request;
 
@@ -54,13 +55,11 @@ class AdminController extends Controller
     }
 
     // Reject a submission
-    public function reject(Request $request, ProjectSubmission $submission)
+    public function reject(RejectSubmissionRequest $request, ProjectSubmission $submission)
     {
-        $request->validate(['rejection_reason' => 'required|string']);
-
         $submission->update([
             'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => $request->validated()['rejection_reason'],
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);

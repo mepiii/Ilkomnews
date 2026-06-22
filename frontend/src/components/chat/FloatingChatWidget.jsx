@@ -107,7 +107,7 @@ export function FloatingChatWidget() {
                   <div className="relative">
                     <div className="h-10 w-10 rounded-full border-2 border-white dark:border-neutral-900 shadow-sm overflow-hidden bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
                       {currentAgent.avatar ? (
-                        <img src={currentAgent.avatar} alt={currentAgent.name} className="h-full w-full object-cover" />
+                        <img src={currentAgent.avatar} alt={currentAgent.name} loading="lazy" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-lg">🐺</span>
                       )}

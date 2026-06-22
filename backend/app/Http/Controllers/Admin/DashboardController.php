@@ -8,7 +8,7 @@ use App\Models\ProjectSubmission;
 
 class DashboardController extends Controller
 {
-    public function apiStats()
+    public function index()
     {
         $stats = [
             'total_news' => News::count(),
@@ -21,13 +21,13 @@ class DashboardController extends Controller
             'rejected_projects' => ProjectSubmission::rejected()->count(),
         ];
 
-        $recentNews = News::latest('date')->take(5)->get();
-        $recentProjects = ProjectSubmission::latest()->take(5)->get();
+        $recent_news = News::latest('date')->take(5)->get();
+        $recent_projects = ProjectSubmission::latest()->take(5)->get();
 
-        return response()->json([
+        return view('admin.dashboard', [
             'stats' => $stats,
-            'recent_news' => $recentNews,
-            'recent_projects' => $recentProjects,
+            'recent_news' => $recent_news,
+            'recent_projects' => $recent_projects,
         ]);
     }
 }

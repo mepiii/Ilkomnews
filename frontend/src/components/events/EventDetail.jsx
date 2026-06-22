@@ -33,9 +33,10 @@ const EventDetail = ({ event, onRegister }) => {
       <div className="bg-theme rounded-lg shadow-lg overflow-hidden">
         {/* Header Image */}
         <div className="relative h-80 overflow-hidden">
-          <img 
-            src={event.image} 
+          <img
+            src={event.image}
             alt={event.title}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>

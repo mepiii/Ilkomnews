@@ -14,7 +14,7 @@ class ChatStatsController extends Controller
         $from = now()->subDays($days);
         $query = ChatLog::where('created_at', '>=', $from);
 
-        return response()->json([
+        $stats = [
             'total_queries' => (clone $query)->count(),
             'successful' => (clone $query)->where('status', 'success')->count(),
             'rejected' => (clone $query)->where('status', 'topic_rejected')->count(),
@@ -25,6 +25,8 @@ class ChatStatsController extends Controller
                 ->where('created_at', '>=', $from)->groupBy('date')->orderBy('date')->get(),
             'top_ips' => ChatLog::selectRaw('ip_address, count(*) as count')
                 ->where('created_at', '>=', $from)->groupBy('ip_address')->orderByDesc('count')->take(10)->get(),
-        ]);
+        ];
+
+        return view('admin.chat.stats', compact('stats'));
     }
 }

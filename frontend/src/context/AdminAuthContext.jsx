@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { Navigate, useLocation } from 'react-router-dom'
 import { adminAuth } from '../services/adminApi'
 
-const AdminAuthContext = createContext(null)
+// Export the context so it can be imported directly
+export const AdminAuthContext = createContext(null)
 
 export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null)

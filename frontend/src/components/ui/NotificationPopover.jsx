@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useContext } from 'react'
 import { Bell, CheckCircle, XCircle } from 'lucide-react'
 import { fetchAdmin } from '../../services/adminApi'
-import { useAdminAuth } from '../../context/AdminAuthContext'
+import { AdminAuthContext } from '../../context/AdminAuthContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -17,7 +17,9 @@ const NotificationPopover = () => {
   const [loading, setLoading] = useState(false)
   const ref = useRef(null)
 
-  const { isAuthenticated } = useAdminAuth()
+  // Safely access auth context - works with or without AdminAuthProvider
+  const authContext = useContext(AdminAuthContext)
+  const isAuthenticated = authContext?.isAuthenticated || false
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true)

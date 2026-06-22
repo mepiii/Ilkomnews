@@ -13,7 +13,7 @@ class SecurityController extends Controller
         $days = (int) $request->get('days', 7);
         $from = now()->subDays($days);
 
-        return response()->json([
+        $stats = [
             'total_attempts' => LoginAttempt::where('created_at', '>=', $from)->count(),
             'failed_attempts' => LoginAttempt::where('created_at', '>=', $from)->where('success', false)->count(),
             'successful_attempts' => LoginAttempt::where('created_at', '>=', $from)->where('success', true)->count(),
@@ -22,6 +22,8 @@ class SecurityController extends Controller
             'suspicious_ips' => LoginAttempt::selectRaw('ip_address, count(*) as failed_count')
                 ->where('created_at', '>=', $from)->where('success', false)
                 ->groupBy('ip_address')->having('failed_count', '>=', 3)->orderByDesc('failed_count')->get(),
-        ]);
+        ];
+
+        return view('admin.security.index', compact('stats'));
     }
 }
