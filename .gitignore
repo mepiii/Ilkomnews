@@ -3,6 +3,7 @@ dist
 dist-ssr
 *.local
 .env
+.env.production
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
@@ -22,6 +23,9 @@ backend/storage/framework/sessions/*
 backend/storage/framework/views/*
 backend/database/database.sqlite
 backend/public/build/
+backend/public/hot
+backend/.npmrc
+backend/local-server.php
 
 # Frontend build output
 frontend/dist/
