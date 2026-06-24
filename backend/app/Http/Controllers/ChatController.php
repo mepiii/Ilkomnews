@@ -176,46 +176,115 @@ PROMPT;
             }
             self::$sessions[$sessionId][] = ['role' => 'user', 'parts' => [['text' => $userMessage]]];
 
-            // Call Gemini API with token limit
-            $apiKey = config('services.gemini.key');
-            if (empty($apiKey)) {
+            // Convert session format to general standard
+            $messages = [['role' => 'system', 'content' => $systemPrompt]];
+            foreach (self::$sessions[$sessionId] as $msg) {
+                if ($msg['role'] === 'user') {
+                    $messages[] = ['role' => 'user', 'content' => $msg['parts'][0]['text']];
+                } elseif ($msg['role'] === 'model') {
+                    $messages[] = ['role' => 'assistant', 'content' => $msg['parts'][0]['text']];
+                }
+            }
+
+            // Fetch active LLM Providers ordered by priority
+            $providers = \App\Models\LlmProvider::where('is_active', true)
+                ->orderBy('priority', 'asc')
+                ->get();
+
+            if ($providers->isEmpty()) {
                 return response()->json([
                     'error' => false,
-                    'message' => 'Layanan chatbot sedang tidak tersedia.',
+                    'message' => 'Layanan chatbot sedang tidak tersedia (Tidak ada LLM Provider yang aktif).',
                     'session_id' => $sessionId,
                 ], 503);
             }
 
-            $response = Http::timeout(15)
-                ->withHeaders(['x-goog-api-key' => $apiKey])
-                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", [
-                    'system_instruction' => [
-                        'parts' => [['text' => $systemPrompt]],
-                    ],
-                    'contents' => self::$sessions[$sessionId],
-                    'generationConfig' => [
-                        'maxOutputTokens' => self::MAX_OUTPUT_TOKENS,
-                        'temperature' => 0.3,
-                        'topP' => 0.8,
-                    ],
-                    'safetySettings' => [
-                        ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
-                        ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
-                        ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
-                        ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
-                    ],
-                ]);
+            $reply = null;
+            $success = false;
+            $lastErrorStatus = 503;
 
-            if (!$response->successful()) {
+            foreach ($providers as $provider) {
+                try {
+                    $payload = [];
+                    $headers = [
+                        'Authorization' => "Bearer {$provider->api_key}",
+                        'Content-Type' => 'application/json',
+                    ];
+
+                    if ($provider->provider_type === 'anthropic') {
+                        $headers['x-api-key'] = $provider->api_key;
+                        $headers['anthropic-version'] = '2023-06-01';
+                        unset($headers['Authorization']);
+
+                        $anthropicMessages = [];
+                        foreach ($messages as $m) {
+                            if ($m['role'] !== 'system') {
+                                $anthropicMessages[] = $m;
+                            }
+                        }
+
+                        $payload = [
+                            'model' => $provider->model_id,
+                            'max_tokens' => self::MAX_OUTPUT_TOKENS,
+                            'temperature' => 0.3,
+                            'system' => $systemPrompt,
+                            'messages' => $anthropicMessages,
+                        ];
+                    } else {
+                        // OpenAI / GitHub Models / Groq Format
+                        if (str_contains($provider->base_url, 'github.ai')) {
+                            $headers['Accept'] = 'application/vnd.github+json';
+                        }
+                        $payload = [
+                            'model' => $provider->model_id,
+                            'messages' => $messages,
+                            'max_tokens' => self::MAX_OUTPUT_TOKENS,
+                            'temperature' => 0.3,
+                            'top_p' => 0.8,
+                        ];
+                    }
+
+                    $response = Http::timeout(15)
+                        ->withHeaders($headers)
+                        ->post($provider->base_url, $payload);
+
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        if ($provider->provider_type === 'anthropic') {
+                            $reply = $data['content'][0]['text'] ?? null;
+                        } else {
+                            $reply = $data['choices'][0]['message']['content'] ?? null;
+                        }
+
+                        if ($reply) {
+                            $success = true;
+                            break; // Successfully got a reply, exit fallback loop
+                        }
+                    } else {
+                        $lastErrorStatus = $response->status();
+                        // If rate limited, log it and try the next provider
+                        \Log::warning("Chatbot LLM fallback: Provider {$provider->name} failed with status {$lastErrorStatus}");
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Chatbot LLM fallback exception for {$provider->name}: " . $e->getMessage());
+                    continue; // Try next provider
+                }
+            }
+
+            if (!$success || !$reply) {
+                if ($lastErrorStatus === 429) {
+                    return response()->json([
+                        'error' => false,
+                        'message' => 'Server sedang sibuk, coba lagi nanti.',
+                        'session_id' => $sessionId,
+                    ], 429);
+                }
                 return response()->json([
                     'error' => false,
-                    'message' => 'Maaf, terjadi kesalahan. Silakan coba lagi.',
+                    'message' => 'Maaf, terjadi kesalahan pada semua penyedia layanan. Silakan coba lagi.',
                     'session_id' => $sessionId,
                 ], 503);
             }
-
-            $data = $response->json();
-            $reply = $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Maaf, saya tidak dapat memproses permintaan Anda.';
 
             // Output limits
             if (strlen($reply) > self::MAX_OUTPUT_CHARS) {
@@ -534,12 +603,13 @@ PROMPT;
             foreach ($keywords as $keyword) {
                 $escaped = addcslashes($keyword, '%_');
                 $q->orWhere('title', 'LIKE', "%{$escaped}%");
+                $q->orWhere('description', 'LIKE', "%{$escaped}%");
                 $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
             }
         })
             ->latest()
             ->limit(3)
-            ->get(['title', 'category', 'status', 'creator_name']);
+            ->get(['title', 'category', 'status', 'creator_name', 'description', 'tech_stack', 'tracking_id']);
 
         if ($results->isEmpty()) {
             return '';
@@ -547,7 +617,24 @@ PROMPT;
 
         $lines = [];
         foreach ($results as $project) {
-            $lines[] = "- {$project->title} [{$project->category}] ({$project->status}) oleh {$project->creator_name}";
+            $desc = $project->description ? Str::limit($project->description, 100) : '';
+            $tech = is_array($project->tech_stack) ? implode(', ', array_slice($project->tech_stack, 0, 3)) : '';
+            $status = $project->status === 'pending' ? 'Menunggu Review' :
+                     ($project->status === 'accepted' ? 'Diterima' : 'Ditolak');
+
+            $line = "- {$project->title} [{$project->category}] - Status: {$status}";
+            if ($tech) {
+                $line .= " | Tech: {$tech}";
+            }
+            if ($desc) {
+                $line .= " | Deskripsi: {$desc}";
+            }
+            if ($project->tracking_id) {
+                $line .= " | ID Tracking: {$project->tracking_id}";
+            }
+            $line .= " | Oleh: {$project->creator_name}";
+
+            $lines[] = $line;
         }
 
         return implode("\n", $lines);

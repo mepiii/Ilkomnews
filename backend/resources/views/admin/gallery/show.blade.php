@@ -2,7 +2,7 @@
     <x-slot name="title">{{ $submission->title }}</x-slot>
 
     <div class="max-w-4xl space-y-6">
-        <a href="{{ route('admin.gallery') }}" class="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900">
+        <a href="{{ route('admin.projects.index') }}" class="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
@@ -31,6 +31,11 @@
                             <button onclick="acceptSubmission()" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Terima</button>
                             <button onclick="openRejectModal()" class="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Tolak</button>
                         @endif
+                        <form method="POST" action="{{ route('admin.projects.destroy', $submission->id) }}" class="inline" onsubmit="return confirm('Hapus proyek ini secara permanen?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Hapus</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -45,7 +50,7 @@
 
                     @if($submission->tech_stack)
                     <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Tech Stack</h3>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Teknologi</h3>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach($submission->tech_stack as $tech)
                                 <span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">{{ $tech }}</span>
@@ -56,7 +61,7 @@
 
                     @if($submission->screenshots)
                     <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Screenshots</h3>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Tangkapan Layar</h3>
                         <div class="grid grid-cols-2 gap-2">
                             @foreach($submission->screenshots as $ss)
                                 <img src="{{ $ss }}" alt="" class="rounded-lg border border-zinc-100 object-cover w-full h-32">
@@ -92,11 +97,11 @@
                     </div>
 
                     <div class="rounded-lg border border-zinc-200 p-4 space-y-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Links</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Tautan</h4>
                         @if($submission->live_demo)
                             <a href="{{ $submission->live_demo }}" target="_blank" class="flex items-center gap-2 text-sm text-zinc-700 hover:text-zinc-900">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                                Live Demo
+                                Demo Langsung
                             </a>
                         @endif
                         @if($submission->github_link)
@@ -108,7 +113,7 @@
                         @if($submission->download_link)
                             <a href="{{ $submission->download_link }}" target="_blank" class="flex items-center gap-2 text-sm text-zinc-700 hover:text-zinc-900">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                Download
+                                Unduh
                             </a>
                         @endif
                         @if($submission->figma_link)

@@ -5,6 +5,8 @@ import { adminAuth } from '../services/adminApi'
 // Export the context so it can be imported directly
 export const AdminAuthContext = createContext(null)
 
+const REMEMBER_KEY = 'admin_remember'
+
 export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem('admin_token'))
@@ -22,15 +24,21 @@ export function AdminAuthProvider({ children }) {
       .then((data) => setUser(data.user || data))
       .catch(() => {
         localStorage.removeItem('admin_token')
+        localStorage.removeItem(REMEMBER_KEY)
         setToken(null)
       })
       .finally(() => setLoading(false))
   }, [token])
 
-  const login = useCallback(async (email, password) => {
-    const data = await adminAuth.login(email, password)
+  const login = useCallback(async (email, password, remember = false) => {
+    const data = await adminAuth.login(email, password, remember)
     setToken(data.token)
     setUser(data.user)
+    if (remember) {
+      localStorage.setItem(REMEMBER_KEY, 'true')
+    } else {
+      localStorage.removeItem(REMEMBER_KEY)
+    }
     return data
   }, [])
 
@@ -39,6 +47,7 @@ export function AdminAuthProvider({ children }) {
       await adminAuth.logout()
     } finally {
       localStorage.removeItem('admin_token')
+      localStorage.removeItem(REMEMBER_KEY)
       setToken(null)
       setUser(null)
     }

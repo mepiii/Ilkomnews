@@ -6,13 +6,12 @@ import { GlowCard } from '../ui/GlowCard'
 const createSlug = (title) => title.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')
 
 const UiUxProjectCard = ({ project }) => {
-  const slug = createSlug(project.title)
   return (
-    <Link to={`/ilkomgallery/uiux/${slug}`} className="group block">
+    <Link to={`/ilkomgallery/project/${project.id}`} className="group block">
       <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}>
         <GlowCard glowColor="purple" className="rounded-2xl overflow-hidden">
           <div className="relative h-72 w-full">
-            <img src={project.thumbnail} alt={project.title} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            <img src={project.thumbnail_url || project.thumbnail || 'https://placehold.co/1200x600/8B5CF6/white?text=No+Image'} alt={project.title} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute top-3 left-3 z-10">
               <span className="inline-flex items-center gap-1.5 bg-white/15 border border-white/20 px-2.5 py-1 text-white text-xs font-medium rounded-full backdrop-blur-sm">

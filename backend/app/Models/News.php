@@ -22,6 +22,17 @@ class News extends Model
         'published' => 'boolean',
     ];
 
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) return null;
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+        return asset('storage/' . $this->image);
+    }
+
     public function incrementViews(): void
     {
         $this->increment('views');

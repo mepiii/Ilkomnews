@@ -14,44 +14,48 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // News table indexes
-        Schema::table('news', function (Blueprint $table) {
-            $table->index('published', 'idx_news_published');
-            $table->index('category', 'idx_news_category');
-            $table->index('date', 'idx_news_date');
-            $table->index(['published', 'date'], 'idx_news_published_date');
-        });
+        $tables = [
+            'news' => [
+                ['published', 'idx_news_published'],
+                ['category', 'idx_news_category'],
+                ['date', 'idx_news_date'],
+                ['published, date', 'idx_news_published_date'],
+            ],
+            'articles' => [
+                ['published', 'idx_articles_published'],
+                ['category', 'idx_articles_category'],
+                ['date', 'idx_articles_date'],
+                ['published, date', 'idx_articles_published_date'],
+            ],
+            'events' => [
+                ['published', 'idx_events_published'],
+                ['category', 'idx_events_category'],
+                ['date', 'idx_events_date'],
+                ['published, date', 'idx_events_published_date'],
+            ],
+            'careers' => [
+                ['published', 'idx_careers_published'],
+                ['published_at', 'idx_careers_published_at'],
+                ['published, published_at', 'idx_careers_published_published_at'],
+            ],
+            'project_submissions' => [
+                ['status', 'idx_project_submissions_status'],
+                ['user_id', 'idx_project_submissions_user_id'],
+                ['status, created_at', 'idx_project_submissions_status_created_at'],
+            ],
+        ];
 
-        // Articles table indexes
-        Schema::table('articles', function (Blueprint $table) {
-            $table->index('published', 'idx_articles_published');
-            $table->index('category', 'idx_articles_category');
-            $table->index('date', 'idx_articles_date');
-            $table->index(['published', 'date'], 'idx_articles_published_date');
-        });
-
-        // Events table indexes
-        Schema::table('events', function (Blueprint $table) {
-            $table->index('published', 'idx_events_published');
-            $table->index('category', 'idx_events_category');
-            $table->index('date', 'idx_events_date');
-            $table->index(['published', 'date'], 'idx_events_published_date');
-        });
-
-        // Careers table indexes
-        Schema::table('careers', function (Blueprint $table) {
-            $table->index('published', 'idx_careers_published');
-            $table->index('position_type', 'idx_careers_position_type');
-            $table->index('published_at', 'idx_careers_published_at');
-            $table->index(['published', 'published_at'], 'idx_careers_published_published_at');
-        });
-
-        // Project submissions table indexes
-        Schema::table('project_submissions', function (Blueprint $table) {
-            $table->index('status', 'idx_project_submissions_status');
-            $table->index('user_id', 'idx_project_submissions_user_id');
-            $table->index(['status', 'created_at'], 'idx_project_submissions_status_created_at');
-        });
+        foreach ($tables as $tableName => $indexes) {
+            if (Schema::hasTable($tableName)) {
+                foreach ($indexes as $index) {
+                    try {
+                        \Illuminate\Support\Facades\DB::statement("ALTER TABLE `{$tableName}` ADD INDEX `{$index[1]}` ({$index[0]})");
+                    } catch (\Exception $e) {
+                        // Ignore error if index already exists
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -86,7 +90,6 @@ return new class extends Migration
         // Careers table indexes
         Schema::table('careers', function (Blueprint $table) {
             $table->dropIndex('idx_careers_published');
-            $table->dropIndex('idx_careers_position_type');
             $table->dropIndex('idx_careers_published_at');
             $table->dropIndex('idx_careers_published_published_at');
         });

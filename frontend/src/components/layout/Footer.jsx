@@ -1,15 +1,21 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFacebookF, faTwitter, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
-import { ArrowUpRight, Heart } from 'lucide-react'
+import { faInstagram, faYoutube, faTiktok, faLine } from '@fortawesome/free-brands-svg-icons'
+import { ArrowUpRight, Heart, Mail, Phone } from 'lucide-react'
 import logo from '../../assets/BEM.png'
 
 const socialLinks = [
-  { icon: faInstagram, href: '#', label: 'Instagram', color: 'hover:bg-pink-500/20 hover:border-pink-400/40 hover:text-pink-400' },
-  { icon: faYoutube, href: '#', label: 'YouTube', color: 'hover:bg-red-500/20 hover:border-red-400/40 hover:text-red-400' },
-  { icon: faTwitter, href: '#', label: 'Twitter', color: 'hover:bg-sky-500/20 hover:border-sky-400/40 hover:text-sky-400' },
-  { icon: faFacebookF, href: '#', label: 'Facebook', color: 'hover:bg-blue-500/20 hover:border-blue-400/40 hover:text-blue-400' },
+  { icon: faInstagram, href: 'https://www.instagram.com/bemilkomunsri', label: 'Instagram', color: 'hover:bg-pink-500/20 hover:border-pink-400/40 hover:text-pink-400' },
+  { icon: faYoutube, href: 'https://youtube.com/@bemkmfasilkomunsri8050', label: 'YouTube', color: 'hover:bg-red-500/20 hover:border-red-400/40 hover:text-red-400' },
+  { icon: faTiktok, href: 'https://www.tiktok.com/@bemfasilkomunsri', label: 'TikTok', color: 'hover:bg-neutral-400/20 hover:border-neutral-300/40 hover:text-neutral-300' },
+  { icon: faLine, href: 'https://line.me/ti/p/~@bemilkomunsri', label: 'LINE', color: 'hover:bg-green-500/20 hover:border-green-400/40 hover:text-green-400' },
+]
+
+const contactInfo = [
+  { icon: Mail, href: 'mailto:bemfasilkomunsri@gmail.com', label: 'bemfasilkomunsri@gmail.com' },
+  { icon: Phone, href: 'tel:083177228380', label: '083177228380 (Tasya Thalita Nabila)' },
+  { icon: Phone, href: 'tel:081271415284', label: '081271415284 (M. Zaki Al Fattah)' },
 ]
 
 const mainLinks = [
@@ -19,9 +25,9 @@ const mainLinks = [
 ]
 
 const legalLinks = [
-  { href: '#', label: 'SAPA' },
-  { href: '#', label: 'BEM Official' },
-  { href: '#', label: 'Unsri' },
+  { href: 'https://sapa.bemfasilkomunsri.org/', label: 'SAPA BEM' },
+  { href: 'https://bemfasilkomunsri.org/', label: 'BEM Website' },
+  { href: 'https://unsri.ac.id/', label: 'Universitas Sriwijaya' },
 ]
 
 const container = {
@@ -72,6 +78,23 @@ export default function Footer() {
             </ul>
           </motion.div>
 
+          {/* Contact info */}
+          <motion.div variants={item} className="mb-8">
+            <ul className="flex flex-col gap-1.5">
+              {contactInfo.map((c, i) => (
+                <li key={i}>
+                  <a
+                    href={c.href}
+                    className="inline-flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    <c.icon size={12} />
+                    {c.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
           {/* Divider */}
           <motion.div variants={item} className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
 
@@ -100,6 +123,8 @@ export default function Footer() {
                   <li key={i}>
                     <a
                       href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-sm text-white/30 hover:text-white/70 transition-colors duration-200"
                     >
                       {link.label}

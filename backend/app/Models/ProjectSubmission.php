@@ -24,6 +24,8 @@ class ProjectSubmission extends Model
         'reviewed_at' => 'datetime',
     ];
 
+    protected $appends = ['thumbnail_url', 'screenshots_urls'];
+
     protected static function booted(): void
     {
         static::creating(function (ProjectSubmission $submission) {
@@ -31,6 +33,23 @@ class ProjectSubmission extends Model
                 $submission->tracking_id = strtoupper(Str::random(12));
             }
         });
+    }
+
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        if (!$this->thumbnail) return null;
+        // If thumbnail is already a URL, return as-is
+        if (filter_var($this->thumbnail, FILTER_VALIDATE_URL)) {
+            return $this->thumbnail;
+        }
+        // Otherwise treat as file path
+        return asset('storage/' . $this->thumbnail);
+    }
+
+    public function getScreenshotsUrlsAttribute(): array
+    {
+        if (!$this->screenshots) return [];
+        return array_map(fn($path) => asset('storage/' . $path), $this->screenshots);
     }
 
     public function scopePending($query) { return $query->where('status', 'pending'); }

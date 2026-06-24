@@ -1,21 +1,21 @@
 @extends('admin.layout')
 
-@section('title', 'Manage News')
+@section('title', 'Kelola Berita')
 
-@section('header', 'Manage News')
+@section('header', 'Kelola Berita')
 
 @section('content')
 <div class="space-y-6">
     <!-- Header Actions -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <p class="text-gray-400">Manage and organize news articles</p>
+            <p class="text-gray-400">Kelola dan atur artikel berita</p>
         </div>
         <a href="{{ route('admin.news.create') }}" class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Create News
+            Buat Berita
         </a>
     </div>
 
@@ -25,13 +25,13 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <!-- Search -->
                 <div class="md:col-span-2">
-                    <label for="search" class="block text-sm font-medium text-gray-300 mb-2">Search</label>
+                    <label for="search" class="block text-sm font-medium text-gray-300 mb-2">Cari</label>
                     <input
                         type="text"
                         name="search"
                         id="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by title or content..."
+                        placeholder="Cari berdasarkan judul atau konten..."
                         class="w-full px-4 py-2 bg-black border border-purple-900/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                     >
                 </div>
@@ -44,19 +44,19 @@
                         id="status"
                         class="w-full px-4 py-2 bg-black border border-purple-900/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                     >
-                        <option value="">All Status</option>
-                        <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Published</option>
-                        <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
+                        <option value="">Semua Status</option>
+                        <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Dipublikasi</option>
+                        <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draf</option>
                     </select>
                 </div>
             </div>
 
             <div class="flex gap-2">
                 <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-all">
-                    Apply Filters
+                    Terapkan Filter
                 </button>
                 <a href="{{ route('admin.news.index') }}" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all">
-                    Clear
+                    Bersihkan
                 </a>
             </div>
         </form>
@@ -69,13 +69,13 @@
             <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
             </svg>
-            <h3 class="text-lg font-medium text-gray-400 mb-2">No news articles found</h3>
-            <p class="text-gray-500 mb-4">Start by creating your first news article</p>
+            <h3 class="text-lg font-medium text-gray-400 mb-2">Tidak ada artikel berita ditemukan</h3>
+            <p class="text-gray-500 mb-4">Mulai dengan membuat artikel berita pertama Anda</p>
             <a href="{{ route('admin.news.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Create News
+                Buat Berita
             </a>
         </div>
         @else
@@ -84,11 +84,11 @@
             <table class="w-full">
                 <thead class="bg-black/50 border-b border-purple-900/20">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Article</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Views</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Artikel</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Dilihat</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-purple-900/20">
@@ -125,9 +125,9 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($item->published)
-                            <span class="px-2 py-1 bg-green-600/20 text-green-400 rounded text-xs font-medium">Published</span>
+                            <span class="px-2 py-1 bg-green-600/20 text-green-400 rounded text-xs font-medium">Dipublikasi</span>
                             @else
-                            <span class="px-2 py-1 bg-gray-600/20 text-gray-400 rounded text-xs font-medium">Draft</span>
+                            <span class="px-2 py-1 bg-gray-600/20 text-gray-400 rounded text-xs font-medium">Draf</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
@@ -137,10 +137,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </a>
-                                <form method="POST" action="{{ route('admin.news.destroy', $item->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this news article?');">
+                                <form method="POST" action="{{ route('admin.news.destroy', $item->id) }}" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus artikel berita ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-600/10 rounded-lg transition-all" title="Delete">
+                                    <button type="submit" class="p-2 text-red-400 hover:text-red-300 hover:bg-red-600/10 rounded-lg transition-all" title="Hapus">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
@@ -181,9 +181,9 @@
                                 {{ number_format($item->views) }}
                             </span>
                             @if($item->published)
-                            <span class="px-2 py-0.5 bg-green-600/20 text-green-400 rounded">Published</span>
+                            <span class="px-2 py-0.5 bg-green-600/20 text-green-400 rounded">Dipublikasi</span>
                             @else
-                            <span class="px-2 py-0.5 bg-gray-600/20 text-gray-400 rounded">Draft</span>
+                            <span class="px-2 py-0.5 bg-gray-600/20 text-gray-400 rounded">Draf</span>
                             @endif
                         </div>
                         <div class="flex items-center gap-2">
@@ -193,14 +193,14 @@
                                 </svg>
                                 Edit
                             </a>
-                            <form method="POST" action="{{ route('admin.news.destroy', $item->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this news article?');">
+                            <form method="POST" action="{{ route('admin.news.destroy', $item->id) }}" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus artikel berita ini?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="flex items-center gap-1 px-3 py-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-600/10 rounded transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
-                                    Delete
+                                    Hapus
                                 </button>
                             </form>
                         </div>
@@ -223,18 +223,36 @@
     @if(!$news->isEmpty())
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div class="bg-[#050505] border border-purple-900/20 rounded-lg p-4">
-            <p class="text-sm text-gray-400">Total Articles</p>
+            <p class="text-sm text-gray-400">Total Artikel</p>
             <p class="mt-1 text-2xl font-bold text-white">{{ $news->total() }}</p>
         </div>
         <div class="bg-[#050505] border border-purple-900/20 rounded-lg p-4">
-            <p class="text-sm text-gray-400">Showing</p>
+            <p class="text-sm text-gray-400">Menampilkan</p>
             <p class="mt-1 text-2xl font-bold text-white">{{ $news->firstItem() ?? 0 }}-{{ $news->lastItem() ?? 0 }}</p>
         </div>
         <div class="bg-[#050505] border border-purple-900/20 rounded-lg p-4">
-            <p class="text-sm text-gray-400">Current Page</p>
+            <p class="text-sm text-gray-400">Halaman Saat Ini</p>
             <p class="mt-1 text-2xl font-bold text-white">{{ $news->currentPage() }}</p>
         </div>
     </div>
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// ponytail: debounce + auto-submit, stdlib only
+const searchInput = document.getElementById('search');
+const statusSelect = document.getElementById('status');
+const searchForm = searchInput?.closest('form');
+
+if (searchForm) {
+    let timeout;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => searchForm.submit(), 400);
+    });
+    statusSelect.addEventListener('change', () => searchForm.submit());
+}
+</script>
+@endpush

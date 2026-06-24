@@ -42,7 +42,12 @@ const DetailPage = ({ type }) => {
             return
           }
         } else {
-          const allData = await service.getAll()
+          const allDataResponse = await service.getAll()
+          // Handle both array responses and object responses with data property
+          const allData = Array.isArray(allDataResponse)
+            ? allDataResponse
+            : allDataResponse?.data || []
+
           result = allData.find(item => generateSlug(item.title) === slug)
           if (!result) {
             const lastPart = slug.split('-').pop()
@@ -55,7 +60,11 @@ const DetailPage = ({ type }) => {
 
         if (result) {
           setData(result)
-          const allData = await service.getAll()
+          const allDataResponse = await service.getAll()
+          // Handle both array responses and object responses with data property
+          const allData = Array.isArray(allDataResponse)
+            ? allDataResponse
+            : allDataResponse?.data || []
           setRelated(allData.filter(item => item.id !== result.id).slice(0, 3))
         } else {
           setError('Konten tidak ditemukan')

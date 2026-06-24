@@ -22,11 +22,16 @@ class GalleryController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('creator_name', 'like', "%{$search}%")
+                  ->orWhere('creator_nim', 'like', "%{$search}%")
                   ->orWhere('tracking_id', 'like', "%{$search}%");
             });
         }
 
         $projects = $query->latest()->paginate(15)->withQueryString();
+
+        if ($request->expectsJson()) {
+            return response()->json($projects);
+        }
 
         // Stats for the view
         $total_projects = ProjectSubmission::count();
@@ -37,9 +42,14 @@ class GalleryController extends Controller
         return view('admin.projects.index', compact('projects', 'total_projects', 'pending_count', 'accepted_count', 'rejected_count'));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $project = ProjectSubmission::findOrFail($id);
+
+        if ($request->expectsJson()) {
+            return response()->json($project);
+        }
+
         return view('admin.projects.show', compact('project'));
     }
 
@@ -56,8 +66,8 @@ class GalleryController extends Controller
         \App\Models\Notification::create([
             'tracking_id' => $submission->tracking_id,
             'type' => 'accepted',
-            'title' => 'Project Diterima!',
-            'message' => "Project '{$submission->title}' telah diterima dan akan ditampilkan di galeri.",
+            'title' => 'Proyek Diterima!',
+            'message' => "Proyek '{$submission->title}' telah diterima dan akan ditampilkan di galeri.",
         ]);
 
         AuditLog::create([
@@ -70,6 +80,10 @@ class GalleryController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        if (request()->expectsJson()) {
+            return response()->json(['data' => $submission->fresh()]);
+        }
+
         return redirect()->route('admin.projects.show', $id)->with('success', 'Project accepted successfully!');
     }
 
@@ -78,7 +92,7 @@ class GalleryController extends Controller
         $submission = ProjectSubmission::findOrFail($id);
 
         $validated = $request->validate([
-            'rejection_reason' => 'nullable|string|max:500',
+            'rejection_reason' => 'required|string|max:500',
         ]);
 
         $rejectionReason = $validated['rejection_reason'] ?? 'No reason provided';
@@ -93,8 +107,8 @@ class GalleryController extends Controller
         \App\Models\Notification::create([
             'tracking_id' => $submission->tracking_id,
             'type' => 'rejected',
-            'title' => 'Project Ditolak',
-            'message' => "Project '{$submission->title}' tidak dapat diterima. Alasan: {$rejectionReason}",
+            'title' => 'Proyek Ditolak',
+            'message' => "Proyek '{$submission->title}' tidak dapat diterima. Alasan: {$rejectionReason}",
         ]);
 
         AuditLog::create([
@@ -111,7 +125,42 @@ class GalleryController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $submission->fresh()]);
+        }
+
         return redirect()->route('admin.projects.show', $id)->with('success', 'Project rejected successfully!');
+    }
+
+    public function destroy($id)
+    {
+        $submission = ProjectSubmission::findOrFail($id);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'delete_project',
+            'entity_type' => 'project_submission',
+            'entity_id' => $submission->id,
+            'details' => [
+                'title' => $submission->title,
+                'tracking_id' => $submission->tracking_id,
+                'status' => $submission->status,
+            ],
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        // Delete associated files if they exist
+        // Note: Currently thumbnail and screenshots are stored as strings/paths
+        // If they were file uploads, we would need to delete them from storage here
+
+        $submission->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Proyek berhasil dihapus!']);
+        }
+
+        return redirect()->route('admin.projects.index')->with('success', 'Proyek berhasil dihapus!');
     }
 
     public function stats()

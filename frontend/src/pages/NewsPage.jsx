@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ArticleCard from '../components/articles/ArticleCard'
-import { Tiles } from '../components/ui/Tiles'
+import { BGPattern } from '../components/ui/BGPattern'
 import { AnimatedTabs } from '../components/ui/AnimatedTabs'
 import ExpandingSearchDock from '../components/shared/ExpandingSearchDock'
 import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
@@ -50,7 +50,7 @@ const NewsPage = () => {
 
   return (
     <div className="min-h-screen bg-theme relative">
-      <Tiles rows={50} cols={10} tileSize="sm" className="opacity-40" />
+      <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-100/30 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-100/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />

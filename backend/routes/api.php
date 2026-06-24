@@ -72,18 +72,13 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')-
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'apiStats']);
 
-    // Gallery submissions + projects alias
-    Route::get('/submissions', [Admin\GalleryController::class, 'index']);
-    Route::get('/submissions/stats', [Admin\GalleryController::class, 'stats']);
-    Route::get('/submissions/{submission}', [Admin\GalleryController::class, 'show']);
-    Route::post('/submissions/{submission}/accept', [Admin\GalleryController::class, 'accept']);
-    Route::post('/submissions/{submission}/reject', [Admin\GalleryController::class, 'reject']);
-
+    // Projects
     Route::get('/projects', [Admin\GalleryController::class, 'index']);
     Route::get('/projects/stats', [Admin\GalleryController::class, 'stats']);
     Route::get('/projects/{submission}', [Admin\GalleryController::class, 'show']);
     Route::post('/projects/{submission}/accept', [Admin\GalleryController::class, 'accept']);
     Route::post('/projects/{submission}/reject', [Admin\GalleryController::class, 'reject']);
+    Route::delete('/projects/{submission}', [Admin\GalleryController::class, 'destroy']);
 
     // News management
     Route::get('/news', [Admin\NewsController::class, 'index']);
@@ -111,4 +106,11 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')-
 
     // Security center
     Route::get('/security/login-attempts', [Admin\SecurityController::class, 'loginAttempts']);
+
+    // Chatbot API configuration
+    Route::get('/chatbot-api', [Admin\ChatbotApiController::class, 'index']);
+    Route::get('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'show']);
+    Route::post('/chatbot-api', [Admin\ChatbotApiController::class, 'store']);
+    Route::put('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'update']);
+    Route::delete('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'destroy']);
 });

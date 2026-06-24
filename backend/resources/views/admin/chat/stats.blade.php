@@ -9,17 +9,17 @@
     <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6">
         <form method="GET" action="{{ route('admin.chat-stats') }}" class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[200px]">
-                <label class="block text-sm font-medium text-gray-400 mb-2">Time Range</label>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Rentang Waktu</label>
                 <select name="days" class="w-full bg-black/50 border border-purple-900/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
-                    <option value="7" {{ request('days', 30) == 7 ? 'selected' : '' }}>Last 7 days</option>
-                    <option value="30" {{ request('days', 30) == 30 ? 'selected' : '' }}>Last 30 days</option>
-                    <option value="90" {{ request('days') == 90 ? 'selected' : '' }}>Last 90 days</option>
+                    <option value="7" {{ request('days', 30) == 7 ? 'selected' : '' }}>7 Hari Terakhir</option>
+                    <option value="30" {{ request('days', 30) == 30 ? 'selected' : '' }}>30 Hari Terakhir</option>
+                    <option value="90" {{ request('days') == 90 ? 'selected' : '' }}>90 Hari Terakhir</option>
                 </select>
             </div>
 
             <div class="flex items-end">
                 <button type="submit" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-                    Apply Filter
+                    Terapkan Filter
                 </button>
             </div>
         </form>
@@ -46,7 +46,7 @@
             <div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-600/20 blur-2xl"></div>
             <div class="relative">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-medium text-gray-400">Success</p>
+                    <p class="text-xs font-medium text-gray-400">Berhasil</p>
                     <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -60,7 +60,7 @@
             <div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-red-600/20 blur-2xl"></div>
             <div class="relative">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-medium text-gray-400">Rejected</p>
+                    <p class="text-xs font-medium text-gray-400">Ditolak</p>
                     <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                     </svg>
@@ -74,7 +74,7 @@
             <div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-yellow-600/20 blur-2xl"></div>
             <div class="relative">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-medium text-gray-400">No Context</p>
+                    <p class="text-xs font-medium text-gray-400">Tanpa Konteks</p>
                     <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                     </svg>
@@ -88,7 +88,7 @@
             <div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-orange-600/20 blur-2xl"></div>
             <div class="relative">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-medium text-gray-400">Rate Limited</p>
+                    <p class="text-xs font-medium text-gray-400">Terbatas Rate</p>
                     <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -102,7 +102,7 @@
             <div class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-600/20 blur-2xl"></div>
             <div class="relative">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-medium text-gray-400">Today</p>
+                    <p class="text-xs font-medium text-gray-400">Hari Ini</p>
                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
@@ -115,17 +115,17 @@
     <!-- Daily Breakdown -->
     @if(isset($stats['daily_breakdown']) && count($stats['daily_breakdown']) > 0)
     <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6">
-        <h3 class="text-lg font-bold text-white mb-4">Daily Breakdown</h3>
+        <h3 class="text-lg font-bold text-white mb-4">Rincian Harian</h3>
 
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-purple-900/30">
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Date</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Tanggal</th>
                         <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Total</th>
-                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Success</th>
-                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Rejected</th>
-                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Success Rate</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Berhasil</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Ditolak</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Tingkat Keberhasilan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -157,16 +157,16 @@
     <!-- Top IP Addresses -->
     @if(isset($stats['top_ips']) && count($stats['top_ips']) > 0)
     <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6">
-        <h3 class="text-lg font-bold text-white mb-4">Top IP Addresses</h3>
+        <h3 class="text-lg font-bold text-white mb-4">IP Teratas</h3>
 
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-purple-900/30">
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Rank</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">IP Address</th>
-                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Query Count</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Activity</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Peringkat</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Alamat IP</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Jumlah Query</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Aktivitas</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -214,7 +214,7 @@
         <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
-        <p class="text-gray-400 text-lg">No chat activity found for the selected period</p>
+        <p class="text-gray-400 text-lg">Tidak ada aktivitas chat untuk periode yang dipilih</p>
     </div>
     @endif
 </div>

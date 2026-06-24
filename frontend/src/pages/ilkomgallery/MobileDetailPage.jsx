@@ -257,10 +257,10 @@ const MobileDetailPage = () => {
   return (
     <div className="min-h-screen bg-theme pb-16">
       {/* Hero Section */}
-      <div className="relative min-h-[60vh] md:min-h-[70vh] overflow-hidden pt-16">
+      <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img 
           src={app.banner || app.thumbnail} 
-          alt={app.title}
+          alt={app.title} 
           className="w-full h-full object-cover"
           loading="eager"
           decoding="async"

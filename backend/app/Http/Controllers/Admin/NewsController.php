@@ -29,6 +29,10 @@ class NewsController extends Controller
 
         $news = $query->latest('date')->paginate(15)->withQueryString();
 
+        if ($request->expectsJson()) {
+            return response()->json($news);
+        }
+
         return view('admin.news.index', compact('news'));
     }
 
@@ -42,24 +46,40 @@ class NewsController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'category' => 'required|string|max:255',
             'date' => 'required|date',
-            'published' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120', // 5MB max
+            'published' => 'nullable|boolean',
+            'summary' => 'nullable|string',
+            'author' => 'nullable|string|max:255',
+            'tags' => 'nullable', // Accept JSON string or array
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240', // 10MB max
         ]);
 
-        // Handle image upload
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('news', 'public');
         }
 
-        // Set published to false if not checked
-        $validated['published'] = $request->has('published') ? true : false;
-
-        // Generate slug from title
+        $validated['published'] = $request->boolean('published');
         $validated['slug'] = Str::slug($validated['title']);
-
-        // Set default values
         $validated['views'] = 0;
+        
+        if (empty($validated['summary'])) {
+            $validated['summary'] = Str::limit(strip_tags($validated['content']), 160);
+        }
+        
+        if (empty($validated['author'])) {
+            $validated['author'] = auth()->user()?->name ?? 'Admin';
+        }
+
+        if (isset($validated['tags']) && is_string($validated['tags'])) {
+            $tagsDecoded = json_decode($validated['tags'], true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $validated['tags'] = $tagsDecoded;
+            } else {
+                // fallback if it's just a comma separated string
+                $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            }
+        }
 
         $news = News::create($validated);
 
@@ -73,7 +93,11 @@ class NewsController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
-        return redirect()->route('admin.news.index')->with('success', 'News article created successfully!');
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $news], 201);
+        }
+
+        return redirect()->route('admin.news.index')->with('success', 'Artikel berita berhasil dibuat!');
     }
 
     public function edit($id)
@@ -94,33 +118,49 @@ class NewsController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'category' => 'required|string|max:255',
             'date' => 'required|date',
-            'published' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
+            'published' => 'nullable|boolean',
+            'summary' => 'nullable|string',
+            'author' => 'nullable|string|max:255',
+            'tags' => 'nullable',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
             'remove_image' => 'nullable|boolean',
         ]);
 
-        // Handle image removal
-        if ($request->has('remove_image') && $news->image) {
+        if ($request->boolean('remove_image') && $news->image) {
             Storage::disk('public')->delete($news->image);
             $validated['image'] = null;
         }
 
-        // Handle new image upload
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($news->image && !$request->has('remove_image')) {
+            if ($news->image && !$request->boolean('remove_image')) {
                 Storage::disk('public')->delete($news->image);
             }
             $validated['image'] = $request->file('image')->store('news', 'public');
         }
 
-        // Set published to false if not checked
-        $validated['published'] = $request->has('published') ? true : false;
+        $validated['published'] = $request->boolean('published');
 
-        // Update slug if title changed
         if ($news->title !== $validated['title']) {
             $validated['slug'] = Str::slug($validated['title']);
+        }
+
+        if (empty($validated['summary'])) {
+            $validated['summary'] = Str::limit(strip_tags($validated['content']), 160);
+        }
+        
+        if (empty($validated['author'])) {
+            $validated['author'] = $news->author ?? auth()->user()?->name ?? 'Admin';
+        }
+
+        if (isset($validated['tags']) && is_string($validated['tags'])) {
+            $tagsDecoded = json_decode($validated['tags'], true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $validated['tags'] = $tagsDecoded;
+            } else {
+                $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            }
         }
 
         $news->update($validated);
@@ -135,7 +175,11 @@ class NewsController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
-        return redirect()->route('admin.news.index')->with('success', 'News article updated successfully!');
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $news->fresh()]);
+        }
+
+        return redirect()->route('admin.news.index')->with('success', 'Artikel berita berhasil diperbarui!');
     }
 
     public function destroy($id)
@@ -152,14 +196,17 @@ class NewsController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
-        // Delete associated image if exists
         if ($news->image) {
             Storage::disk('public')->delete($news->image);
         }
 
         $news->delete();
 
-        return redirect()->route('admin.news.index')->with('success', 'News article deleted successfully!');
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Artikel berita berhasil dihapus!']);
+        }
+
+        return redirect()->route('admin.news.index')->with('success', 'Artikel berita berhasil dihapus!');
     }
 
     public function stats()

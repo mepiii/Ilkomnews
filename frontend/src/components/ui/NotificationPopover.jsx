@@ -48,6 +48,9 @@ const NotificationPopover = () => {
 
   useEffect(() => {
     fetchNotifications()
+    // Set up periodic polling every 60 seconds
+    const intervalId = setInterval(fetchNotifications, 60000)
+    return () => clearInterval(intervalId)
   }, [fetchNotifications])
 
   useEffect(() => {

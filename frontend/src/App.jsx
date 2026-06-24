@@ -7,7 +7,6 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PerformanceMonitor from './components/common/PerformanceMonitor'
 import ErrorBoundary from './components/common/ErrorBoundary'
-import AnimatedTiles from './components/common/AnimatedTiles'
 import AdminRoutes from './routes/AdminRoutes'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -32,8 +31,12 @@ const PageLoader = () => (
   </div>
 )
 
-function App() {
+import { useLocation } from 'react-router-dom';
+
+function AppContent() {
   const [showIntro, setShowIntro] = useState(true)
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
   useEffect(() => {
     const timer = setTimeout(() => setShowIntro(false), 2000)
@@ -41,37 +44,41 @@ function App() {
   }, [])
 
   return (
+    <div className="relative min-h-screen flex flex-col transition-colors duration-300">
+      <PerformanceMonitor />
+      {!isAdminRoute && <Navbar />}
+      <main className={`flex-grow ${!isAdminRoute ? 'pt-28 pb-12' : ''}`}>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/:slug" element={<DetailPage type="news" />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/:slug" element={<DetailPage type="events" />} />
+            <Route path="/ilkomgallery" element={<IlkomGalleryPage />} />
+            <Route path="/ilkomgallery/project/:slug" element={<ProjectDetailPage />} />
+            <Route path="/ilkomgallery/game/:slug" element={<GameDetailPage />} />
+            <Route path="/ilkomgallery/mobile/:slug" element={<MobileDetailPage />} />
+            <Route path="/ilkomgallery/uiux/:slug" element={<UiUxDetailPage />} />
+            <Route path="/ilkomgallery/web/:slug" element={<WebDetailPage />} />
+            <Route path="/submit" element={<SubmitProjectPage />} />
+            <Route path="/track" element={<TrackPage />} />
+            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+        </Suspense>
+      </main>
+      {!isAdminRoute && <Footer />}
+      {!isAdminRoute && <FloatingChatWidget />}
+    </div>
+  )
+}
+
+function App() {
+  return (
     <ErrorBoundary>
       <ThemeProvider>
-        {showIntro && <IntroScreen />}
-        <div className="relative min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-          <AnimatedTiles />
-          <PerformanceMonitor />
-          <Navbar />
-          <main className="flex-grow">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/news/:slug" element={<DetailPage type="news" />} />
-                <Route path="/events" element={<EventsPage />} />
-                <Route path="/events/:slug" element={<DetailPage type="events" />} />
-                <Route path="/ilkomgallery" element={<IlkomGalleryPage />} />
-                <Route path="/ilkomgallery/project/:slug" element={<ProjectDetailPage />} />
-                <Route path="/ilkomgallery/game/:slug" element={<GameDetailPage />} />
-                <Route path="/ilkomgallery/mobile/:slug" element={<MobileDetailPage />} />
-                <Route path="/ilkomgallery/uiux/:slug" element={<UiUxDetailPage />} />
-                <Route path="/ilkomgallery/web/:slug" element={<WebDetailPage />} />
-                <Route path="/submit" element={<SubmitProjectPage />} />
-                <Route path="/track" element={<TrackPage />} />
-                <Route path="/admin/*" element={<AdminRoutes />} />
-                <Route path="*" element={<HomePage />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-          <FloatingChatWidget />
-        </div>
+        <AppContent />
       </ThemeProvider>
     </ErrorBoundary>
   )

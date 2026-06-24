@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class SecurityController extends Controller
 {
-    public function loginAttempts(Request $request)
+    public function index(Request $request)
     {
         $days = (int) $request->get('days', 7);
         $from = now()->subDays($days);

@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
 import Breadcrumb from '../components/common/Breadcrumb'
-import { Tiles } from '../components/ui/Tiles'
+import { BGPattern } from '../components/ui/BGPattern'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -53,7 +53,7 @@ const TrackPage = () => {
 
   return (
     <div className="min-h-screen bg-theme relative pt-10">
-      <Tiles rows={50} cols={10} tileSize="sm" className="opacity-40" />
+      <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
@@ -83,12 +83,12 @@ const TrackPage = () => {
 
           {/* Search Form */}
           <form onSubmit={handleSubmit} className="mb-8">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input type="text" value={trackingId} onChange={e => setTrackingId(e.target.value)}
                 placeholder="Enter tracking ID (e.g. ABC12345)"
                 className="flex-1 px-4 py-3 bg-theme-secondary border border-theme rounded-xl text-theme-primary font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors" />
               <button type="submit" disabled={loading || !trackingId.trim()}
-                className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-2 font-semibold text-sm">
+                className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm">
                 {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Search size={18} /> Track</>}
               </button>
             </div>

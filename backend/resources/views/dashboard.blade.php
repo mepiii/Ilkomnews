@@ -37,7 +37,7 @@
             <div class="rounded-xl border border-zinc-200 bg-white">
                 <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
                     <h2 class="font-semibold text-zinc-900">Berita Terbaru</h2>
-                    <a href="{{ route('admin.berita') }}" class="text-xs font-medium text-zinc-500 hover:text-zinc-900">Lihat semua →</a>
+                    <a href="{{ route('admin.news.index') }}" class="text-xs font-medium text-zinc-500 hover:text-zinc-900">Lihat semua →</a>
                 </div>
                 <div class="divide-y divide-zinc-100">
                     @forelse ($recentNews as $item)
@@ -66,7 +66,7 @@
             <div class="rounded-xl border border-zinc-200 bg-white">
                 <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
                     <h2 class="font-semibold text-zinc-900">Submissions Terbaru</h2>
-                    <a href="{{ route('admin.gallery') }}" class="text-xs font-medium text-zinc-500 hover:text-zinc-900">Lihat semua →</a>
+                    <a href="{{ route('admin.projects.index') }}" class="text-xs font-medium text-zinc-500 hover:text-zinc-900">Lihat semua →</a>
                 </div>
                 <div class="divide-y divide-zinc-100">
                     @forelse ($recentSubmissions as $sub)

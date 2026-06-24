@@ -10,8 +10,8 @@
     <div class="bg-gradient-to-r from-purple-600/20 to-purple-900/20 border border-purple-600/30 rounded-xl p-6 shadow-lg shadow-purple-500/10">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="text-2xl font-bold text-white">Welcome back, {{ Auth::user()->name }}!</h3>
-                <p class="mt-1 text-gray-400">Here's what's happening with your site today.</p>
+                <h3 class="text-2xl font-bold text-white">Selamat datang kembali, {{ Auth::user()->name }}!</h3>
+                <p class="mt-1 text-gray-400">Inilah yang terjadi dengan situs Anda hari ini.</p>
             </div>
             <div class="hidden sm:block">
                 <div class="flex items-center gap-2 px-4 py-2 bg-purple-600/20 rounded-lg">
@@ -40,9 +40,9 @@
                 </div>
             </div>
             <div class="mt-4 flex items-center gap-2 text-sm">
-                <span class="text-green-400">{{ $stats['published_news'] }} published</span>
+                <span class="text-green-400">{{ $stats['published_news'] }} dipublikasi</span>
                 <span class="text-gray-600">•</span>
-                <span class="text-gray-400">{{ $stats['draft_news'] }} drafts</span>
+                <span class="text-gray-400">{{ $stats['draft_news'] }} draf</span>
             </div>
         </div>
 
@@ -50,7 +50,7 @@
         <div class="bg-[#050505] border border-purple-900/20 rounded-xl p-6 shadow-lg shadow-purple-500/5 hover:shadow-purple-500/10 transition-all">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-400">Total Views</p>
+                    <p class="text-sm font-medium text-gray-400">Total Tampilan</p>
                     <p class="mt-2 text-3xl font-bold text-white">{{ number_format($stats['total_views']) }}</p>
                 </div>
                 <div class="p-3 bg-green-600/20 rounded-lg">
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <div class="mt-4 text-sm text-gray-400">
-                Across all published news
+                Di semua berita yang dipublikasi
             </div>
         </div>
 
@@ -79,9 +79,9 @@
                 </div>
             </div>
             <div class="mt-4 flex items-center gap-2 text-sm">
-                <span class="text-green-400">{{ $stats['accepted_projects'] }} accepted</span>
+                <span class="text-green-400">{{ $stats['accepted_projects'] }} diterima</span>
                 <span class="text-gray-600">•</span>
-                <span class="text-red-400">{{ $stats['rejected_projects'] }} rejected</span>
+                <span class="text-red-400">{{ $stats['rejected_projects'] }} ditolak</span>
             </div>
         </div>
 
@@ -89,7 +89,7 @@
         <div class="bg-[#050505] border border-purple-900/20 rounded-xl p-6 shadow-lg shadow-purple-500/5 hover:shadow-purple-500/10 transition-all">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-400">Pending Review</p>
+                    <p class="text-sm font-medium text-gray-400">Menunggu Tinjauan</p>
                     <p class="mt-2 text-3xl font-bold text-white">{{ $stats['pending_projects'] }}</p>
                 </div>
                 <div class="p-3 bg-yellow-600/20 rounded-lg">
@@ -100,7 +100,7 @@
             </div>
             <div class="mt-4">
                 <a href="{{ route('admin.projects.index') }}" class="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                    Review pending projects →
+                    Tinjau proyek yang menunggu →
                 </a>
             </div>
         </div>
@@ -108,7 +108,7 @@
 
     <!-- Quick Actions -->
     <div class="bg-[#050505] border border-purple-900/20 rounded-xl p-6 shadow-lg shadow-purple-500/5">
-        <h3 class="text-lg font-bold text-white mb-4">Quick Actions</h3>
+        <h3 class="text-lg font-bold text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a href="{{ route('admin.news.create') }}" class="flex items-center gap-3 p-4 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-600/20 rounded-lg transition-all group">
                 <div class="p-2 bg-purple-600/20 rounded-lg group-hover:bg-purple-600/30 transition-all">
@@ -117,8 +117,8 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="font-medium text-white">Create News</p>
-                    <p class="text-sm text-gray-400">Publish new article</p>
+                    <p class="font-medium text-white">Buat Berita</p>
+                    <p class="text-sm text-gray-400">Publikasikan artikel baru</p>
                 </div>
             </a>
 
@@ -129,8 +129,8 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="font-medium text-white">Manage News</p>
-                    <p class="text-sm text-gray-400">Edit or delete articles</p>
+                    <p class="font-medium text-white">Kelola Berita</p>
+                    <p class="text-sm text-gray-400">Edit atau hapus artikel</p>
                 </div>
             </a>
 
@@ -141,8 +141,8 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="font-medium text-white">Review Projects</p>
-                    <p class="text-sm text-gray-400">Accept or reject submissions</p>
+                    <p class="font-medium text-white">Tinjau Proyek</p>
+                    <p class="text-sm text-gray-400">Terima atau tolak pengajuan</p>
                 </div>
             </a>
         </div>
@@ -153,9 +153,9 @@
         <!-- Recent News -->
         <div class="bg-[#050505] border border-purple-900/20 rounded-xl p-6 shadow-lg shadow-purple-500/5">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-white">Recent News</h3>
+                <h3 class="text-lg font-bold text-white">Berita Terbaru</h3>
                 <a href="{{ route('admin.news.index') }}" class="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                    View all →
+                    Lihat semua →
                 </a>
             </div>
 
@@ -164,7 +164,7 @@
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
                 </svg>
-                <p>No news articles yet</p>
+                <p>Belum ada artikel berita</p>
             </div>
             @else
             <div class="space-y-4">

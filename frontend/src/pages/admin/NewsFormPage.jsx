@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Save } from 'lucide-react'
-import { adminNews } from '../../services/adminApi'
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { adminNews } from '../../services/adminApi';
 
 const INITIAL_STATE = {
   title: '',
@@ -11,29 +10,31 @@ const INITIAL_STATE = {
   category: '',
   date: '',
   author: '',
-  image: '',
+  image: null,
   tags: '',
-  status: 'draft',
-}
+  published: false,
+};
 
-const CATEGORIES = ['Workshop', 'Kompetisi', 'Pelatihan', 'Seminar', 'Berita', 'Tutorial', 'Pembelajaran', 'Event']
+const CATEGORIES = ['Workshop', 'Kompetisi', 'Pelatihan', 'Seminar', 'Berita', 'Tutorial', 'Pembelajaran', 'Event'];
 
 export default function NewsFormPage() {
-  const { id } = useParams()
-  const isEdit = Boolean(id)
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState(INITIAL_STATE)
-  const [loading, setLoading] = useState(isEdit)
-  const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState({})
-  const [serverError, setServerError] = useState('')
+  const [form, setForm] = useState(INITIAL_STATE);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
-    if (!isEdit) return
+    if (!isEdit) return;
     adminNews.getById(id)
       .then((data) => {
-        const item = data.news || data
+        const item = data.news || data;
         setForm({
           title: item.title || '',
           summary: item.summary || '',
@@ -41,164 +42,231 @@ export default function NewsFormPage() {
           category: item.category || '',
           date: item.date ? item.date.split('T')[0] : '',
           author: item.author || '',
-          image: item.image || '',
+          image: null, 
           tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
-          status: item.status || 'draft',
-        })
+          published: Boolean(item.published),
+        });
+        if (item.image_url || item.image) {
+          setImagePreview(item.image_url || item.image);
+        }
       })
-      .catch((err) => setServerError(err.message))
-      .finally(() => setLoading(false))
-  }, [id, isEdit])
+      .catch((err) => setServerError(err.message || 'Failed to fetch news'))
+      .finally(() => setLoading(false));
+  }, [id, isEdit]);
 
   const updateField = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      updateField('image', file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    updateField('image', null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const validate = () => {
-    const errs = {}
-    if (!form.title.trim()) errs.title = 'Judul wajib diisi'
-    if (!form.content.trim()) errs.content = 'Konten wajib diisi'
-    return errs
-  }
+    const errs = {};
+    if (!form.title.trim()) errs.title = 'Judul wajib diisi';
+    if (!form.content.trim()) errs.content = 'Konten wajib diisi';
+    if (!form.category) errs.category = 'Kategori wajib dipilih';
+    if (!form.date) errs.date = 'Tanggal wajib diisi';
+    return errs;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setServerError('')
-    const errs = validate()
-    if (Object.keys(errs).length > 0) { setErrors(errs); return }
-    setSaving(true)
-    try {
-      const payload = { ...form, tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [] }
-      if (isEdit) { await adminNews.update(id, payload) } else { await adminNews.create(payload) }
-      navigate('/admin/news')
-    } catch (err) {
-      setServerError(err.message)
-    } finally {
-      setSaving(false)
+    e.preventDefault();
+    setServerError('');
+    
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { 
+      setErrors(errs); 
+      return; 
     }
-  }
+    
+    setSaving(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('title', form.title);
+      formData.append('content', form.content);
+      formData.append('category', form.category);
+      formData.append('date', form.date);
+      formData.append('published', form.published ? '1' : '0');
+      
+      if (form.summary) formData.append('summary', form.summary);
+      if (form.author) formData.append('author', form.author);
+      if (form.tags) {
+        const tagsArray = form.tags.split(',').map((t) => t.trim()).filter(Boolean);
+        formData.append('tags', JSON.stringify(tagsArray));
+      }
+      
+      if (form.image instanceof File) {
+        formData.append('image', form.image);
+      } else if (isEdit && !imagePreview) {
+        // user removed the image in edit mode
+        formData.append('remove_image', '1');
+      }
+
+      if (isEdit) {
+        formData.append('_method', 'PUT');
+        await adminNews.updateWithForm(id, formData);
+      } else {
+        await adminNews.createWithForm(formData);
+      }
+      
+      navigate('/admin/news');
+    } catch (err) {
+      setServerError(err.message || 'Failed to save article');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
-    )
+    );
   }
 
   const inputClass = (field) =>
-    `w-full px-3 py-2 border rounded-lg text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors placeholder:text-[var(--text-muted)] ${
+    `w-full px-3 py-2 border rounded-lg text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-colors placeholder:text-[var(--text-muted)] ${
       errors[field]
-        ? 'border-red-400 bg-red-50 dark:bg-red-950/30'
+        ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
         : 'border-[var(--border-color)]'
-    }`
+    }`;
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center gap-4 mb-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-4 border-b border-[var(--border-color)] pb-4">
         <button
           onClick={() => navigate('/admin/news')}
-          className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] transition-colors"
-          aria-label="Kembali ke daftar berita"
+          className="p-2 border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] transition-colors"
+          aria-label="Kembali"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-          {isEdit ? 'Edit Berita' : 'Tambah Berita'}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] font-header">
+            {isEdit ? 'Edit Berita' : 'Tambah Berita'}
+          </h1>
+          <p className="text-[var(--text-secondary)] text-sm mt-1">Lengkapi form di bawah untuk artikel berita.</p>
+        </div>
       </div>
 
       {serverError && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 rounded-lg text-red-600 dark:text-red-400 text-sm">{serverError}</div>
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm font-medium">
+          {serverError}
+        </div>
       )}
 
-      <motion.form
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        onSubmit={handleSubmit}
-        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6 space-y-5"
-      >
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Judul *</label>
-          <input type="text" value={form.title} onChange={(e) => updateField('title', e.target.value)}
-            className={inputClass('title')} placeholder="Judul berita" />
-          {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+      <form onSubmit={handleSubmit} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 md:p-8 space-y-6 shadow-sm">
+        
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">Judul <span className="text-red-500">*</span></label>
+          <input type="text" value={form.title} onChange={(e) => updateField('title', e.target.value)} className={inputClass('title')} placeholder="Masukkan judul..." />
+          {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Ringkasan</label>
-          <textarea value={form.summary} onChange={(e) => updateField('summary', e.target.value)}
-            rows={3} className={inputClass('summary')} placeholder="Ringkasan singkat berita" />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">Ringkasan</label>
+          <textarea value={form.summary} onChange={(e) => updateField('summary', e.target.value)} rows={2} className={inputClass('summary')} placeholder="Ringkasan singkat (opsional)..." />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Konten *</label>
-          <textarea value={form.content} onChange={(e) => updateField('content', e.target.value)}
-            rows={10} className={inputClass('content')} placeholder="Konten lengkap berita" />
-          {errors.content && <p className="text-xs text-red-500 mt-1">{errors.content}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Kategori</label>
-            <select value={form.category} onChange={(e) => updateField('category', e.target.value)}
-              className={inputClass('category')}>
-              <option value="">Pilih kategori</option>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Kategori <span className="text-red-500">*</span></label>
+            <select value={form.category} onChange={(e) => updateField('category', e.target.value)} className={inputClass('category')}>
+              <option value="">-- Pilih Kategori --</option>
               {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
+            {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Tanggal</label>
-            <input type="date" value={form.date} onChange={(e) => updateField('date', e.target.value)}
-              className={inputClass('date')} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Penulis</label>
-            <input type="text" value={form.author} onChange={(e) => updateField('author', e.target.value)}
-              className={inputClass('author')} placeholder="Nama penulis" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">URL Gambar</label>
-            <input type="url" value={form.image} onChange={(e) => updateField('image', e.target.value)}
-              className={inputClass('image')} placeholder="https://..." />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Tanggal <span className="text-red-500">*</span></label>
+            <input type="date" value={form.date} onChange={(e) => updateField('date', e.target.value)} className={inputClass('date')} />
+            {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Tags</label>
-          <input type="text" value={form.tags} onChange={(e) => updateField('tags', e.target.value)}
-            className={inputClass('tags')} placeholder="AI, Machine Learning, Workshop" />
-          <p className="text-xs text-[var(--text-muted)] mt-1">Pisahkan dengan koma</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Penulis</label>
+            <input type="text" value={form.author} onChange={(e) => updateField('author', e.target.value)} className={inputClass('author')} placeholder="Nama Penulis" />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Tags</label>
+            <input type="text" value={form.tags} onChange={(e) => updateField('tags', e.target.value)} className={inputClass('tags')} placeholder="Berita, Kampus, Lomba (pisahkan dengan koma)" />
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={form.status === 'published'}
-              onChange={(e) => updateField('status', e.target.checked ? 'published' : 'draft')}
-              className="sr-only peer" />
-            <div className="w-11 h-6 bg-[var(--bg-secondary)] peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary" />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">Konten <span className="text-red-500">*</span></label>
+          <textarea value={form.content} onChange={(e) => updateField('content', e.target.value)} rows={10} className={inputClass('content')} placeholder="Isi lengkap berita..." />
+          {errors.content && <p className="text-xs text-red-500">{errors.content}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">Thumbnail Berita</label>
+          <div className="mt-2 border-2 border-dashed border-[var(--border-color)] rounded-xl p-6 bg-[var(--bg-secondary)] text-center transition-colors hover:border-[var(--accent)]">
+            {imagePreview ? (
+              <div className="relative inline-block">
+                <img src={imagePreview} alt="Preview" className="max-h-64 rounded-lg shadow-sm" />
+                <button type="button" onClick={removeImage} className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="p-3 bg-[var(--bg-primary)] rounded-full">
+                  <Upload size={24} className="text-[var(--text-secondary)]" />
+                </div>
+                <div className="text-sm text-[var(--text-secondary)]">
+                  <label htmlFor="file-upload" className="cursor-pointer font-medium text-[var(--accent)] hover:underline">Upload file</label>
+                  <span> atau drag and drop</span>
+                  <input id="file-upload" name="file-upload" type="file" ref={fileInputRef} className="sr-only" accept="image/*" onChange={handleImageChange} />
+                </div>
+                <p className="text-xs text-[var(--text-muted)]">PNG, JPG, GIF up to 5MB</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 pt-4 border-t border-[var(--border-color)]">
+          <input type="checkbox" id="isPublished" checked={form.published} onChange={(e) => updateField('published', e.target.checked)} className="w-5 h-5 accent-[var(--accent)] rounded" />
+          <label htmlFor="isPublished" className="font-medium text-[var(--text-primary)] cursor-pointer">
+            Publikasikan secara publik
           </label>
-          <span className="text-sm text-[var(--text-primary)]">
-            {form.status === 'published' ? 'Tayang' : 'Draft'}
-          </span>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button type="submit" disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
-            <Save size={16} />
-            {saving ? 'Menyimpan...' : 'Simpan'}
-          </button>
-          <button type="button" onClick={() => navigate('/admin/news')}
-            className="px-5 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
+          <button type="button" onClick={() => navigate('/admin/news')} className="px-5 py-2 border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors font-medium">
             Batal
           </button>
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--accent)] text-white rounded-lg hover:brightness-110 transition-colors font-medium disabled:opacity-50">
+            <Save size={18} />
+            {saving ? 'Menyimpan...' : 'Simpan Berita'}
+          </button>
         </div>
-      </motion.form>
+      </form>
     </div>
-  )
+  );
 }

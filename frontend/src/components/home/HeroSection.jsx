@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { AnimatedText } from '../ui/AnimatedText'
 import heroImage from '../../assets/gedungfasilkom.jpg'
 
@@ -70,7 +70,7 @@ const HeroSection = () => {
             initial="hidden"
             animate="visible"
           >
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] tracking-tight">
               <span className="text-white block mb-1">
                 <AnimatedText>Selamat Datang Di</AnimatedText>
               </span>
@@ -121,7 +121,6 @@ const HeroSection = () => {
                   transition={{ duration: 0.2 }}
                 >
                   Jelajahi Berita
-                  <Sparkles size={16} className="text-purple-300" />
                 </motion.div>
               </Link>
               <Link to="/ilkomgallery">
@@ -132,7 +131,6 @@ const HeroSection = () => {
                   transition={{ duration: 0.2 }}
                 >
                   Ilkom Gallery
-                  <Sparkles size={16} className="text-amber-300" />
                 </motion.div>
               </Link>
             </div>

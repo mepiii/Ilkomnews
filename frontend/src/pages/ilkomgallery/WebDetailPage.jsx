@@ -1,11 +1,13 @@
 // src/pages/ilkomgallery/WebDetailPage.jsx
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
+import {
   X, ExternalLink, User, Calendar, Code2, Globe, Award, Users,
   Mail, ArrowLeft, Eye
 } from 'lucide-react'
 import { FaGithub } from 'react-icons/fa'
+import { projectsService } from '../../services/api'
+import { BGPattern } from '../../components/ui/BGPattern'
 
 // Data Web Projects - Lengkap dengan 5 project
 const webData = {
@@ -258,12 +260,13 @@ const WebDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme pb-16">
+    <div className="min-h-screen bg-theme pb-16 relative">
+      <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
       {/* Hero Section */}
-      <div className="relative min-h-[60vh] md:min-h-[70vh] overflow-hidden pt-16">
+      <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img 
           src={project.banner || project.thumbnail} 
-          alt={project.title}
+          alt={project.title} 
           className="w-full h-full object-cover"
           loading="eager"
           decoding="async"

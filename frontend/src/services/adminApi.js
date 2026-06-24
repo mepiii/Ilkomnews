@@ -14,12 +14,16 @@ function removeToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-export async function fetchAdmin(endpoint, options = {}) {
+export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
   const token = getToken()
   const headers = {
-    'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
+  }
+
+  // Only set Content-Type to application/json if it's not FormData
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const controller = new AbortController()
@@ -60,10 +64,10 @@ export async function fetchAdmin(endpoint, options = {}) {
 }
 
 export const adminAuth = {
-  login(email, password) {
+  login(email, password, remember = false) {
     return fetchAdmin('/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     }).then((data) => {
       setToken(data.token)
       return data
@@ -104,11 +108,25 @@ export const adminNews = {
     })
   },
 
+  createWithForm(formData) {
+    return fetchAdmin('/admin/news', {
+      method: 'POST',
+      body: formData,
+    }, true)
+  },
+
   update(id, data) {
     return fetchAdmin(`/admin/news/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+  },
+
+  updateWithForm(id, formData) {
+    return fetchAdmin(`/admin/news/${id}`, {
+      method: 'POST', // Use POST with _method=PUT in formData for Laravel
+      body: formData,
+    }, true)
   },
 
   delete(id) {
@@ -153,6 +171,34 @@ export const adminChatStats = {
   getStats(params = {}) {
     const qs = new URLSearchParams(params).toString()
     return fetchAdmin(`/admin/chat-stats${qs ? `?${qs}` : ''}`)
+  },
+}
+
+export const adminChatbot = {
+  getAll() {
+    return fetchAdmin('/admin/chatbot-api')
+  },
+
+  getById(id) {
+    return fetchAdmin(`/admin/chatbot-api/${id}`)
+  },
+
+  create(data) {
+    return fetchAdmin('/admin/chatbot-api', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
+  update(id, data) {
+    return fetchAdmin(`/admin/chatbot-api/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
+  delete(id) {
+    return fetchAdmin(`/admin/chatbot-api/${id}`, { method: 'DELETE' })
   },
 }
 

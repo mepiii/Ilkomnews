@@ -10,7 +10,7 @@ const AI_AGENTS = [
     id: 'wolfy',
     name: 'Wolfy (Arka Wolf)',
     role: 'ILKOM NEWS Assistant',
-    avatar: '/assets/logo.png',
+    avatar: '/assets/wolfy-avatar.png',
     status: 'online',
     icon: Sparkles,
     gradient: 'from-purple-500/20 to-violet-500/20',
@@ -219,7 +219,7 @@ export function FloatingChatWidget() {
         whileTap={{ scale: 0.95 }}
         onClick={toggleOpen}
         className={cn(
-          'cursor-pointer group relative flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300',
+          'cursor-pointer group relative flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 overflow-hidden',
           isOpen
             ? 'bg-red-500 text-white rotate-90'
             : 'bg-purple-600 text-white hover:shadow-purple-600/25'
@@ -227,7 +227,11 @@ export function FloatingChatWidget() {
         aria-label={isOpen ? 'Close chat' : 'Chat with Wolfy'}
       >
         <span className="absolute inset-0 -z-10 rounded-full bg-inherit opacity-20 blur-xl transition-opacity duration-300 group-hover:opacity-40" />
-        {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+        {isOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <img src="/assets/wolfy-icon.png" alt="Wolfy" className="h-10 w-10 object-contain" />
+        )}
       </motion.button>
     </div>
   )

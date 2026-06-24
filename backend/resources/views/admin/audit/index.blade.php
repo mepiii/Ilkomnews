@@ -9,21 +9,21 @@
     <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6">
         <form method="GET" action="{{ route('admin.audit-logs') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">Action</label>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Aksi</label>
                 <select name="action" class="w-full bg-black/50 border border-purple-900/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
-                    <option value="">All Actions</option>
-                    <option value="create" {{ request('action') === 'create' ? 'selected' : '' }}>Create</option>
-                    <option value="update" {{ request('action') === 'update' ? 'selected' : '' }}>Update</option>
-                    <option value="delete" {{ request('action') === 'delete' ? 'selected' : '' }}>Delete</option>
-                    <option value="login" {{ request('action') === 'login' ? 'selected' : '' }}>Login</option>
-                    <option value="logout" {{ request('action') === 'logout' ? 'selected' : '' }}>Logout</option>
+                    <option value="">Semua Aksi</option>
+                    <option value="create" {{ request('action') === 'create' ? 'selected' : '' }}>Buat</option>
+                    <option value="update" {{ request('action') === 'update' ? 'selected' : '' }}>Perbarui</option>
+                    <option value="delete" {{ request('action') === 'delete' ? 'selected' : '' }}>Hapus</option>
+                    <option value="login" {{ request('action') === 'login' ? 'selected' : '' }}>Masuk</option>
+                    <option value="logout" {{ request('action') === 'logout' ? 'selected' : '' }}>Keluar</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">Entity Type</label>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Tipe Entitas</label>
                 <select name="entity_type" class="w-full bg-black/50 border border-purple-900/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
-                    <option value="">All Types</option>
+                    <option value="">Semua Tipe</option>
                     <option value="news" {{ request('entity_type') === 'news' ? 'selected' : '' }}>News</option>
                     <option value="project" {{ request('entity_type') === 'project' ? 'selected' : '' }}>Project</option>
                     <option value="gallery" {{ request('entity_type') === 'gallery' ? 'selected' : '' }}>Gallery</option>
@@ -32,21 +32,21 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">From Date</label>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Dari Tanggal</label>
                 <input type="date" name="from" value="{{ request('from') }}" class="w-full bg-black/50 border border-purple-900/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">To Date</label>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Sampai Tanggal</label>
                 <input type="date" name="to" value="{{ request('to') }}" class="w-full bg-black/50 border border-purple-900/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
             </div>
 
             <div class="md:col-span-2 lg:col-span-4 flex gap-3">
                 <button type="submit" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-                    Apply Filters
+                    Terapkan Filter
                 </button>
                 <a href="{{ route('admin.audit-logs') }}" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
-                    Clear Filters
+                    Bersihkan Filter
                 </a>
             </div>
         </form>
@@ -55,9 +55,9 @@
     <!-- Audit Logs Table -->
     <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-bold text-white">Audit Trail</h3>
+            <h3 class="text-lg font-bold text-white">Jejak Audit</h3>
             <div class="text-sm text-gray-400">
-                Total: <span class="text-white font-semibold">{{ $logs->total() }}</span> entries
+                Total: <span class="text-white font-semibold">{{ $logs->total() }}</span> entri
             </div>
         </div>
 
@@ -65,12 +65,12 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-purple-900/30">
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">User</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Action</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Entity</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">IP Address</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Time</th>
-                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Details</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Pengguna</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Aksi</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Entitas</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Alamat IP</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Waktu</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-400">Detail</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,7 +82,7 @@
                                     {{ $log->user ? substr($log->user->name, 0, 1) : '?' }}
                                 </div>
                                 <div>
-                                    <p class="text-white text-sm font-medium">{{ $log->user->name ?? 'Unknown' }}</p>
+                                    <p class="text-white text-sm font-medium">{{ $log->user->name ?? 'Tidak Diketahui' }}</p>
                                     <p class="text-gray-400 text-xs">{{ $log->user->email ?? '-' }}</p>
                                 </div>
                             </div>

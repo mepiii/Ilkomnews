@@ -192,16 +192,34 @@ export default function ProjectDetailPage() {
         {/* Meta grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <MetaItem icon={User} label="Pembuat" value={project.creator_name || project.creator || '-'} />
+          {project.creator_nim && <MetaItem icon={Tag} label="NIM" value={project.creator_nim} />}
+          {project.creator_email && <MetaItem icon={Tag} label="Email" value={project.creator_email} />}
+          {project.tracking_id && <MetaItem icon={Tag} label="Tracking ID" value={project.tracking_id} />}
           <MetaItem icon={FolderOpen} label="Kategori" value={project.category || '-'} />
-          <MetaItem icon={Calendar} label="Tanggal" value={
+          <MetaItem icon={Calendar} label="Tanggal Submit" value={
             project.created_at ? new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'
           } />
-          {project.tech_stack && (
-            <MetaItem icon={Tag} label="Tech Stack" value={
-              Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : project.tech_stack
+          {project.reviewed_at && (
+            <MetaItem icon={Calendar} label="Ditinjau pada" value={
+              new Date(project.reviewed_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
             } />
           )}
+          {project.reviewed_by && <MetaItem icon={User} label="Ditinjau oleh" value={project.reviewed_by} />}
         </div>
+
+        {/* Team members */}
+        {project.team_members && Array.isArray(project.team_members) && project.team_members.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Anggota Tim</p>
+            <div className="flex flex-wrap gap-2">
+              {project.team_members.map((member, i) => (
+                <span key={i} className="px-2.5 py-1 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs rounded-full">
+                  {typeof member === 'string' ? member : member.name || member}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tech stack tags */}
         {project.tech_stack && Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && (

@@ -24,6 +24,12 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        // Logout all other sessions except current one
+        \DB::table('sessions')
+            ->where('user_id', $request->user()->id)
+            ->where('id', '!=', session()->getId())
+            ->delete();
+
         return back()->with('status', 'password-updated');
     }
 }

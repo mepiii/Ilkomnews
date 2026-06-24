@@ -10,6 +10,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -31,7 +32,7 @@ export default function LoginPage() {
     setSubmitting(true)
 
     try {
-      await login(email, password)
+      await login(email, password, remember)
       navigate('/admin/dashboard', { replace: true })
     } catch (err) {
       setError(err.message || 'Email atau password salah')
@@ -100,6 +101,19 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-color)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--border-color)] text-secondary focus:ring-secondary/50"
+              />
+              <label htmlFor="remember" className="text-sm text-[var(--text-secondary)]">
+                Ingat saya
+              </label>
             </div>
 
             <button

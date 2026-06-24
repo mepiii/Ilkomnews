@@ -1,169 +1,29 @@
 // src/pages/ilkomgallery/ProjectDetailPage.jsx
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
-  Play, X, ExternalLink, 
+import {
+  Play, X, ExternalLink,
   User, Calendar, Code2, Brain, Award, Users,
-  Mail, ArrowLeft
+  Mail, ArrowLeft, AlertCircle
 } from 'lucide-react'
 import { FaGithub } from 'react-icons/fa'
+import { BGPattern } from '../../components/ui/BGPattern'
 
-// Data project (key-nya sekarang pake slug)
-const projectsData = {
-  'image-classifier-for-plant-diseases': {
-    id: 1,
-    slug: 'image-classifier-for-plant-diseases',
-    title: 'Image Classifier for Plant Diseases',
-    creator: 'Andi Wijaya',
-    nim: '20190101099',
-    jurusan: 'S1 Ilmu Komputer',
-    angkatan: 2019,
-    email: 'andi.wijaya@student.ac.id',
-    thumbnail: 'https://placehold.co/1200x600/3B82F6/white?text=AI+Classifier',
-    banner: 'https://placehold.co/1600x600/2563EB/white?text=Image+Classifier+Project',
-    description: 'Sistem klasifikasi penyakit tanaman menggunakan CNN dengan akurasi 95%.',
-    fullDescription: `Proyek ini dikembangkan sebagai tugas akhir yang bertujuan membantu petani mendeteksi penyakit tanaman secara dini.
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
-**Teknologi yang Digunakan:**
-- Convolutional Neural Network (CNN) dengan arsitektur ResNet50
-- Dataset berisi 15,000+ gambar daun tanaman
-- Akurasi mencapai 95% pada data uji
-
-**Dampak:**
-- Telah diuji coba pada 3 kelompok tani
-- Mengurangi waktu diagnosis dari 3 hari menjadi 5 menit`,
-    github: 'https://github.com/andiwijaya/plant-disease-classifier',
-    demoLink: 'https://plant-ai.demo.com',
-    techStack: ['Python', 'TensorFlow', 'Flask', 'React'],
-    collaborators: ['Budi Santoso', 'Citra Dewi'],
-    award: 'Juara 1 Lomba Inovasi Teknologi 2024'
-  },
-  'chatbot-for-academic-services': {
-    id: 2,
-    slug: 'chatbot-for-academic-services',
-    title: 'Chatbot for Academic Services',
-    creator: 'Sarah Amelia',
-    nim: '20200101123',
-    jurusan: 'S1 Sistem Informasi',
-    angkatan: 2020,
-    email: 'sarah.amelia@student.ac.id',
-    thumbnail: 'https://placehold.co/1200x600/10B981/white?text=Chatbot',
-    banner: 'https://placehold.co/1600x600/059669/white?text=Chatbot+Project',
-    description: 'Chatbot AI untuk membantu mahasiswa mendapatkan informasi akademik.',
-    fullDescription: `Chatbot akademik yang dapat diakses melalui LINE Messenger.
-
-**Fitur Utama:**
-- Informasi jadwal kuliah
-- Cek nilai ujian
-- Pengumuman akademik real-time`,
-    github: 'https://github.com/sarahamelia/academic-chatbot',
-    demoLink: 'https://chatbot.demo.com',
-    techStack: ['Python', 'Rasa', 'Flask', 'PostgreSQL'],
-    collaborators: ['M. Farhan'],
-    award: null
-  },
-  'sentiment-analysis-for-e-commerce': {
-    id: 3,
-    slug: 'sentiment-analysis-for-e-commerce',
-    title: 'Sentiment Analysis for E-Commerce',
-    creator: 'M. Farhan',
-    nim: '20210101188',
-    jurusan: 'S1 Ilmu Komputer',
-    angkatan: 2021,
-    email: 'farhan@student.ac.id',
-    thumbnail: 'https://placehold.co/1200x600/8B5CF6/white?text=Sentiment+Analysis',
-    banner: 'https://placehold.co/1600x600/7C3AED/white?text=Sentiment+Analysis+Project',
-    description: 'Analisis sentimen untuk review produk e-commerce menggunakan NLP.',
-    fullDescription: `Sistem analisis sentimen otomatis untuk review produk.
-
-**Teknologi:**
-- Natural Language Processing
-- Machine Learning dengan Scikit-learn
-- API dengan FastAPI`,
-    github: 'https://github.com/mfarhan/sentiment-analysis',
-    demoLink: 'https://sentiment.demo.com',
-    techStack: ['Python', 'Scikit-learn', 'NLTK', 'FastAPI'],
-    collaborators: [],
-    award: 'Best Paper Award 2024'
-  },
-  'iot-smart-campus-monitoring': {
-    id: 4,
-    slug: 'iot-smart-campus-monitoring',
-    title: 'IoT Smart Campus Monitoring',
-    creator: 'Reno Kurniawan',
-    nim: '20200101155',
-    jurusan: 'S1 Teknologi Informasi',
-    angkatan: 2020,
-    email: 'reno.kurniawan@student.ac.id',
-    thumbnail: 'https://placehold.co/1200x600/EF4444/white?text=IoT',
-    banner: 'https://placehold.co/1600x600/DC2626/white?text=IoT+Project',
-    description: 'Sistem monitoring ruangan kampus berbasis IoT dengan sensor.',
-    fullDescription: `Sistem monitoring ruangan kampus real-time.
-
-**Fitur:**
-- Monitoring suhu dan kelembaban
-- Deteksi kepadatan ruangan
-- Dashboard real-time`,
-    github: 'https://github.com/renokurniawan/smart-campus-iot',
-    demoLink: 'https://iot.demo.com',
-    techStack: ['Arduino', 'Raspberry Pi', 'Node.js', 'MQTT'],
-    collaborators: ['Andi Wijaya'],
-    award: null
-  },
-  'ai-movie-recommendation-system': {
-    id: 5,
-    slug: 'ai-movie-recommendation-system',
-    title: 'AI Movie Recommendation System',
-    creator: 'Putri Maharani',
-    nim: '20210101234',
-    jurusan: 'S1 Ilmu Komputer',
-    angkatan: 2021,
-    email: 'putri.maharani@student.ac.id',
-    thumbnail: 'https://placehold.co/1200x600/EC4899/white?text=Movie+Recommendation+AI',
-    banner: 'https://placehold.co/1600x600/DB2777/white?text=AI+Movie+Recommendation+System',
-    description: 'Sistem rekomendasi film berbasis AI yang memberikan saran personalized berdasarkan history tontonan dan preferensi pengguna.',
-    fullDescription: `**Tentang Project:**
-Sistem rekomendasi film yang menggunakan algoritma collaborative filtering dan content-based filtering untuk memberikan rekomendasi film yang akurat dan personal.
-
-**🎯 Fitur Utama:**
-- Rekomendasi film berdasarkan genre favorit
-- Personalisasi berdasarkan rating pengguna
-- Similar movie finder (cari film yang mirip)
-- Top 10 trending movies hari ini
-- Save to watchlist
-
-**🛠️ Teknologi yang Digunakan:**
-- Machine Learning: Surprise Library, Scikit-learn
-- Algoritma: Collaborative Filtering (SVD), Content-Based Filtering (Cosine Similarity)
-- Backend: FastAPI, PostgreSQL, Redis
-- Frontend: React.js, Tailwind CSS
-- Deployment: Docker, Railway
-
-**📊 Dataset:**
-Menggunakan MovieLens dataset dengan:
-- 25,000+ movies
-- 1,000,000+ user ratings
-- 100+ genre categories
-
-**🏆 Pencapaian:**
-- Akurasi rekomendasi mencapai 87% pada user testing
-- Rata-rata user engagement meningkat 45% setelah menggunakan sistem
-- Top 3 finalis Hackathon AI 2024
-
-**📈 Dampak:**
-- Digunakan oleh 500+ pengguna beta
-- Rating rata-rata 4.8/5 dari pengguna
-- Rencana kerjasama dengan platform streaming lokal`,
-    github: 'https://github.com/putrimaharani/movie-recommendation',
-    demoLink: 'https://movie-recommendation.demo.com',
-    techStack: ['Python', 'FastAPI', 'Scikit-learn', 'React', 'PostgreSQL', 'Redis', 'Docker'],
-    collaborators: ['Ahmad Fauzi', 'Rizky Pratama'],
-    award: 'Top 3 Hackathon AI 2024'
-  }
+// Helper function to generate slug from title
+const generateSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
 }
 
-// Fungsi untuk format teks (support markdown sederhana)
+// Format text function (support markdown sederhana)
 const formatText = (text) => {
+  if (!text) return null
   return text.split('\n').map((line, idx) => {
     if (line.startsWith('**') && line.endsWith('**')) {
       return <h3 key={idx} className="text-lg font-bold text-white mt-4 mb-2">{line.slice(2, -2)}</h3>
@@ -181,13 +41,63 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    const data = projectsData[slug]
-    if (data) {
-      setProject(data)
+    const fetchProject = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Try to parse slug as ID first
+        const id = parseInt(slug)
+        if (!isNaN(id)) {
+          // Fetch by ID directly
+          const response = await fetch(`${API_BASE}/projects/${id}`)
+          if (response.ok) {
+            const data = await response.json()
+            setProject(data)
+          } else {
+            throw new Error('Project not found')
+          }
+        } else {
+          // Fetch all projects and find by slug/title
+          const response = await fetch(`${API_BASE}/projects`)
+          if (!response.ok) {
+            throw new Error('Failed to fetch projects')
+          }
+
+          const data = await response.json()
+          const projects = data.data || data // Handle both paginated and array responses
+
+          // Find project by matching slug
+          const foundProject = projects.find(p => {
+            // Generate slug from title and compare
+            const projectSlug = generateSlug(p.title)
+            return projectSlug === slug
+          })
+
+          if (foundProject) {
+            setProject(foundProject)
+          } else {
+            // Also check if any project has matching ID as string
+            const idMatch = projects.find(p => p.id.toString() === slug)
+            if (idMatch) {
+              setProject(idMatch)
+            } else {
+              throw new Error('Project not found')
+            }
+          }
+        }
+      } catch (err) {
+        setError(err.message)
+        setProject(null)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    fetchProject()
   }, [slug])
 
   if (loading) {
@@ -196,6 +106,27 @@ const ProjectDetailPage = () => {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white">Memuat proyek...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+            <AlertCircle size={32} className="text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Error</h2>
+          <p className="text-theme-muted mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/ilkomgallery')}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Kembali ke Gallery
+          </button>
         </div>
       </div>
     )
@@ -214,12 +145,37 @@ const ProjectDetailPage = () => {
     )
   }
 
+  // Map API fields to display values
+  const displayCreator = project.creator_name || 'Unknown'
+  const displayMajor = project.creator_major || 'Unknown'
+  const displayNim = project.creator_nim || 'Unknown'
+  const displayYear = project.creator_year || 'Unknown'
+  const displayThumbnail = project.thumbnail_url || project.thumbnail || 'https://placehold.co/1200x600/3B82F6/white?text=Project+Image'
+  const displayDescription = project.description || 'No description available'
+  const displayTechStack = project.tech_stack || []
+  const displayLiveDemo = project.live_demo
+  const displayGithub = project.github_link
+  const displayCollaborators = project.collaborators || []
+
+  // Get category display name
+  const getCategoryDisplay = (category) => {
+    const categories = {
+      web: 'Web Development',
+      mobile: 'Mobile App',
+      uiux: 'UI/UX Design',
+      game: 'Game Development',
+      ai: 'AI Project'
+    }
+    return categories[category] || category
+  }
+
   return (
-    <div className="min-h-screen bg-theme pb-16">
-      {/* Hero Section - Tambah pt-16 untuk kasih space dari navbar */}
-      <div className="relative min-h-[60vh] md:min-h-[70vh] overflow-hidden pt-16">
-        <img 
-          src={project.banner || project.thumbnail} 
+    <div className="min-h-screen bg-theme pb-16 relative">
+      <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
+      {/* Hero Section */}
+      <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
+        <img
+          src={displayThumbnail}
           alt={project.title}
           className="w-full h-full object-cover"
           loading="eager"
@@ -227,106 +183,104 @@ const ProjectDetailPage = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
-        
-        {/* Tombol Kembali - Sekarang aman tidak ketutupan navbar karena hero section punya pt-16 */}
-        <button 
+
+        {/* Back Button */}
+        <button
           onClick={() => navigate('/ilkomgallery')}
           className="absolute top-24 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg text-white hover:bg-black/70 transition-all duration-300 group"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Kembali ke Gallery</span>
         </button>
-        
-        {/* Tombol Close (X) di Kanan Atas */}
-        <button 
+
+        {/* Close Button */}
+        <button
           onClick={() => navigate('/ilkomgallery')}
           className="absolute top-24 right-6 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition"
         >
           <X size={20} className="text-white" />
         </button>
-        
+
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 text-white text-xs font-medium rounded-full">
                 <Brain size={12} />
-                <span>AI PROJECT</span>
+                <span>{getCategoryDisplay(project.category).toUpperCase()}</span>
               </span>
-              {project.award && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500 text-black text-xs font-medium rounded-full">
-                  <Award size={12} />
-                  <span>{project.award}</span>
-                </span>
-              )}
             </div>
-            
+
             <h1 className="text-2xl md:text-4xl font-bold text-white mb-4 max-w-4xl font-header">
               {project.title}
             </h1>
-            
+
             <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
-              <div className="text-white/70">Oleh {project.creator}</div>
+              <div className="text-white/70">Oleh {displayCreator}</div>
               <div className="text-white/70">•</div>
-              <div className="text-white/70">Angkatan {project.angkatan}</div>
+              <div className="text-white/70">Angkatan {displayYear}</div>
             </div>
-            
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <a 
-                href={project.demoLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-md font-semibold hover:bg-white/90 transition"
-              >
-                <Play size={18} fill="currentColor" />
-                <span>Demo Project</span>
-              </a>
-            </div>
-            
+
+            {displayLiveDemo && (
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <a
+                  href={displayLiveDemo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-md font-semibold hover:bg-white/90 transition"
+                >
+                  <Play size={18} fill="currentColor" />
+                  <span>Demo Project</span>
+                </a>
+              </div>
+            )}
+
             <p className="text-white/80 text-base md:text-lg max-w-3xl">
-              {project.description}
+              {displayDescription}
             </p>
           </div>
         </div>
       </div>
-      
+
       {/* Detail Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <section>
               <h2 className="text-white text-2xl font-bold mb-4">About This Project</h2>
               <div className="text-theme-secondary leading-relaxed">
-                {formatText(project.fullDescription)}
+                {formatText(displayDescription)}
               </div>
             </section>
-            
-            <section>
-              <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
-                <Code2 size={24} />
-                <span>Tech Stack</span>
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {project.techStack.map((tech, idx) => (
-                  <span key={idx} className="px-4 py-2 bg-theme-secondary text-theme-primary rounded-lg text-sm font-medium">
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </section>
-            
+
+            {displayTechStack.length > 0 && (
+              <section>
+                <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Code2 size={24} />
+                  <span>Tech Stack</span>
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  {displayTechStack.map((tech, idx) => (
+                    <span key={idx} className="px-4 py-2 bg-theme-secondary text-theme-primary rounded-lg text-sm font-medium">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section>
               <h2 className="text-white text-2xl font-bold mb-4">Links & Resources</h2>
               <div className="flex flex-wrap gap-4">
-                {project.demoLink && (
-                  <a href={project.demoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                {displayLiveDemo && (
+                  <a href={displayLiveDemo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                     <ExternalLink size={18} />
                     <span>Live Demo</span>
                   </a>
                 )}
-                {project.github && (
-                  <a href={project.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition">
+                {displayGithub && (
+                  <a href={displayGithub} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition">
                     <FaGithub size={18} />
                     <span>GitHub Repository</span>
                   </a>
@@ -334,7 +288,7 @@ const ProjectDetailPage = () => {
               </div>
             </section>
           </div>
-          
+
           {/* Sidebar */}
           <div className="space-y-6">
             <div className="bg-theme-secondary rounded-xl p-6 border border-theme">
@@ -342,40 +296,34 @@ const ProjectDetailPage = () => {
                 <User size={18} />
                 <span>Creator</span>
               </h3>
-              
+
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-2xl font-bold">
-                  {project.creator.charAt(0)}
+                  {displayCreator.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="text-theme-primary font-semibold text-lg">{project.creator}</h4>
-                  <p className="text-theme-muted text-sm">{project.jurusan}</p>
-                  <p className="text-theme-muted text-xs">NIM: {project.nim}</p>
+                  <h4 className="text-theme-primary font-semibold text-lg">{displayCreator}</h4>
+                  <p className="text-theme-muted text-sm">{displayMajor}</p>
+                  <p className="text-theme-muted text-xs">NIM: {displayNim}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-theme-muted">
                   <Calendar size={14} />
-                  <span>Angkatan {project.angkatan}</span>
-                </div>
-                <div className="flex items-center gap-2 text-theme-muted">
-                  <Mail size={14} />
-                  <a href={`mailto:${project.email}`} className="hover:text-purple-400 transition">
-                    {project.email}
-                  </a>
+                  <span>Angkatan {displayYear}</span>
                 </div>
               </div>
             </div>
-            
-            {project.collaborators && project.collaborators.length > 0 && (
+
+            {displayCollaborators.length > 0 && (
               <div className="bg-theme-secondary rounded-xl p-6 border border-theme">
                 <h3 className="text-theme-primary font-bold text-lg mb-3 flex items-center gap-2">
                   <Users size={18} />
                   <span>Collaborators</span>
                 </h3>
                 <div className="space-y-2">
-                  {project.collaborators.map((collab, idx) => (
+                  {displayCollaborators.map((collab, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-2 hover:bg-theme rounded-lg transition">
                       <div className="w-8 h-8 rounded-full bg-theme-secondary flex items-center justify-center text-xs font-bold">
                         {collab.charAt(0)}

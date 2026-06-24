@@ -1,8 +1,8 @@
 @extends('admin.layout')
 
-@section('title', isset($news) ? 'Edit News' : 'Create News')
+@section('title', isset($news) ? 'Edit Berita' : 'Buat Berita')
 
-@section('header', isset($news) ? 'Edit News' : 'Create News')
+@section('header', isset($news) ? 'Edit Berita' : 'Buat Berita')
 
 @section('content')
 <div class="max-w-4xl">
@@ -22,7 +22,7 @@
             <!-- Title -->
             <div>
                 <label for="title" class="block text-sm font-medium text-gray-300 mb-2">
-                    Title <span class="text-red-400">*</span>
+                    Judul <span class="text-red-400">*</span>
                 </label>
                 <input
                     type="text"
@@ -31,7 +31,7 @@
                     required
                     value="{{ old('title', $news->title ?? '') }}"
                     class="w-full px-4 py-3 bg-black border border-purple-900/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
-                    placeholder="Enter news title..."
+                    placeholder="Masukkan judul berita..."
                 >
                 @error('title')
                     <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
@@ -41,7 +41,7 @@
             <!-- Content -->
             <div>
                 <label for="content" class="block text-sm font-medium text-gray-300 mb-2">
-                    Content <span class="text-red-400">*</span>
+                    Konten <span class="text-red-400">*</span>
                 </label>
                 <textarea
                     name="content"
@@ -49,10 +49,35 @@
                     required
                     rows="12"
                     class="w-full px-4 py-3 bg-black border border-purple-900/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all resize-y"
-                    placeholder="Write your news content here..."
+                    placeholder="Tulis konten berita di sini..."
                 >{{ old('content', $news->content ?? '') }}</textarea>
-                <p class="mt-2 text-sm text-gray-400">Supports HTML formatting and markdown</p>
+                <p class="mt-2 text-sm text-gray-400">Mendukung format HTML dan markdown</p>
                 @error('content')
+                    <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-300 mb-2">
+                    Kategori <span class="text-red-400">*</span>
+                </label>
+                <select
+                    name="category"
+                    id="category"
+                    required
+                    class="w-full px-4 py-3 bg-black border border-purple-900/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                >
+                    <option value="">Pilih Kategori</option>
+                    <option value="Academic" {{ old('category', $news->category ?? '') === 'Academic' ? 'selected' : '' }}>Akademik</option>
+                    <option value="Event" {{ old('category', $news->category ?? '') === 'Event' ? 'selected' : '' }}>Acara</option>
+                    <option value="Achievement" {{ old('category', $news->category ?? '') === 'Achievement' ? 'selected' : '' }}>Prestasi</option>
+                    <option value="Research" {{ old('category', $news->category ?? '') === 'Research' ? 'selected' : '' }}>Penelitian</option>
+                    <option value="Campus Life" {{ old('category', $news->category ?? '') === 'Campus Life' ? 'selected' : '' }}>Kehidupan Kampus</option>
+                    <option value="Technology" {{ old('category', $news->category ?? '') === 'Technology' ? 'selected' : '' }}>Teknologi</option>
+                    <option value="Announcement" {{ old('category', $news->category ?? '') === 'Announcement' ? 'selected' : '' }}>Pengumuman</option>
+                </select>
+                @error('category')
                     <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -60,7 +85,7 @@
             <!-- Date -->
             <div>
                 <label for="date" class="block text-sm font-medium text-gray-300 mb-2">
-                    Publication Date <span class="text-red-400">*</span>
+                    Tanggal Publikasi <span class="text-red-400">*</span>
                 </label>
                 <input
                     type="date"
@@ -78,12 +103,12 @@
             <!-- Image Upload -->
             <div>
                 <label for="image" class="block text-sm font-medium text-gray-300 mb-2">
-                    Featured Image
+                    Gambar Unggulan
                 </label>
 
                 @if(isset($news) && $news->image)
-                <div class="mb-4">
-                    <p class="text-sm text-gray-400 mb-2">Current Image:</p>
+                <div class="mb-4" id="current-image-container">
+                    <p class="text-sm text-gray-400 mb-2">Gambar Saat Ini:</p>
                     <div class="relative inline-block">
                         <img
                             src="{{ Storage::url($news->image) }}"
@@ -106,7 +131,10 @@
                             </div>
                         </label>
                     </div>
-                    <p class="mt-2 text-sm text-gray-400">Check the X button to remove this image</p>
+                    <p class="mt-2 text-sm text-gray-400">Centang tombol X untuk menghapus gambar ini</p>
+                    <p id="removal-notice" class="hidden mt-2 text-sm text-yellow-400">
+                        ⚠️ Gambar ini akan dihapus saat Anda menyimpan
+                    </p>
                 </div>
                 @endif
 
@@ -127,21 +155,34 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                         <div class="text-center">
-                            <p class="text-sm font-medium text-gray-300">Click to upload new image</p>
-                            <p class="text-xs text-gray-500 mt-1">PNG, JPG, WEBP up to 5MB</p>
+                            <p class="text-sm font-medium text-gray-300">Klik untuk unggah gambar baru</p>
+                            <p class="text-xs text-gray-500 mt-1">PNG, JPG, WEBP maksimal 5MB</p>
                         </div>
                     </label>
                 </div>
 
                 <!-- Image Preview -->
                 <div id="image-preview" class="hidden mt-4">
-                    <p class="text-sm text-gray-400 mb-2">New Image Preview:</p>
-                    <img
-                        id="preview-img"
-                        src=""
-                        alt="New image preview"
-                        class="w-48 h-48 object-cover rounded-lg border border-purple-900/30"
-                    >
+                    <p class="text-sm text-gray-400 mb-2">Pratinjau Gambar Baru:</p>
+                    <div class="relative inline-block">
+                        <img
+                            id="preview-img"
+                            src=""
+                            alt="New image preview"
+                            class="w-48 h-48 object-cover rounded-lg border border-purple-900/30"
+                        >
+                        <button
+                            type="button"
+                            id="clear-preview"
+                            onclick="clearImagePreview()"
+                            class="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 rounded-lg transition-all"
+                            title="Hapus pilihan gambar"
+                        >
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 @error('image')
@@ -165,10 +206,10 @@
                     </div>
                     <div class="flex-1">
                         <p class="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">
-                            Publish this article
+                            Publikasikan artikel ini
                         </p>
                         <p class="text-xs text-gray-400 mt-1">
-                            If unchecked, this article will be saved as a draft
+                            Jika tidak dicentang, artikel akan disimpan sebagai draf
                         </p>
                     </div>
                 </label>
@@ -183,7 +224,7 @@
                     href="{{ route('admin.news.index') }}"
                     class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all"
                 >
-                    Cancel
+                    Batal
                 </a>
                 <button
                     type="submit"
@@ -192,7 +233,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    {{ isset($news) ? 'Update News' : 'Create News' }}
+                    {{ isset($news) ? 'Perbarui Berita' : 'Buat Berita' }}
                 </button>
             </div>
         </form>
@@ -205,13 +246,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-blue-400 mb-2">Writing Tips</h3>
+                <h3 class="text-sm font-semibold text-blue-400 mb-2">Tips Menulis</h3>
                 <ul class="space-y-1 text-sm text-blue-400/80">
-                    <li>• Use clear, concise headlines that capture attention</li>
-                    <li>• Include relevant images to enhance visual appeal</li>
-                    <li>• Break content into short paragraphs for readability</li>
-                    <li>• Save as draft first to review before publishing</li>
-                    <li>• Published articles are immediately visible to users</li>
+                    <li>• Gunakan judul yang jelas dan menarik perhatian</li>
+                    <li>• Sertakan gambar yang relevan untuk meningkatkan daya tarik visual</li>
+                    <li>• Bagi konten menjadi paragraf pendek agar mudah dibaca</li>
+                    <li>• Simpan sebagai draf terlebih dahulu untuk ditinjau sebelum dipublikasi</li>
+                    <li>• Artikel yang dipublikasi akan langsung terlihat oleh pengguna</li>
                 </ul>
             </div>
         </div>
@@ -220,73 +261,66 @@
 
 @push('scripts')
 <script>
-    // Image preview functionality
+    // Image preview — URL.createObjectURL is instant, no FileReader needed
     function previewImage(input) {
         const preview = document.getElementById('image-preview');
         const previewImg = document.getElementById('preview-img');
 
         if (input.files && input.files[0]) {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                preview.classList.remove('hidden');
-            };
-
-            reader.readAsDataURL(input.files[0]);
+            // Revoke previous object URL to free memory
+            if (previewImg.dataset.objectUrl) {
+                URL.revokeObjectURL(previewImg.dataset.objectUrl);
+            }
+            const url = URL.createObjectURL(input.files[0]);
+            previewImg.src = url;
+            previewImg.dataset.objectUrl = url;
+            preview.classList.remove('hidden');
         } else {
             preview.classList.add('hidden');
         }
     }
 
-    // Toggle image removal
+    // Clear the new image selection and hide preview
+    function clearImagePreview() {
+        const input = document.getElementById('image');
+        const preview = document.getElementById('image-preview');
+        const previewImg = document.getElementById('preview-img');
+
+        if (previewImg.dataset.objectUrl) {
+            URL.revokeObjectURL(previewImg.dataset.objectUrl);
+            delete previewImg.dataset.objectUrl;
+        }
+        input.value = '';
+        previewImg.src = '';
+        preview.classList.add('hidden');
+    }
+
+    // Toggle existing image removal
     function toggleImageRemoval(checkbox) {
-        const currentImage = document.getElementById('current-image');
-        if (currentImage) {
+        const currentImageContainer = document.getElementById('current-image-container');
+        const removalNotice = document.getElementById('removal-notice');
+
+        if (currentImageContainer && removalNotice) {
             if (checkbox.checked) {
-                currentImage.style.opacity = '0.3';
-                currentImage.style.filter = 'grayscale(100%)';
+                currentImageContainer.style.opacity = '0.5';
+                removalNotice.classList.remove('hidden');
             } else {
-                currentImage.style.opacity = '1';
-                currentImage.style.filter = 'none';
+                currentImageContainer.style.opacity = '1';
+                removalNotice.classList.add('hidden');
             }
         }
     }
 
-    // Auto-save draft (optional enhancement)
-    let autoSaveTimeout;
-    const formInputs = document.querySelectorAll('#title, #content');
-
-    formInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(() => {
-                // You can implement auto-save to localStorage here
-                console.log('Auto-save triggered');
-            }, 2000);
-        });
-    });
-
     // Warn before leaving with unsaved changes
     let formChanged = false;
     const form = document.querySelector('form');
-
-    formInputs.forEach(input => {
-        input.addEventListener('change', () => {
-            formChanged = true;
-        });
+    document.querySelectorAll('#title, #content').forEach(input => {
+        input.addEventListener('change', () => { formChanged = true; });
     });
-
     window.addEventListener('beforeunload', function(e) {
-        if (formChanged) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
+        if (formChanged) { e.preventDefault(); e.returnValue = ''; }
     });
-
-    form.addEventListener('submit', function() {
-        formChanged = false;
-    });
+    form.addEventListener('submit', function() { formChanged = false; });
 </script>
 @endpush
 @endsection

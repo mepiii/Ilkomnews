@@ -10,6 +10,8 @@ const NewsListPage = lazy(() => import('../pages/admin/NewsListPage'))
 const NewsFormPage = lazy(() => import('../pages/admin/NewsFormPage'))
 const ProjectsListPage = lazy(() => import('../pages/admin/ProjectsListPage'))
 const ProjectDetailPage = lazy(() => import('../pages/admin/ProjectDetailPage'))
+const ChatbotApiPage = lazy(() => import('../pages/admin/ChatbotApiPage'))
+const SettingsPage = lazy(() => import('../pages/admin/SettingsPage'))
 const SecurityCenterPage = lazy(() => import('../pages/admin/SecurityCenterPage'))
 const ChatStatsPage = lazy(() => import('../pages/admin/ChatStatsPage'))
 const AuditLogsPage = lazy(() => import('../pages/admin/AuditLogsPage'))
@@ -34,6 +36,8 @@ export default function AdminRoutes() {
           <Route path="news/:id/edit" element={<NewsFormPage />} />
           <Route path="projects" element={<ProjectsListPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="chatbot-api" element={<ChatbotApiPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="security" element={<SecurityCenterPage />} />
           <Route path="chat-stats" element={<ChatStatsPage />} />
           <Route path="audit-logs" element={<AuditLogsPage />} />

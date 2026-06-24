@@ -128,9 +128,9 @@ const LampNavbar = () => {
 
           {/* Mobile — solid navbar */}
           <div className="md:hidden flex items-center justify-between w-full bg-white dark:bg-black py-2 px-4 rounded-2xl border border-black/[0.08] dark:border-white/[0.12] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 shrink-0">
               <img src={logo} alt="ILKOM" className="h-7 w-auto" />
-              <span className="text-sm font-bold text-black dark:text-white">ILKOM NEWS</span>
+              <span className="text-sm font-bold text-black dark:text-white hidden min-[360px]:inline">ILKOM NEWS</span>
             </Link>
             <div className="flex items-center gap-2">
               <NotificationPopover />

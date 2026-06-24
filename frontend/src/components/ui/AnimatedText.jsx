@@ -15,18 +15,18 @@ const AnimatedText = ({
 }) => {
   const text = typeof children === 'string' ? children : ''
 
-  // Idle float — computed once per mount
+  // Idle float — computed once per mount, starts AFTER reveal finishes
   const idleDuration = useMemo(() => 4 + Math.random() * 2, [])
+  const revealFinishDelay = delay + text.length * staggerDelay + duration + 0.3
 
   const idleAnimation = idle
     ? {
         y: [0, -2, 0],
-        opacity: [0.85, 1, 0.85],
         transition: {
           duration: idleDuration,
           repeat: Infinity,
           ease: 'easeInOut',
-          delay: delay + text.length * staggerDelay + duration,
+          delay: revealFinishDelay,
         },
       }
     : {}
@@ -61,6 +61,7 @@ const AnimatedText = ({
   return (
     <motion.span
       className={`inline-block cursor-default ${className}`}
+      initial={{ opacity: 1 }}
       animate={idleAnimation}
       {...props}
     >

@@ -22,11 +22,13 @@
             <!-- Project Image -->
             <div class="lg:w-1/3">
                 @if($project->thumbnail)
-                <img
-                    src="{{ Storage::url($project->thumbnail) }}"
-                    alt="{{ $project->title }}"
-                    class="w-full aspect-video object-cover rounded-lg border border-purple-900/30"
-                >
+                <div class="max-h-[400px] overflow-hidden rounded-lg border border-purple-900/30">
+                    <img
+                        src="{{ $project->thumbnail_url }}"
+                        alt="{{ $project->title }}"
+                        class="w-auto max-h-[400px] object-contain mx-auto rounded-xl"
+                    >
+                </div>
                 @else
                 <div class="w-full aspect-video bg-purple-600/20 rounded-lg flex items-center justify-center border border-purple-900/30">
                     <svg class="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

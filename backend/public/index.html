@@ -38,6 +38,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
 
+    <!-- Prevent FOUC (Flash of Unstyled Content) for Dark Mode -->
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('ilkom-theme');
+          var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -53,12 +68,12 @@
       }
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-Nr4dOBxz.js"></script>
+    <script type="module" crossorigin src="/assets/index-BuHJEhwa.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-Cyuzqnbw.js">
-    <link rel="modulepreload" crossorigin href="/assets/icons-CQIGLlZu.js">
-    <link rel="modulepreload" crossorigin href="/assets/react-vendor-eQpSfq6Z.js">
-    <link rel="modulepreload" crossorigin href="/assets/motion-BX6qBh53.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-DTwr6XB4.css">
+    <link rel="modulepreload" crossorigin href="/assets/icons-B0-4Rsh_.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-BTOdXYcS.js">
+    <link rel="modulepreload" crossorigin href="/assets/motion-B7CODZYl.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BBCQsPAV.css">
   </head>
   <body>
     <div id="root"></div>
