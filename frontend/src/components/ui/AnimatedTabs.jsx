@@ -40,7 +40,7 @@ const AnimatedTabs = ({ tabs, activeTab, onTabChange, className = '' }) => {
   }, [activeTab, tabs])
 
   return (
-    <div className={cn('relative w-full overflow-x-auto no-scrollbar pb-2', className)}>
+    <div className={cn('relative w-full flex justify-center overflow-x-auto no-scrollbar pb-2', className)}>
       <div className="relative min-w-max">
         {/* Hover Highlight */}
         <div

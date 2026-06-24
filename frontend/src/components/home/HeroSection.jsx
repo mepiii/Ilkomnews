@@ -81,7 +81,7 @@ const HeroSection = () => {
                   animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 >
-                  <AnimatedText delay={0.1}>ILKOM</AnimatedText>
+                  <AnimatedText delay={0.1} idle={false}>ILKOM</AnimatedText>
                 </motion.span>
                 <motion.span
                   className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-300"
@@ -89,7 +89,7 @@ const HeroSection = () => {
                   animate={{ backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'] }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 >
-                  <AnimatedText delay={0.2}>NEWS</AnimatedText>
+                  <AnimatedText delay={0.2} idle={false}>NEWS</AnimatedText>
                 </motion.span>
               </div>
             </h1>
