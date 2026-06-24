@@ -31,7 +31,7 @@ class ChatbotApiController extends Controller
             'is_active'     => 'boolean',
         ]);
 
-        // Map 'model' to 'model_id' for the database
+        // Map 'model' to 'model_id' for the database schema
         $validated['model_id'] = $validated['model'] ?? null;
         unset($validated['model']);
 
@@ -50,7 +50,7 @@ class ChatbotApiController extends Controller
 
         $validated = $request->validate([
             'name'          => 'sometimes|required|string|max:100',
-            'provider_type' => 'sometimes|required|in:openai,anthropic,custom',
+            'provider_type' => 'sometimes|required|string|max:100',
             'api_key'       => 'sometimes|required|string|max:500',
             'base_url'      => 'nullable|url|max:255',
             'model'         => 'sometimes|required|string|max:100',
