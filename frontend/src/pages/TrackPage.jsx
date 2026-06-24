@@ -52,7 +52,7 @@ const TrackPage = () => {
   const handleSubmit = (e) => { e.preventDefault(); track(trackingId) }
 
   return (
-    <div className="min-h-screen bg-theme relative pt-10">
+    <div className="min-h-screen bg-theme relative pt-24 pb-12">
       <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />

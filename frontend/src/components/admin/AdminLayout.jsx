@@ -49,11 +49,11 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-[280px] bg-[var(--bg-card)] border-r border-[var(--border-color)] z-50 flex flex-col transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 w-[280px] bg-[var(--bg-primary)] z-50 flex flex-col transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between p-5 border-b border-[var(--border-color)]">
+        <div className="flex items-center justify-between p-5">
           <h1 className="text-xl font-bold tracking-tight font-header flex items-center gap-2">
             <span className="text-[var(--accent)]">ILKOM</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">Admin</span>
@@ -67,7 +67,7 @@ export default function AdminLayout() {
         </div>
 
         {user && (
-          <div className="px-5 py-3 border-b border-[var(--border-color)]">
+          <div className="px-5 py-3">
             <p className="text-xs text-[var(--text-secondary)] truncate flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
               {user.email}
@@ -84,7 +84,7 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-[var(--border-color)] space-y-2">
+        <div className="p-4 space-y-2">
           <div className="flex items-center justify-between px-2">
             <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Tema</span>
             <ThemeToggle />
@@ -102,7 +102,7 @@ export default function AdminLayout() {
       {/* Main Content Area */}
       <div className="flex flex-col min-h-screen min-w-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[var(--bg-card)] border-b border-[var(--border-color)] lg:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[var(--bg-primary)] lg:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}

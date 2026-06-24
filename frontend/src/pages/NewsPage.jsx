@@ -49,7 +49,7 @@ const NewsPage = () => {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="min-h-screen bg-theme relative">
+    <div className="min-h-screen bg-theme relative pt-24 pb-12">
       <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-100/30 dark:bg-purple-900/10 rounded-full blur-3xl" />

@@ -65,7 +65,7 @@ const LampNavbar = () => {
           <div className="hidden md:flex items-center justify-center gap-1 bg-white dark:bg-black py-1.5 px-2 rounded-full border border-black/[0.08] dark:border-white/[0.12] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
             <Link to="/" className="flex items-center gap-2 px-3 py-1.5 mr-1 shrink-0" onClick={() => setActiveTab('Beranda')}>
               <img src={logo} alt="ILKOM" className="h-7 w-auto" />
-              <span className="text-sm font-bold text-black dark:text-white hidden lg:inline">ILKOM</span>
+              <span className="text-sm font-bold tracking-tight text-black dark:text-white hidden min-[800px]:inline">ILKOM NEWS</span>
             </Link>
 
             {navItems.map((item) => {

@@ -47,7 +47,7 @@ function AppContent() {
     <div className="relative min-h-screen flex flex-col transition-colors duration-300">
       <PerformanceMonitor />
       {!isAdminRoute && <Navbar />}
-      <main className={`flex-grow ${!isAdminRoute ? 'pt-28 pb-12' : ''}`}>
+      <main className="flex-grow">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
