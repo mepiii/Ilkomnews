@@ -61,20 +61,37 @@ export default function NewsFormPage() {
     }
   };
 
+  const objectUrlRef = useRef(null);
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       updateField('image', file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      // Revoke previous object URL to avoid memory leaks
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+      const url = URL.createObjectURL(file);
+      objectUrlRef.current = url;
+      setImagePreview(url);
     }
   };
 
   const removeImage = () => {
     updateField('image', null);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

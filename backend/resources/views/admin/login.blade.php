@@ -120,14 +120,6 @@
                     </div>
                 </form>
 
-                <!-- Footer Links -->
-                <div class="mt-6 pt-6 border-t border-purple-900/20">
-                    <div class="text-center">
-                        <a href="{{ route('password.request') }}" class="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                            Forgot your password?
-                        </a>
-                    </div>
-                </div>
             </div>
 
             <!-- Security Notice -->

@@ -193,7 +193,8 @@ export default function ProjectDetailPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <MetaItem icon={User} label="Pembuat" value={project.creator_name || project.creator || '-'} />
           {project.creator_nim && <MetaItem icon={Tag} label="NIM" value={project.creator_nim} />}
-          {project.creator_email && <MetaItem icon={Tag} label="Email" value={project.creator_email} />}
+          {project.creator_major && <MetaItem icon={FolderOpen} label="Jurusan" value={project.creator_major} />}
+          {project.creator_year && <MetaItem icon={Calendar} label="Angkatan" value={project.creator_year} />}
           {project.tracking_id && <MetaItem icon={Tag} label="Tracking ID" value={project.tracking_id} />}
           <MetaItem icon={FolderOpen} label="Kategori" value={project.category || '-'} />
           <MetaItem icon={Calendar} label="Tanggal Submit" value={

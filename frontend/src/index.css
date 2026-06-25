@@ -23,6 +23,8 @@
     --accent: #7A47A6;
     --accent-hover: #5b2d8e;
     --tile: rgba(122, 71, 166, 0.06);
+    /* Theme-aware color for the global BGPattern grid (light mode) */
+    --pattern-color: rgba(122, 71, 166, 0.10);
   }
 
   .dark {
@@ -45,6 +47,8 @@
     --accent: #bf94ff;
     --accent-hover: #d4b3ff;
     --tile: rgba(122, 71, 166, 0.12);
+    /* Theme-aware color for the global BGPattern grid (dark mode) */
+    --pattern-color: rgba(191, 148, 255, 0.08);
   }
 
   body {

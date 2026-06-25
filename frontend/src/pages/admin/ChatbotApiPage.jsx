@@ -9,7 +9,7 @@ export default function ChatbotApiPage() {
   const [error, setError] = useState(null)
   
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [formData, setFormData] = useState({ id: null, name: '', provider: '', model: '', api_key: '', base_url: '', is_active: false })
+  const [formData, setFormData] = useState({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', is_active: false })
   const [saving, setSaving] = useState(false)
   
   const [showKeys, setShowKeys] = useState({})
@@ -32,16 +32,17 @@ export default function ChatbotApiPage() {
 
   const handleOpenModal = (api = null) => {
     if (api) {
-      setFormData(api)
+      // Backend returns model_id (DB column) but our form uses model
+      setFormData({ ...api, model: api.model_id || api.model || '' })
     } else {
-      setFormData({ id: null, name: '', provider: 'openai', model: 'gpt-3.5-turbo', api_key: '', base_url: '', is_active: true })
+      setFormData({ id: null, name: '', provider_type: 'openai', model: 'gpt-3.5-turbo', api_key: '', base_url: '', is_active: true })
     }
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
-    setFormData({ id: null, name: '', provider: '', model: '', api_key: '', base_url: '', is_active: false })
+    setFormData({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', is_active: false })
   }
 
   const handleSubmit = async (e) => {
@@ -134,10 +135,10 @@ export default function ChatbotApiPage() {
                         <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center">
                           <Globe size={16} className="text-[var(--accent)]" />
                         </div>
-                        <span className="text-[var(--text-primary)] font-medium capitalize">{api.provider}</span>
+                        <span className="text-[var(--text-primary)] font-medium capitalize">{api.provider_type}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-[var(--text-secondary)] text-sm">{api.model}</td>
+                    <td className="py-4 px-6 text-[var(--text-secondary)] text-sm">{api.model_id}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
                         <Key size={14} className="text-[var(--text-muted)]" />
@@ -218,9 +219,9 @@ export default function ChatbotApiPage() {
                     <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Provider</label>
                     <select
                       required
-                      value={formData.provider}
+                      value={formData.provider_type}
                       onChange={(e) => {
-                        const provider = e.target.value
+                        const providerType = e.target.value
                         const baseUrls = {
                           openai: 'https://api.openai.com/v1',
                           anthropic: 'https://api.anthropic.com/v1',
@@ -229,8 +230,8 @@ export default function ChatbotApiPage() {
                         }
                         setFormData({
                           ...formData,
-                          provider,
-                          base_url: formData.base_url || baseUrls[provider] || ''
+                          provider_type: providerType,
+                          base_url: formData.base_url || baseUrls[providerType] || ''
                         })
                       }}
                       className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"

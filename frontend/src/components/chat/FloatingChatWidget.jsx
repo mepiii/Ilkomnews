@@ -139,7 +139,11 @@ export function FloatingChatWidget() {
                 >
                   {msg.role === 'assistant' && (
                     <div className="h-8 w-8 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm overflow-hidden bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center flex-shrink-0">
-                      <AgentIcon className="h-4 w-4 text-purple-600" />
+                      {currentAgent.avatar ? (
+                        <img src={currentAgent.avatar} alt={currentAgent.name} loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <AgentIcon className="h-4 w-4 text-purple-600" />
+                      )}
                     </div>
                   )}
                   <div className={cn('flex flex-col gap-1', msg.role === 'user' ? 'items-end' : '')}>

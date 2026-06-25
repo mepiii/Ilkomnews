@@ -261,7 +261,7 @@ const WebDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-theme pb-16 relative">
-      <BGPattern variant="grid" fill="#252525" size={24} className="fixed inset-0" />
+      <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
       {/* Hero Section */}
       <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img 
