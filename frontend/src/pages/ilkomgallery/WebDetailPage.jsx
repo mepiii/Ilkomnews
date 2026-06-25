@@ -7,7 +7,6 @@ import {
 } from 'lucide-react'
 import { FaGithub } from 'react-icons/fa'
 import { projectsService } from '../../services/api'
-import { BGPattern } from '../../components/ui/BGPattern'
 
 // Data Web Projects - Lengkap dengan 5 project
 const webData = {
@@ -237,7 +236,7 @@ const WebDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white">Loading project...</p>
@@ -248,7 +247,7 @@ const WebDetailPage = () => {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">Project tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-blue-500 hover:text-blue-400">
@@ -260,8 +259,7 @@ const WebDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme pb-16 relative">
-      <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
+    <div className="min-h-screen bg-transparent pb-16 relative">
       {/* Hero Section */}
       <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img 

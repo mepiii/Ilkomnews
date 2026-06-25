@@ -7,7 +7,6 @@ import {
   Mail, ArrowLeft, AlertCircle
 } from 'lucide-react'
 import { FaGithub } from 'react-icons/fa'
-import { BGPattern } from '../../components/ui/BGPattern'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -102,7 +101,7 @@ const ProjectDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white">Memuat proyek...</p>
@@ -113,7 +112,7 @@ const ProjectDetailPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <AlertCircle size={32} className="text-red-500" />
@@ -134,7 +133,7 @@ const ProjectDetailPage = () => {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">Project tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-purple-500 hover:text-purple-400">
@@ -170,8 +169,7 @@ const ProjectDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme pb-16 relative">
-      <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
+    <div className="min-h-screen bg-transparent pb-16 relative">
       {/* Hero Section */}
       <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img

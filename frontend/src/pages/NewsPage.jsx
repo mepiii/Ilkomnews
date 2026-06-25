@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ArticleCard from '../components/articles/ArticleCard'
-import { BGPattern } from '../components/ui/BGPattern'
 import { AnimatedTabs } from '../components/ui/AnimatedTabs'
+import { PageHeader } from '../components/ui/PageHeader'
 import ExpandingSearchDock from '../components/shared/ExpandingSearchDock'
 import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { mockNews } from '../services/api'
@@ -49,9 +49,8 @@ const NewsPage = () => {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="min-h-screen bg-theme relative pt-24 pb-12">
-      <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
-      <div className="absolute inset-0 pointer-events-none">
+    <div className="min-h-screen bg-transparent relative pt-24 pb-12">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-100/30 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-100/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
       </div>
@@ -59,21 +58,18 @@ const NewsPage = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumb />
 
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
-            <div className="bg-card border border-theme rounded-2xl px-3 py-1">
-              <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
+        <PageHeader
+          badge={
+            <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
+              <div className="bg-card border border-theme rounded-2xl px-3 py-1">
+                <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
+              </div>
+              <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
             </div>
-            <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-theme-primary mb-4">
-            Berita <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">Terkini</span>
-          </h1>
-          <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
-          <p className="text-theme-muted text-base max-w-2xl mx-auto">
-            Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer
-          </p>
-        </div>
+          }
+          title="Berita Terkini"
+          subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
+        />
 
         {/* Category Tabs */}
         <div className="mb-6 flex justify-center">

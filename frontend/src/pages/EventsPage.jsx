@@ -3,6 +3,7 @@ import EventList from '../components/events/EventList'
 import EventFilter from '../components/events/EventFilter'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
 import { mockEvents } from '../services/api'
 
 const EventsPage = () => {
@@ -74,10 +75,11 @@ const EventsPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
       <Breadcrumb />
       
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary">Event & Kegiatan</h1>
-        <p className="text-text-gray mt-1">Ikuti berbagai event menarik untuk mengembangkan diri</p>
-      </div>
+      <PageHeader
+        title="Event & Kegiatan"
+        subtitle="Ikuti berbagai event menarik untuk mengembangkan diri"
+        className="mb-6"
+      />
       
       <EventFilter 
         onFilterChange={handleFilterChange}

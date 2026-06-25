@@ -215,7 +215,7 @@ const GameDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white">Loading game...</p>
@@ -226,7 +226,7 @@ const GameDetailPage = () => {
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-theme flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">Game tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-orange-500 hover:text-orange-400">
@@ -238,7 +238,7 @@ const GameDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme pb-16">
+    <div className="min-h-screen bg-transparent pb-16">
       {/* Hero Section */}
       <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
         <img 

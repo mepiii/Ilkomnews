@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { BGPattern } from './components/ui/BGPattern'
 import { FloatingChatWidget } from './components/chat/FloatingChatWidget'
 import IntroScreen from './components/common/IntroScreen'
 import Navbar from './components/layout/Navbar'
@@ -23,15 +24,13 @@ const SubmitProjectPage = lazy(() => import('./pages/SubmitProjectPage'))
 const TrackPage = lazy(() => import('./pages/TrackPage'))
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+  <div className="min-h-screen flex items-center justify-center">
     <div className="text-center">
       <div className="w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-      <p className="text-neutral-500 text-sm">Memuat...</p>
+      <p className="text-theme-muted text-sm">Memuat...</p>
     </div>
   </div>
 )
-
-import { useLocation } from 'react-router-dom';
 
 function AppContent() {
   const [showIntro, setShowIntro] = useState(true)
@@ -46,8 +45,29 @@ function AppContent() {
   return (
     <div className="relative min-h-screen flex flex-col transition-colors duration-300">
       <PerformanceMonitor />
+
+      {/*
+        Global BGPattern — the single source of truth for the decorative grid.
+        Rendered once at the app root so every public route shows it consistently
+        (previously it was mounted per-page in only ~7 of 15 routes, which is why
+        it appeared to "fail to render" globally).
+
+        Layering contract:
+          - `fixed inset-0`   → covers the whole viewport, never scrolls.
+          - `-z-10`           → sits BEHIND all real content (which is z-0+).
+          - `pointer-events-none` → never blocks clicks.
+          - `fill="var(--pattern-color)"` → defined in index.css for light/dark,
+            so the grid reacts to the theme automatically.
+          - Mounted on public routes only: Navbar and Footer paint their own
+            solid/glass backgrounds (--nav-bg / --footer-bg), so the grid is
+            naturally excluded there. Admin routes use a separate layout/theme.
+      */}
+      {!isAdminRoute && (
+        <BGPattern variant="grid" fill="var(--pattern-color)" size={24} mask="fade-edges" className="fixed inset-0" />
+      )}
+
       {!isAdminRoute && <Navbar />}
-      <main className="flex-grow">
+      <main className="relative z-0 flex-grow">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />

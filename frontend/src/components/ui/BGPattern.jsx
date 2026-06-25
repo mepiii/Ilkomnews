@@ -63,7 +63,7 @@ const BGPattern = ({
     <div
       aria-hidden="true"
       className={cn(
-        'pointer-events-none absolute inset-0 z-[-10] size-full',
+        'pointer-events-none inset-0 z-[-10] size-full',
         maskClasses[mask],
         className
       )}

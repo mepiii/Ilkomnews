@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Upload, CheckCircle, Copy, ExternalLink, Plus, X, Globe, Smartphone, Palette, Gamepad2, Cpu, Image as ImageIcon } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
 import Breadcrumb from '../components/common/Breadcrumb'
-import { BGPattern } from '../components/ui/BGPattern'
+import { PageHeader } from '../components/ui/PageHeader'
 const CATEGORIES = [
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
   { id: 'mobile', label: 'Aplikasi Mobile', icon: Smartphone },
@@ -180,9 +180,8 @@ const SubmitProjectPage = () => {
 
   if (result) {
     return (
-      <div className="min-h-screen bg-theme relative pt-24 pb-12">
-        <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
-        <div className="absolute inset-0 pointer-events-none">
+      <div className="min-h-screen bg-transparent relative pt-24 pb-12">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
         </div>
@@ -223,9 +222,8 @@ const SubmitProjectPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme relative pt-24 pb-12">
-      <BGPattern variant="grid" fill="var(--pattern-color)" size={24} className="fixed inset-0" />
-      <div className="absolute inset-0 pointer-events-none">
+    <div className="min-h-screen bg-transparent relative pt-24 pb-12">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
       </div>
@@ -234,22 +232,18 @@ const SubmitProjectPage = () => {
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
             <Breadcrumb />
-            <div className="mb-12 text-center">
-              <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-4">
-                <div className="bg-card border border-theme rounded-2xl px-3 py-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span>
+            <PageHeader
+              badge={
+                <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
+                  <div className="bg-card border border-theme rounded-2xl px-3 py-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span>
+                  </div>
+                  <p className="pr-3 text-xs text-theme-muted">Submit</p>
                 </div>
-                <p className="pr-3 text-xs text-theme-muted">Submit</p>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black text-theme-primary mb-4 font-header">
-                <span>Kirim </span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">Proyek</span>
-              </h1>
-              <div className="w-12 h-0.5 mx-auto rounded-full mb-4 bg-accent" />
-              <p className="text-theme-muted text-base md:text-lg max-w-2xl mx-auto">
-                Bagikan proyek Anda dengan komunitas ILKOM
-              </p>
-            </div>
+              }
+              title="Kirim Proyek"
+              subtitle="Bagikan proyek Anda dengan komunitas ILKOM"
+            />
           </div>
 
           {error && (
