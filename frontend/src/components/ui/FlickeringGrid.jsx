@@ -9,7 +9,7 @@ export function FlickeringGrid({
   width,
   height,
   className,
-  maxOpacity = 0.3,
+  maxOpacity = 0.1,
 }) {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
