@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import LoadingSpinner from '../common/LoadingSpinner'
 import NewsExpandableCard from '../cards/NewsExpandableCard'
 import { FlowButton } from '../ui/FlowButton'
+import { GlowCard } from '../ui/GlowCard'
 import { Text_03 } from '../ui/Text03'
 import { BGPattern } from '../ui/BGPattern'
 import { newsService } from '../../services/api'
@@ -40,7 +41,7 @@ const LatestNews = () => {
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Informasi terbaru seputar kegiatan mahasiswa dan kampus</p>
         </motion.div>
         <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12" variants={container} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          {news.slice(0, 4).map((article) => (<motion.div key={article.id} variants={item}><NewsExpandableCard article={article} /></motion.div>))}
+          {news.slice(0, 4).map((article) => (<motion.div key={article.id} variants={item}><GlowCard glowColor="purple" className="rounded-2xl"><NewsExpandableCard article={article} /></GlowCard></motion.div>))}
         </motion.div>
         <div className="text-center"><Link to="/news" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}><FlowButton text="Lihat Semua Berita" /></Link></div>
       </div>

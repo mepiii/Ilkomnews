@@ -98,48 +98,48 @@ export default function ChatStatsPage() {
           icon={MessageSquare}
           label="Total Query"
           value={data?.total_queries}
-          color="bg-blue-500/20"
-          iconColor="text-blue-400"
+          color="bg-blue-500/10"
+          iconColor="text-blue-500"
           delay={0}
         />
         <StatCard
           icon={CheckCircle}
           label="Berhasil"
           value={data?.successful}
-          color="bg-emerald-500/20"
-          iconColor="text-emerald-400"
+          color="bg-emerald-500/10"
+          iconColor="text-emerald-500"
           delay={0.05}
         />
         <StatCard
           icon={XCircle}
           label="Ditolak (Topik)"
           value={data?.rejected}
-          color="bg-red-500/20"
-          iconColor="text-red-400"
+          color="bg-red-500/10"
+          iconColor="text-red-500"
           delay={0.1}
         />
         <StatCard
           icon={AlertCircle}
           label="Tanpa Konteks"
           value={data?.no_context}
-          color="bg-amber-500/20"
-          iconColor="text-amber-400"
+          color="bg-amber-500/10"
+          iconColor="text-amber-500"
           delay={0.15}
         />
         <StatCard
           icon={Zap}
           label="Dibatasi Rate Limit"
           value={data?.rate_limited}
-          color="bg-purple-500/20"
-          iconColor="text-purple-400"
+          color="bg-purple-500/10"
+          iconColor="text-purple-500"
           delay={0.2}
         />
         <StatCard
           icon={Clock}
           label="Hari Ini"
           value={data?.today}
-          color="bg-pink-500/20"
-          iconColor="text-pink-400"
+          color="bg-pink-500/10"
+          iconColor="text-pink-500"
           delay={0.25}
         />
       </div>

@@ -10,6 +10,19 @@ import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { mockNews } from '../services/api'
 import { Newspaper, Filter } from 'lucide-react'
 
+const parseTags = (tags) => {
+  if (!tags) return []
+  if (Array.isArray(tags)) return tags.map(t => String(t).trim()).filter(Boolean)
+  if (typeof tags === 'string') {
+    try {
+      const parsed = JSON.parse(tags)
+      if (Array.isArray(parsed)) return parsed.map(t => String(t).trim()).filter(Boolean)
+    } catch {}
+    return tags.split(',').map(t => t.trim()).filter(Boolean)
+  }
+  return []
+}
+
 const NEWS_CATEGORIES = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
   { id: 'Workshop', label: 'Workshop', icon: Newspaper },
@@ -26,6 +39,7 @@ const NewsPage = () => {
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
+  const [selectedTag, setSelectedTag] = useState('all')
 
   useEffect(() => {
     mockNews.getAll()
@@ -34,8 +48,11 @@ const NewsPage = () => {
       .finally(() => setLoading(false))
   }, [])
 
+  const uniqueTags = [...new Set(allNews.flatMap(item => parseTags(item.tags)))]
+
   const filtered = allNews
     .filter(n => activeTab === 'all' || n.category === activeTab)
+    .filter(n => selectedTag === 'all' || parseTags(n.tags).includes(selectedTag))
     .filter(n => {
       if (!searchQuery) return true
       const s = searchQuery.toLowerCase()
@@ -73,6 +90,16 @@ const NewsPage = () => {
           subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
         />
 
+        {/* Tag Filter */}
+        {uniqueTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8 justify-center">
+            <button onClick={() => setSelectedTag('all')} className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${selectedTag === 'all' ? 'bg-purple-600 text-white' : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'}`}>Semua</button>
+            {uniqueTags.map(tag => (
+              <button key={tag} onClick={() => setSelectedTag(tag)} className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${selectedTag === tag ? 'bg-purple-600 text-white' : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'}`}>#{tag}</button>
+            ))}
+          </div>
+        )}
+
         {/* Category Tabs */}
         <div className="mb-6 flex justify-center">
           <AnimatedTabs tabs={NEWS_CATEGORIES} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -105,7 +132,7 @@ const NewsPage = () => {
             </div>
             <p className="text-theme-primary text-lg font-medium">Tidak ada berita yang ditemukan</p>
             <p className="text-theme-muted text-sm mt-1">Coba ubah filter atau cari dengan kata kunci lain</p>
-            <button onClick={() => { setActiveTab('all'); setSearchQuery(''); setSortBy('Terbaru') }} className="mt-4 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium hover:bg-accent/20 transition-colors">
+            <button onClick={() => { setActiveTab('all'); setSearchQuery(''); setSortBy('Terbaru'); setSelectedTag('all') }} className="mt-4 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium hover:bg-accent/20 transition-colors">
               Reset Filter
             </button>
           </div>

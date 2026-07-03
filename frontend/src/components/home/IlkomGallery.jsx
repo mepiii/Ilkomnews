@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, Smartphone, Palette, Gamepad2, Sparkles } from 'lucide-react'
 import { Text_03 } from '../ui/Text03'
 import { FlowButton } from '../ui/FlowButton'
+import { GlowCard } from '../ui/GlowCard'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import ProjectExpandableCard from '../cards/ProjectExpandableCard'
 import { projectsService } from '../../services/api'
@@ -52,7 +53,7 @@ const IlkomGallery = () => {
             {loading ? Array.from({ length: 4 }).map((_, i) => (<motion.div key={i} variants={itemVariant}><div className="h-64 rounded-xl bg-theme-secondary animate-pulse" /></motion.div>))
             : error ? <div className="col-span-full text-center py-10"><p className="text-theme-muted text-sm">{error}</p></div>
             : items.length === 0 ? <div className="col-span-full text-center py-10"><p className="text-theme-muted text-sm">Belum ada proyek di kategori ini</p></div>
-            : items.map((project, i) => (<motion.div key={project.id || i} variants={itemVariant}><ProjectExpandableCard project={project} /></motion.div>))}
+            : items.map((project, i) => (<motion.div key={project.id || i} variants={itemVariant}><GlowCard glowColor="purple" className="rounded-2xl"><ProjectExpandableCard project={project} /></GlowCard></motion.div>))}
           </motion.div>
         </AnimatePresence>
         <div className="text-center mt-10"><Link to="/ilkomgallery"><FlowButton text="Lihat Semua Proyek" /></Link></div>

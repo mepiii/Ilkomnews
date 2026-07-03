@@ -10,8 +10,10 @@ const HomePage = () => {
       <HeroSection />
       <AnimatedSeparator variant="purple" />
       <LatestNews />
-      <TalkingMascot />
+      <AnimatedSeparator variant="line" />
       <IlkomGallery />
+      <AnimatedSeparator variant="line" />
+      <TalkingMascot />
     </div>
   )
 }

@@ -108,32 +108,32 @@ export default function SecurityCenterPage() {
           icon={Shield}
           label="Total Percobaan"
           value={data?.total_attempts}
-          color="bg-blue-500/20"
-          iconColor="text-blue-400"
+          color="bg-blue-500/10"
+          iconColor="text-blue-500"
           delay={0}
         />
         <StatCard
           icon={AlertTriangle}
           label="Gagal Login"
           value={data?.failed_attempts}
-          color="bg-red-500/20"
-          iconColor="text-red-400"
+          color="bg-red-500/10"
+          iconColor="text-red-500"
           delay={0.05}
         />
         <StatCard
           icon={CheckCircle}
           label="Berhasil Login"
           value={data?.successful_attempts}
-          color="bg-emerald-500/20"
-          iconColor="text-emerald-400"
+          color="bg-emerald-500/10"
+          iconColor="text-emerald-500"
           delay={0.1}
         />
         <StatCard
           icon={Lock}
           label="Lockout"
           value={data?.lockouts}
-          color="bg-amber-500/20"
-          iconColor="text-amber-400"
+          color="bg-amber-500/10"
+          iconColor="text-amber-500"
           delay={0.15}
         />
       </div>

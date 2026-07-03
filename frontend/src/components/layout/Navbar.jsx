@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, Newspaper, Image, ExternalLink, Users, ChevronDown, Send, Search } from 'lucide-react'
+import { Menu, X, Home, Newspaper, Image, ExternalLink, Users, ChevronDown, Send, Search, Bookmark } from 'lucide-react'
 import { AnimatedThemeToggle } from '../ui/AnimatedThemeToggle'
 import NotificationPopover from '../ui/NotificationPopover'
 import logo from '../../assets/BEM.png'
@@ -20,6 +20,7 @@ const LampNavbar = () => {
     { name: 'Ilkom Gallery', path: '/ilkomgallery', icon: Image },
     { name: 'Submit', path: '/submit', icon: Send },
     { name: 'Track', path: '/track', icon: Search },
+    { name: 'Saved', path: '/saved', icon: Bookmark },
   ]
 
   const bemApps = [
