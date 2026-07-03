@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { MessageCircle, GraduationCap, Trophy, Bot, Sparkles, BookOpen, Code2, Lightbulb, Zap, Star, Brain } from 'lucide-react'
 import { Text_03 } from '../ui/Text03'
 import { Tiles } from '../ui/Tiles'
+import { FlickeringGrid } from '../ui/FlickeringGrid'
 import mascotIdle from '../../assets/mascot/mascot-idle.png'
 import mascotTalking from '../../assets/mascot/mascot-talking.png'
 
@@ -55,6 +56,7 @@ const TalkingMascot = () => {
   return (
     <section className="py-12 md:py-20 relative z-0 overflow-hidden bg-theme">
       <Tiles rows={10} cols={16} />
+      <FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-10 left-[5%] md:top-20 md:left-[10%] text-purple-600/30 dark:text-purple-400/20 animate-idle-float" style={{ animationDuration: '3s' }}><GraduationCap size={28} strokeWidth={1.5} /></div>
         <div className="absolute top-20 right-[8%] md:top-32 md:right-[15%] text-purple-500/30 dark:text-purple-300/20 animate-idle-float" style={{ animationDuration: '4s', animationDelay: '0.5s' }}><Bot size={26} strokeWidth={1.5} /></div>

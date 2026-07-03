@@ -9,6 +9,7 @@ import ErrorMessage from '../components/common/ErrorMessage'
 import { mockNews, mockArticles, mockEvents } from '../services/api'
 import { getIdFromSlug, isNumericId, generateSlug } from '../utils/formatters'
 import { Tiles } from '../components/ui/Tiles'
+import { FlickeringGrid } from '../components/ui/FlickeringGrid'
 
 const DetailPage = ({ type }) => {
   const { slug } = useParams()
@@ -23,6 +24,7 @@ const DetailPage = ({ type }) => {
     return (
       <div className="min-h-screen bg-transparent relative z-0">
         <Tiles rows={10} cols={16} />
+        <FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} />
         <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 relative z-10">
           <Breadcrumb />
           <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
@@ -85,9 +87,9 @@ const DetailPage = ({ type }) => {
 
   useEffect(() => { if (data) window.scrollTo(0, 0) }, [data])
 
-  if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
-  if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
-  if (!data) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div></div>
+  if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
+  if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
+  if (!data) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><Tiles rows={10} cols={16} /><FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div></div>
 
   const renderDetail = () => {
     switch (type) {
@@ -102,6 +104,7 @@ const DetailPage = ({ type }) => {
   return (
     <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8">
       <Tiles rows={10} cols={16} />
+      <FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" maxOpacity={0.3} />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
