@@ -8,6 +8,7 @@ import Footer from './components/layout/Footer'
 import PerformanceMonitor from './components/common/PerformanceMonitor'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import AdminRoutes from './routes/AdminRoutes'
+import { Tiles } from './components/ui/Tiles'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
@@ -47,22 +48,11 @@ function AppContent() {
       {showIntro && <IntroScreen />}
       <PerformanceMonitor />
 
-      {/*
-        Global BGPattern — the single source of truth for the decorative grid.
-        Rendered once at the app root so every public route shows it consistently
-        (previously it was mounted per-page in only ~7 of 15 routes, which is why
-        it appeared to "fail to render" globally).
+      {/* Full-page Tiles background */}
+      {!isAdminRoute && (
+        <Tiles fixed rows={100} cols={16} />
+      )}
 
-        Layering contract:
-          - `fixed inset-0`   → covers the whole viewport, never scrolls.
-          - `-z-10`           → sits BEHIND all real content (which is z-0+).
-          - `pointer-events-none` → never blocks clicks.
-          - `fill="var(--pattern-color)"` → defined in index.css for light/dark,
-            so the grid reacts to the theme automatically.
-          - Mounted on public routes only: Navbar and Footer paint their own
-            solid/glass backgrounds (--nav-bg / --footer-bg), so the grid is
-            naturally excluded there. Admin routes use a separate layout/theme.
-      */}
       {!isAdminRoute && <Navbar />}
       <main className="relative z-0 flex-grow">
         <Suspense fallback={<PageLoader />}>

@@ -1,37 +1,54 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import LoadingSpinner from '../common/LoadingSpinner'
+import { motion, AnimatePresence } from 'framer-motion'
 import NewsExpandableCard from '../cards/NewsExpandableCard'
 import { FlowButton } from '../ui/FlowButton'
 import { GlowCard } from '../ui/GlowCard'
 import { Text_03 } from '../ui/Text03'
-import { Tiles } from '../ui/Tiles'
-import { FlickeringGrid } from '../ui/FlickeringGrid'
+import { SmoothTabs } from '../ui/SmoothTabs'
 import { newsService } from '../../services/api'
+import { Newspaper } from 'lucide-react'
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } }
-const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }
+const TABS = [
+  { id: 'all', label: 'Semua Berita', icon: Newspaper },
+  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
+  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
+]
+
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
+const itemVariant = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }
 
 const LatestNews = () => {
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [activeTab, setActiveTab] = useState('all')
+
   useEffect(() => {
     const fetchNews = async () => {
-      try { setLoading(true); const response = await newsService.getLatest(4); const data = response.data || response; setNews(Array.isArray(data) ? data : []) }
-      catch (err) { setError(err.message || 'Gagal memuat berita') } finally { setLoading(false) }
+      try {
+        setLoading(true)
+        const response = await newsService.getLatest(8)
+        const data = response.data || response
+        setNews(Array.isArray(data) ? data : [])
+      } catch (err) {
+        setError(err.message || 'Gagal memuat berita')
+      } finally {
+        setLoading(false)
+      }
     }
     fetchNews()
   }, [])
-  if (loading) return <LoadingSpinner />
-  if (error || news.length === 0) {
-    return (<section className="py-20 relative z-0 bg-theme"><FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" /><Tiles rows={10} cols={16} /><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"><div className="text-center py-16 glass-card rounded-3xl"><p className="text-theme-muted text-lg">{error || 'Belum ada berita'}</p></div></div></section>)
-  }
+
+  const filtered = activeTab === 'all'
+    ? news
+    : news.filter(n => n.category === activeTab)
+
+  const items = filtered.slice(0, 4)
+
   return (
     <section className="py-20 md:py-24 relative z-0 bg-theme">
-      <FlickeringGrid squareSize={4} gridGap={6} flickerChance={0.3} color="rgb(139, 92, 246)" />
-      <Tiles rows={10} cols={16} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
@@ -42,12 +59,47 @@ const LatestNews = () => {
           <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Informasi terbaru seputar kegiatan mahasiswa dan kampus</p>
         </motion.div>
-        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12" variants={container} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          {news.slice(0, 4).map((article) => (<motion.div key={article.id} variants={item}><GlowCard glowColor="purple" className="rounded-2xl"><NewsExpandableCard article={article} /></GlowCard></motion.div>))}
-        </motion.div>
-        <div className="text-center"><Link to="/news" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}><FlowButton text="Lihat Semua Berita" /></Link></div>
+
+        <div className="flex justify-center mb-8">
+          <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <motion.div key={i} variants={itemVariant}>
+                  <div className="h-64 rounded-xl bg-theme-secondary animate-pulse" />
+                </motion.div>
+              ))
+            ) : error ? (
+              <div className="col-span-full text-center py-10">
+                <p className="text-theme-muted text-sm">{error}</p>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="col-span-full text-center py-10">
+                <p className="text-theme-muted text-sm">Belum ada berita di kategori ini</p>
+              </div>
+            ) : (
+              items.map((article, i) => (
+                <motion.div key={article.id || i} variants={itemVariant}>
+                  <GlowCard glowColor="purple" className="rounded-2xl">
+                    <NewsExpandableCard article={article} />
+                  </GlowCard>
+                </motion.div>
+              ))
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="text-center mt-10">
+          <Link to="/news" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
+            <FlowButton text="Lihat Semua Berita" />
+          </Link>
+        </div>
       </div>
     </section>
   )
 }
+
 export default LatestNews

@@ -13,6 +13,7 @@ export function Tiles({
   cols = 10,
   tileClassName,
   tileSize = "md",
+  fixed = false,
 }) {
   const rowsArray = new Array(rows).fill(1)
   const colsArray = new Array(cols).fill(1)
@@ -20,7 +21,9 @@ export function Tiles({
   return (
     <div
       className={cn(
-        "relative z-0 flex w-full h-full justify-center",
+        fixed
+          ? "fixed inset-0 z-0 overflow-hidden pointer-events-none"
+          : "relative z-0 flex w-full h-full justify-center",
         className
       )}
     >
