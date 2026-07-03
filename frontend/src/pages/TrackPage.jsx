@@ -5,7 +5,7 @@ import { Search, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
 import Breadcrumb from '../components/common/Breadcrumb'
 import { PageHeader } from '../components/ui/PageHeader'
-import { BGPattern } from '../components/ui/BGPattern'
+import { Tiles } from '../components/ui/Tiles'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -54,7 +54,7 @@ const TrackPage = () => {
 
   return (
     <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-12">
-      <BGPattern variant="grid" size={60} mask="fade-edges" />
+      <Tiles rows={10} cols={16} />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />

@@ -1,7 +1,6 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
-import { BGPattern } from './components/ui/BGPattern'
 import { FloatingChatWidget } from './components/chat/FloatingChatWidget'
 import IntroScreen from './components/common/IntroScreen'
 import Navbar from './components/layout/Navbar'
@@ -64,10 +63,6 @@ function AppContent() {
             solid/glass backgrounds (--nav-bg / --footer-bg), so the grid is
             naturally excluded there. Admin routes use a separate layout/theme.
       */}
-      {!isAdminRoute && (
-        <BGPattern variant="grid" fill="var(--pattern-color)" size={24} mask="fade-edges" className="fixed inset-0" />
-      )}
-
       {!isAdminRoute && <Navbar />}
       <main className="relative z-0 flex-grow">
         <Suspense fallback={<PageLoader />}>

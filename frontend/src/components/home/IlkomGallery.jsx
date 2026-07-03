@@ -8,7 +8,7 @@ import { GlowCard } from '../ui/GlowCard'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import ProjectExpandableCard from '../cards/ProjectExpandableCard'
 import { projectsService } from '../../services/api'
-import { BGPattern } from '../ui/BGPattern'
+import { Tiles } from '../ui/Tiles'
 
 const TABS = [
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
@@ -36,7 +36,7 @@ const IlkomGallery = () => {
   const items = projects.slice(0, 4)
   return (
     <section className="py-20 md:py-24 relative z-0 overflow-hidden bg-theme">
-      <BGPattern variant="grid" size={60} mask="fade-edges" />
+      <Tiles rows={10} cols={16} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
