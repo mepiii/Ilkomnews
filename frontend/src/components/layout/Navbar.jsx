@@ -10,6 +10,7 @@ const LampNavbar = () => {
   const location = useLocation()
   const [activeTab, setActiveTab] = useState('Beranda')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [bemDropdownOpen, setBemDropdownOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
@@ -41,7 +42,7 @@ const LampNavbar = () => {
   const handleScroll = useCallback(() => {
     const y = window.scrollY
     if (y < 50) { setIsVisible(true) }
-    else if (y > lastScrollY.current && y > 100) { setIsVisible(false); setDropdownOpen(false); setMobileOpen(false) }
+    else if (y > lastScrollY.current && y > 100) { setIsVisible(false); setDropdownOpen(false); setBemDropdownOpen(false); setMobileOpen(false) }
     else if (y < lastScrollY.current - 10) { setIsVisible(true) }
     lastScrollY.current = y
   }, [])
@@ -52,10 +53,13 @@ const LampNavbar = () => {
   }, [handleScroll])
 
   useEffect(() => {
-    const handleClick = (e) => { if (dropdownOpen && !e.target.closest('[data-dropdown]')) setDropdownOpen(false) }
+    const handleClick = (e) => {
+      if (dropdownOpen && !e.target.closest('[data-dropdown]')) setDropdownOpen(false)
+      if (bemDropdownOpen && !e.target.closest('[data-dropdown-bem]')) setBemDropdownOpen(false)
+    }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [dropdownOpen])
+  }, [dropdownOpen, bemDropdownOpen])
 
   return (
     <AnimatePresence>
@@ -99,7 +103,7 @@ const LampNavbar = () => {
             {/* Aktivitas Dropdown */}
             <div className="relative" data-dropdown>
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => { setDropdownOpen(!dropdownOpen); setBemDropdownOpen(false) }}
                 className={`flex items-center gap-1 cursor-pointer px-4 py-2 rounded-full transition-all text-[13px] font-semibold tracking-wide uppercase ${
                   activeTab === 'Aktivitas'
                     ? 'bg-black/[0.06] dark:bg-white/[0.12] text-black dark:text-white'
@@ -137,15 +141,15 @@ const LampNavbar = () => {
             </div>
 
             {/* BEM Apps Dropdown */}
-            <div className="relative" data-dropdown>
+            <div className="relative" data-dropdown-bem>
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => { setBemDropdownOpen(!bemDropdownOpen); setDropdownOpen(false) }}
                 className="flex items-center gap-1 cursor-pointer px-4 py-2 rounded-full transition-all text-[13px] font-semibold tracking-wide uppercase text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               >
                 <span className="hidden md:inline">BEM Apps</span>
-                <ChevronDown size={14} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`transition-transform ${bemDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-              {dropdownOpen && (
+              {bemDropdownOpen && (
                 <motion.div
                   initial={{ opacity: 0, y: -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
