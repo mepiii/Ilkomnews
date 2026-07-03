@@ -48,7 +48,7 @@ export function FloatingChatWidget() {
   const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }])
   const [loading, setLoading] = useState(false)
   const [sessionId] = useState(() => `wolfy_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
-  const [activeView, setActiveView] = useState('chat')
+  const [activeView, setActiveView] = useState('faq')
   const [expandedFaq, setExpandedFaq] = useState(null)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -147,7 +147,7 @@ export function FloatingChatWidget() {
                 <div className="flex items-center justify-center gap-2"><MessageSquare className="w-4 h-4" />Chat</div>
               </button>
               <button onClick={() => setActiveView('faq')} className={`flex-1 py-3 text-sm font-medium transition-colors ${activeView === 'faq' ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}>
-                <div className="flex items-center justify-center gap-2"><BookOpen className="w-4 h-4" />Artikel Populer</div>
+                <div className="flex items-center justify-center gap-2"><BookOpen className="w-4 h-4" />FAQ</div>
               </button>
             </div>
 
@@ -261,8 +261,16 @@ export function FloatingChatWidget() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 text-center">
-                  <button className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors">Lihat semua artikel</button>
+                {/* Ask Wolfy prompt */}
+                <div className="mt-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 text-center">
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-3">Ada pertanyaan lain?</p>
+                  <button
+                    onClick={() => setActiveView('chat')}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Tanyakan ke Wolfy
+                  </button>
                 </div>
               </div>
             )}

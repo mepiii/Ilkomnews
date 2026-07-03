@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, Newspaper, Image, ExternalLink, Users, ChevronDown, Send, Search, Bookmark } from 'lucide-react'
+import { Menu, X, Home, Newspaper, Image, ExternalLink, Users, ChevronDown, Send, Search, Bookmark, Heart, Eye } from 'lucide-react'
 import { AnimatedThemeToggle } from '../ui/AnimatedThemeToggle'
 import NotificationPopover from '../ui/NotificationPopover'
 import logo from '../../assets/BEM.png'
@@ -18,9 +18,12 @@ const LampNavbar = () => {
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Berita', path: '/news', icon: Newspaper },
     { name: 'Ilkom Gallery', path: '/ilkomgallery', icon: Image },
-    { name: 'Submit', path: '/submit', icon: Send },
-    { name: 'Track', path: '/track', icon: Search },
-    { name: 'Saved', path: '/saved', icon: Bookmark },
+  ]
+
+  const activityItems = [
+    { name: 'Submit Proyek', path: '/submit', icon: Send },
+    { name: 'Lacak Status', path: '/track', icon: Search },
+    { name: 'Koleksi Saya', path: '/koleksi', icon: Bookmark },
   ]
 
   const bemApps = [
@@ -30,7 +33,9 @@ const LampNavbar = () => {
 
   useEffect(() => {
     const current = navItems.find(item => item.path === location.pathname)
+    const currentActivity = activityItems.find(item => item.path === location.pathname)
     if (current) setActiveTab(current.name)
+    else if (currentActivity) setActiveTab('Aktivitas')
   }, [location.pathname])
 
   const handleScroll = useCallback(() => {
@@ -91,6 +96,47 @@ const LampNavbar = () => {
               )
             })}
 
+            {/* Aktivitas Dropdown */}
+            <div className="relative" data-dropdown>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className={`flex items-center gap-1 cursor-pointer px-4 py-2 rounded-full transition-all text-[13px] font-semibold tracking-wide uppercase ${
+                  activeTab === 'Aktivitas'
+                    ? 'bg-black/[0.06] dark:bg-white/[0.12] text-black dark:text-white'
+                    : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                }`}
+              >
+                <span className="hidden md:inline">Aktivitas</span>
+                <ChevronDown size={14} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {dropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-700 overflow-hidden p-1.5"
+                >
+                  {activityItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = location.pathname === item.path
+                    return (
+                      <Link key={item.name} to={item.path}
+                        onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
+                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                            : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span>{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </div>
+
+            {/* BEM Apps Dropdown */}
             <div className="relative" data-dropdown>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -164,6 +210,21 @@ const LampNavbar = () => {
                   </Link>
                 )
               })}
+              <div className="border-t border-neutral-200 dark:border-neutral-700 mt-1 pt-1">
+                <div className="px-4 py-2 text-xs font-semibold text-black/40 dark:text-white/40 uppercase tracking-wider">Aktivitas</div>
+                {activityItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link key={item.name} to={item.path}
+                      onClick={() => { setActiveTab('Aktivitas'); setMobileOpen(false) }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+                    >
+                      <Icon size={18} />
+                      <span>{item.name}</span>
+                    </Link>
+                  )
+                })}
+              </div>
               <div className="border-t border-neutral-200 dark:border-neutral-700 mt-1 pt-1">
                 {bemApps.map((app) => {
                   const Icon = app.icon

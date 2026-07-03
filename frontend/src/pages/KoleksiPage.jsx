@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Bookmark, Trash2 } from 'lucide-react'
+import { Bookmark, Trash2, Heart, Eye } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import NewsExpandableCard from '../components/cards/NewsExpandableCard'
@@ -9,7 +9,7 @@ import { Text_03 } from '../components/ui/Text03'
 
 const ITEMS_PER_PAGE = 8
 
-const SavedItemsPage = () => {
+const KoleksiPage = () => {
   const [savedItems, setSavedItems] = useState([])
   const [activeTab, setActiveTab] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
@@ -46,11 +46,11 @@ const SavedItemsPage = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
-            <Text_03 text="Item Tersimpan" className="section-gradient-text" />
+            <Text_03 text="Koleksi Saya" className="section-gradient-text" />
           </h1>
           <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">
-            Koleksi artikel dan proyek yang telah Anda simpan
+            Artikel dan proyek yang telah Anda sukai, simpan, atau lihat
           </p>
         </motion.div>
 
@@ -74,7 +74,8 @@ const SavedItemsPage = () => {
         {paginatedItems.length === 0 ? (
           <div className="text-center py-16 glass-card rounded-3xl">
             <Bookmark size={48} className="mx-auto mb-4 text-theme-muted" />
-            <p className="text-theme-muted text-lg">Belum ada item tersimpan</p>
+            <p className="text-theme-muted text-lg">Belum ada koleksi</p>
+            <p className="text-theme-muted text-sm mt-2">Sukai, simpan, atau lihat konten untuk mengumpulkannya di sini</p>
             <Link to="/ilkomgallery" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
               Jelajahi Galeri
             </Link>
@@ -124,4 +125,4 @@ const SavedItemsPage = () => {
   )
 }
 
-export default SavedItemsPage
+export default KoleksiPage

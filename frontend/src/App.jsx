@@ -22,7 +22,7 @@ const UiUxDetailPage = lazy(() => import('./pages/ilkomgallery/UiUxDetailPage'))
 const WebDetailPage = lazy(() => import('./pages/ilkomgallery/WebDetailPage'))
 const SubmitProjectPage = lazy(() => import('./pages/SubmitProjectPage'))
 const TrackPage = lazy(() => import('./pages/TrackPage'))
-const SavedItemsPage = lazy(() => import('./pages/SavedItemsPage'))
+const SavedItemsPage = lazy(() => import('./pages/KoleksiPage'))
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -84,7 +84,7 @@ function AppContent() {
             <Route path="/ilkomgallery/uiux/:slug" element={<UiUxDetailPage />} />
             <Route path="/ilkomgallery/web/:slug" element={<WebDetailPage />} />
             <Route path="/submit" element={<SubmitProjectPage />} />
-            <Route path="/saved" element={<SavedItemsPage />} />
+            <Route path="/koleksi" element={<SavedItemsPage />} />
             <Route path="/track" element={<TrackPage />} />
             <Route path="/admin/*" element={<AdminRoutes />} />
             <Route path="*" element={<HomePage />} />
