@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Breadcrumb from '../components/common/Breadcrumb'
+import { BGPattern } from '../components/ui/BGPattern'
 import { 
   Mail, MapPin, Phone, BookOpen, Code, Server, Database, Calculator, 
   Cpu, Trophy, Users, Rocket, Briefcase, GraduationCap, 
@@ -95,8 +96,9 @@ const AboutPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-transparent">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-transparent relative z-0">
+      <BGPattern variant="grid" size={60} mask="fade-edges" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <Breadcrumb />
 
         {/* Hero Section */}

@@ -132,6 +132,13 @@ export const adminNews = {
   delete(id) {
     return fetchAdmin(`/admin/news/${id}`, { method: 'DELETE' })
   },
+
+  reorder: async (order) => {
+    return fetchAdmin('/admin/news/reorder', { method: 'PUT', body: JSON.stringify({ order }) })
+  },
+  toggleHidden: async (id) => {
+    return fetchAdmin(`/admin/news/${id}/toggle-hidden`, { method: 'PUT' })
+  },
 }
 
 export const adminProjects = {

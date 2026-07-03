@@ -4,6 +4,7 @@ import EventFilter from '../components/events/EventFilter'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { PageHeader } from '../components/ui/PageHeader'
+import { BGPattern } from '../components/ui/BGPattern'
 import { mockEvents } from '../services/api'
 
 const EventsPage = () => {
@@ -72,7 +73,9 @@ const EventsPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+    <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-12">
+      <BGPattern variant="grid" size={60} mask="fade-edges" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
       <Breadcrumb />
       
       <PageHeader
@@ -89,6 +92,7 @@ const EventsPage = () => {
       />
       
       {loading ? <LoadingSpinner /> : <EventList events={filteredEvents} loading={loading} />}
+      </div>
     </div>
   )
 }

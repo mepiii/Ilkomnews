@@ -8,6 +8,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 import { mockNews, mockArticles, mockEvents } from '../services/api'
 import { getIdFromSlug, isNumericId, generateSlug } from '../utils/formatters'
+import { BGPattern } from '../components/ui/BGPattern'
 
 const DetailPage = ({ type }) => {
   const { slug } = useParams()
@@ -20,9 +21,12 @@ const DetailPage = ({ type }) => {
   const validTypes = ['news', 'articles', 'events', 'career']
   if (!type || !validTypes.includes(type)) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumb />
-        <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
+      <div className="min-h-screen bg-transparent relative z-0">
+        <BGPattern variant="grid" size={60} mask="fade-edges" />
+        <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 relative z-10">
+          <Breadcrumb />
+          <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
+        </div>
       </div>
     )
   }
@@ -81,9 +85,9 @@ const DetailPage = ({ type }) => {
 
   useEffect(() => { if (data) window.scrollTo(0, 0) }, [data])
 
-  if (loading) return <div className="max-w-7xl mx-auto px-4 pt-24 pb-8"><Breadcrumb /><LoadingSpinner /></div>
-  if (error) return <div className="max-w-7xl mx-auto px-4 pt-24 pb-8"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div>
-  if (!data) return <div className="max-w-7xl mx-auto px-4 pt-24 pb-8"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div>
+  if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><BGPattern variant="grid" size={60} mask="fade-edges" /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
+  if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><BGPattern variant="grid" size={60} mask="fade-edges" /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
+  if (!data) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><BGPattern variant="grid" size={60} mask="fade-edges" /><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div></div>
 
   const renderDetail = () => {
     switch (type) {
@@ -96,9 +100,12 @@ const DetailPage = ({ type }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-24 pb-8">
-      <Breadcrumb />
-      {renderDetail()}
+    <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8">
+      <BGPattern variant="grid" size={60} mask="fade-edges" />
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <Breadcrumb />
+        {renderDetail()}
+      </div>
     </div>
   )
 }

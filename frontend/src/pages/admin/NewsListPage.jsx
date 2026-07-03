@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Plus, Edit, Trash2, Newspaper } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Newspaper, GripVertical } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
 
 const STATUS_OPTIONS = [
@@ -24,6 +24,36 @@ export default function NewsListPage() {
   const status = searchParams.get('status') || ''
 
   const [searchInput, setSearchInput] = useState(search)
+  const [draggedIndex, setDraggedIndex] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+  }
+
+  const handleDrop = async (e, dropIndex) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) return
+    const reordered = [...items]
+    const [removed] = reordered.splice(draggedIndex, 1)
+    reordered.splice(dropIndex, 0, removed)
+    setItems(reordered)
+    setDraggedIndex(null)
+    try {
+      await adminNews.reorder(reordered.map((item) => item.id))
+    } catch (err) {
+      fetchNews()
+    }
+  }
 
   const fetchNews = useCallback(async () => {
     setLoading(true)
@@ -145,6 +175,7 @@ export default function NewsListPage() {
               <table className="w-full text-sm">
                 <thead>
                 <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
+                    <th className="px-2 py-3 w-10"></th>
                     <th className="px-5 py-3 font-medium">Judul</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Kategori</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell">Tanggal</th>
@@ -155,7 +186,16 @@ export default function NewsListPage() {
                 </thead>
                 <tbody className="divide-y divide-[var(--border-color)]">
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                    <tr key={item.id} className={`hover:bg-[var(--bg-secondary)] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <td className="px-2 py-3 text-[var(--text-muted)] cursor-grab">
+                        <GripVertical size={16} />
+                      </td>
                       <td className="px-5 py-3 max-w-[250px]">
                         <span className="font-medium text-[var(--text-primary)] truncate block">{item.title}</span>
                       </td>

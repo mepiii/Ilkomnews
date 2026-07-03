@@ -185,32 +185,32 @@ export default function DashboardPage() {
           icon={Newspaper}
           label="Total Berita"
           value={stats.total_news}
-          color="bg-purple-500/20"
-          iconColor="text-purple-400"
+          color="bg-purple-500/10"
+          iconColor="text-purple-500"
           trend={8}
         />
         <StatCard
           icon={Eye}
           label="Tayang"
           value={stats.published_news}
-          color="bg-emerald-500/20"
-          iconColor="text-emerald-400"
+          color="bg-emerald-500/10"
+          iconColor="text-emerald-500"
           trend={12}
         />
         <StatCard
           icon={FolderOpen}
           label="Total Proyek"
           value={stats.total_projects}
-          color="bg-blue-500/20"
-          iconColor="text-blue-400"
+          color="bg-blue-500/10"
+          iconColor="text-blue-500"
           trend={5}
         />
         <StatCard
           icon={Clock}
           label="Menunggu Review"
           value={stats.pending_projects}
-          color="bg-amber-500/20"
-          iconColor="text-amber-400"
+          color="bg-amber-500/10"
+          iconColor="text-amber-500"
           trend={-3}
         />
       </div>
