@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 
@@ -8,8 +8,8 @@ export function Tiles({
   cols = 20,
   tileClassName,
 }) {
-  const rowsArray = useMemo(() => new Array(rows).fill(null), [rows])
-  const colsArray = useMemo(() => new Array(cols).fill(null), [cols])
+  const rowsArray = new Array(rows).fill(null)
+  const colsArray = new Array(cols).fill(null)
 
   return (
     <div
@@ -25,7 +25,7 @@ export function Tiles({
               <motion.div
                 key={`tile-${ri}-${ci}`}
                 className={cn(
-                  "flex-1 border-l border-t border-white/[0.04] relative",
+                  "flex-1 border-r border-b border-white/[0.04] relative",
                   tileClassName
                 )}
                 whileHover={{

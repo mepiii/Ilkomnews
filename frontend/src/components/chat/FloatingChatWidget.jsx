@@ -128,7 +128,7 @@ export function FloatingChatWidget() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex h-[380px] flex-col overflow-y-auto p-4 gap-4 bg-gradient-to-b from-white/20 to-white/40 dark:from-neutral-900/20 dark:to-neutral-900/40">
+            <div className="flex h-[380px] flex-col min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-4 gap-4 bg-gradient-to-b from-white/20 to-white/40 dark:from-neutral-900/20 dark:to-neutral-900/40">
               {messages.map((msg, i) => (
                 <motion.div
                   key={i}

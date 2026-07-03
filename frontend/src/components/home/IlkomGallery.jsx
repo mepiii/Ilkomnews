@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Globe, Smartphone, Palette, Gamepad2, Sparkles } from 'lucide-react'
 import { AnimatedText } from '../ui/AnimatedText'
+import { Text_03 } from '../ui/Text03'
 import { FlowButton } from '../ui/FlowButton'
 import { SmoothTabs } from '../ui/SmoothTabs'
 
@@ -60,13 +61,17 @@ const IlkomGallery = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Proyek Mahasiswa</p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 font-header">
-            <span style={{ color: 'var(--text-primary)' }}><AnimatedText>ILKOM </AnimatedText></span>
-            <span style={{ color: 'var(--accent)' }}><AnimatedText delay={0.1}>Gallery</AnimatedText></span>
+          <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
+            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1">
+              <span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span>
+            </div>
+            <p className="pr-3 text-xs text-theme-muted">Gallery</p>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black mb-4 font-header">
+            <Text_03 text="ILKOM Gallery" className="section-gradient-text" />
           </h2>
-          <div className="w-12 h-0.5 mx-auto rounded-full mb-4" style={{ background: 'var(--accent)' }} />
-          <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
+          <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
+          <p className="text-theme-muted text-base max-w-2xl mx-auto">
             Galeri karya dan proyek mahasiswa Fakultas Ilmu Komputer
           </p>
         </motion.div>
