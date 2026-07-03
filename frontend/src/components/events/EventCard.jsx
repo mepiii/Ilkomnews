@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin, Users } from 'lucide-react'
 import { GlowCard } from '../ui/GlowCard'
 import { formatDate } from '../../utils/formatters'
+import ImageWithFallback from '../ui/ImageWithFallback'
 
 const EventCard = ({ event }) => {
   const getStatus = (date, capacity, registered) => {
@@ -18,10 +19,11 @@ const EventCard = ({ event }) => {
   return (
     <Link to={`/events/${event.id}`} className="block group">
       <GlowCard glowColor="purple" className="rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-        <div className="relative h-72 w-full">
-          <img
+        <div className="relative h-56 w-full overflow-hidden">
+          <ImageWithFallback
             src={event.image || 'https://via.placeholder.com/400x300'}
             alt={event.title}
+            fallbackText={event.title}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
