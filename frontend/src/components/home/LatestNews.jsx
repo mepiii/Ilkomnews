@@ -13,11 +13,11 @@ const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
   { id: 'Workshop', label: 'Workshop', icon: Newspaper },
   { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
   { id: 'Seminar', label: 'Seminar', icon: Newspaper },
 ]
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
-const itemVariant = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }
+import { container, itemVariant } from '../../lib/animations'
 
 const LatestNews = () => {
   const [news, setNews] = useState([])
@@ -48,7 +48,7 @@ const LatestNews = () => {
   const items = filtered.slice(0, 4)
 
   return (
-    <section className="py-20 md:py-24 relative z-0 bg-theme">
+    <section className="py-20 md:py-24 relative z-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">

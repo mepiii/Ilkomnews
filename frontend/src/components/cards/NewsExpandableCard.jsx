@@ -1,13 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ExpandableCard } from '../ui/ExpandableCard'
 import { generateSlug, formatDate } from '../../utils/formatters'
-
-const parseTags = (tags) => {
-  if (!tags) return []
-  if (Array.isArray(tags)) return tags.map(t => String(t).trim()).filter(Boolean)
-  if (typeof tags === 'string') return tags.split(',').map(t => t.trim()).filter(Boolean)
-  return []
-}
+import { parseTags } from '../../utils/parsers'
 
 const NewsExpandableCard = ({ article }) => {
   const slug = generateSlug(article.title)
@@ -16,7 +10,7 @@ const NewsExpandableCard = ({ article }) => {
   return (
     <ExpandableCard
       title={article.title}
-      src={article.image || 'https://via.placeholder.com/400x300'}
+      src={article.image_url || article.image || 'https://via.placeholder.com/400x300'}
       description={article.summary || article.title}
       itemType="news"
       itemId={article.id}
@@ -30,7 +24,7 @@ const NewsExpandableCard = ({ article }) => {
       meta={
         <div className="space-y-2">
           {(article.author || article.author_image) && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-white/50">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
               {article.author_image ? (
                 <img src={article.author_image} alt={article.author} className="w-3.5 h-3.5 rounded-full object-cover" />
               ) : null}
@@ -58,11 +52,12 @@ const NewsExpandableCard = ({ article }) => {
       <div className="w-full space-y-4">
         {article.content && (
           <div>
-            <h4 className="text-gray-700 dark:text-white/80 text-xs font-semibold uppercase tracking-wider mb-2">Konten</h4>
+            <h4 className="text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider mb-2">Konten</h4>
             <div
-              className="text-gray-600 dark:text-white/60 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: (article.content || '').replace(/<[^>]*>/g, '').substring(0, 500) + (article.content?.length > 500 ? '...' : '') }}
-            />
+              className="text-[var(--text-secondary)] text-sm leading-relaxed"
+            >
+              {(article.content || '').substring(0, 500)}{article.content?.length > 500 ? '...' : ''}
+            </div>
           </div>
         )}
 

@@ -1,29 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Breadcrumb from '../components/common/Breadcrumb'
-import LoadingSpinner from '../components/common/LoadingSpinner'
-import ArticleCard from '../components/articles/ArticleCard'
-import { AnimatedTabs } from '../components/ui/AnimatedTabs'
+import NewsExpandableCard from '../components/cards/NewsExpandableCard'
+import { GlowCard } from '../components/ui/GlowCard'
 import { PageHeader } from '../components/ui/PageHeader'
-import { Tiles } from '../components/ui/Tiles'
+import EmptyResults from '../components/ui/EmptyResults'
+import { SmoothTabs } from '../components/ui/SmoothTabs'
 import ExpandingSearchDock from '../components/shared/ExpandingSearchDock'
 import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
-import { mockNews } from '../services/api'
-import { Newspaper, Filter } from 'lucide-react'
+import { PageBackground } from '../components/ui/PageBackground'
+import { api } from '../services/api'
+import { parseTags } from '../utils/parsers'
+import { Newspaper, Filter, Tag } from 'lucide-react'
 
-const parseTags = (tags) => {
-  if (!tags) return []
-  if (Array.isArray(tags)) return tags.map(t => String(t).trim()).filter(Boolean)
-  if (typeof tags === 'string') {
-    try {
-      const parsed = JSON.parse(tags)
-      if (Array.isArray(parsed)) return parsed.map(t => String(t).trim()).filter(Boolean)
-    } catch {}
-    return tags.split(',').map(t => t.trim()).filter(Boolean)
-  }
-  return []
-}
-
-const NEWS_CATEGORIES = [
+const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
   { id: 'Workshop', label: 'Workshop', icon: Newspaper },
   { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
@@ -33,26 +23,30 @@ const NEWS_CATEGORIES = [
 
 const SORT_OPTIONS = ['Terbaru', 'Terlama', 'Terpopuler']
 
+import { container, itemVariant } from '../lib/animations'
+
 const NewsPage = () => {
   const [allNews, setAllNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
-  const [selectedTag, setSelectedTag] = useState('all')
+  const [selectedTag, setSelectedTag] = useState('Semua')
 
   useEffect(() => {
-    mockNews.getAll()
+    api.news.getAll()
       .then(res => setAllNews(Array.isArray(res) ? res : (res.data || [])))
       .catch(() => setAllNews([]))
       .finally(() => setLoading(false))
   }, [])
 
-  const uniqueTags = [...new Set(allNews.flatMap(item => parseTags(item.tags)))]
+  const uniqueTags = useMemo(() => [...new Set(allNews.flatMap(item => parseTags(item.tags)))], [allNews])
 
-  const filtered = allNews
+  const TAG_OPTIONS = useMemo(() => ['Semua', ...uniqueTags], [uniqueTags])
+
+  const filtered = useMemo(() => allNews
     .filter(n => activeTab === 'all' || n.category === activeTab)
-    .filter(n => selectedTag === 'all' || parseTags(n.tags).includes(selectedTag))
+    .filter(n => selectedTag === 'Semua' || parseTags(n.tags).includes(selectedTag))
     .filter(n => {
       if (!searchQuery) return true
       const s = searchQuery.toLowerCase()
@@ -62,82 +56,87 @@ const NewsPage = () => {
       if (sortBy === 'Terlama') return new Date(a.date) - new Date(b.date)
       if (sortBy === 'Terpopuler') return (b.views || 0) - (a.views || 0)
       return new Date(b.date) - new Date(a.date)
-    })
-
-  if (loading) return <LoadingSpinner />
+    }), [allNews, activeTab, selectedTag, searchQuery, sortBy])
 
   return (
-    <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-12">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-100/30 dark:bg-purple-900/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-100/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
+    <PageBackground>
+      <div className="min-h-screen relative z-0 pt-24 pb-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Breadcrumb />
+
+          {/* Section Header */}
+          <PageHeader
+            badge={
+              <>
+                <span className="bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-2xl px-3 py-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-900 dark:text-white">Berita Terkini</span>
+                </span>
+                <p className="pr-3 text-xs text-neutral-500 dark:text-neutral-400">Terbaru</p>
+              </>
+            }
+            title="Berita Terkini"
+            subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
+            textStyle="gradient"
+          />
+
+          {/* Tabs */}
+          <div className="flex justify-center mb-6">
+            <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+          </div>
+
+          {/* Search + Filters */}
+          <div className="flex items-center gap-3 flex-wrap justify-center mb-6">
+            <ExpandingSearchDock value={searchQuery} onChange={setSearchQuery} placeholder="Cari berita, penulis..." />
+            <AnimatedFilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} icon={Filter} />
+            {uniqueTags.length > 0 && (
+              <AnimatedFilterDropdown options={TAG_OPTIONS} value={selectedTag} onChange={setSelectedTag} icon={Tag} />
+            )}
+          </div>
+
+          {/* Count */}
+          <div className="flex items-center gap-2 mb-4">
+            <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+              <span className="font-semibold text-[var(--accent)]">{filtered.length}</span> berita ditemukan
+            </p>
+          </div>
+
+          {/* News Grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab + selectedTag + sortBy}
+              variants={container}
+              initial="hidden"
+              animate="show"
+              exit={{ opacity: 0, y: -12 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+            >
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <motion.div key={i} variants={itemVariant}>
+                    <div className="h-64 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+                  </motion.div>
+                ))
+              ) : filtered.length === 0 ? (
+                <EmptyResults
+                  icon={<Newspaper size={40} className="text-[var(--accent)]" />}
+                  title="Tidak ada berita yang ditemukan"
+                  description="Coba ubah filter atau cari dengan kata kunci lain"
+                  onReset={() => { setActiveTab('all'); setSearchQuery(''); setSortBy('Terbaru'); setSelectedTag('Semua') }}
+                />
+              ) : (
+                filtered.map((article, i) => (
+                  <motion.div key={article.id || i} variants={itemVariant}>
+                    <GlowCard glowColor="purple" className="rounded-2xl">
+                      <NewsExpandableCard article={article} />
+                    </GlowCard>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumb />
-
-        <PageHeader
-          badge={
-            <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
-              <div className="bg-card border border-theme rounded-2xl px-3 py-1">
-                <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
-              </div>
-              <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
-            </div>
-          }
-          title="Berita Terkini"
-          subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
-        />
-
-        {/* Tag Filter */}
-        {uniqueTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8 justify-center">
-            <button onClick={() => setSelectedTag('all')} className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${selectedTag === 'all' ? 'bg-purple-600 text-white' : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'}`}>Semua</button>
-            {uniqueTags.map(tag => (
-              <button key={tag} onClick={() => setSelectedTag(tag)} className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${selectedTag === tag ? 'bg-purple-600 text-white' : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'}`}>#{tag}</button>
-            ))}
-          </div>
-        )}
-
-        {/* Category Tabs */}
-        <div className="mb-6 flex justify-center">
-          <AnimatedTabs tabs={NEWS_CATEGORIES} activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
-
-        {/* Search + Sort */}
-        <div className="flex items-center gap-2 flex-wrap justify-center mb-6">
-          <ExpandingSearchDock value={searchQuery} onChange={setSearchQuery} placeholder="Cari berita, penulis..." />
-          <AnimatedFilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} icon={Filter} />
-        </div>
-
-        {/* Count */}
-        <div className="flex items-center gap-2 mb-4">
-          <p className="text-theme-muted text-sm">
-            <span className="font-semibold text-accent">{filtered.length}</span> berita ditemukan
-          </p>
-        </div>
-
-        {/* News Grid */}
-        {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filtered.map((item) => (
-              <ArticleCard key={item.id} article={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-theme-secondary rounded-2xl border border-theme">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-accent/10 rounded-full mb-4">
-              <Newspaper size={40} className="text-accent" />
-            </div>
-            <p className="text-theme-primary text-lg font-medium">Tidak ada berita yang ditemukan</p>
-            <p className="text-theme-muted text-sm mt-1">Coba ubah filter atau cari dengan kata kunci lain</p>
-            <button onClick={() => { setActiveTab('all'); setSearchQuery(''); setSortBy('Terbaru'); setSelectedTag('all') }} className="mt-4 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium hover:bg-accent/20 transition-colors">
-              Reset Filter
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+    </PageBackground>
   )
 }
 

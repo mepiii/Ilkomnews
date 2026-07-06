@@ -1,12 +1,10 @@
-// src/pages/ilkomgallery/MobileDetailPage.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
-  Play, X, ExternalLink, Download,
+  Play, X, Download,
   User, Calendar, Code2, Smartphone, Award, Users,
   Mail, ArrowLeft, Image
 } from 'lucide-react'
-import { FaGithub } from 'react-icons/fa'
 
 // Data mobile projects
 const mobileData = {
@@ -204,7 +202,7 @@ Aplikasi portal akademik yang memudahkan mahasiswa mengakses informasi akademik 
 const formatText = (text) => {
   return text.split('\n').map((line, idx) => {
     if (line.startsWith('**') && line.endsWith('**')) {
-      return <h3 key={idx} className="text-lg font-bold text-white mt-4 mb-2">{line.slice(2, -2)}</h3>
+      return <h3 key={idx} className="text-lg font-bold text-theme-primary mt-4 mb-2">{line.slice(2, -2)}</h3>
     }
     if (line.startsWith('- ')) {
       return <li key={idx} className="text-theme-secondary ml-4 mb-1">{line.slice(2)}</li>
@@ -223,10 +221,10 @@ const MobileDetailPage = () => {
   const [selectedScreenshot, setSelectedScreenshot] = useState(null)
 
   useEffect(() => {
-    const data = mobileData[slug]
-    if (data) {
-      setApp(data)
-    }
+    const found = mobileData[slug]
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setApp(found ?? null)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(false)
   }, [slug])
 
@@ -235,7 +233,7 @@ const MobileDetailPage = () => {
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Loading aplikasi...</p>
+          <p className="text-theme-primary">Loading aplikasi...</p>
         </div>
       </div>
     )
@@ -245,7 +243,7 @@ const MobileDetailPage = () => {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-xl mb-4">Aplikasi tidak ditemukan</p>
+          <p className="text-theme-primary text-xl mb-4">Aplikasi tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-emerald-500 hover:text-emerald-400">
             Kembali ke Gallery
           </Link>
@@ -350,7 +348,7 @@ const MobileDetailPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4">About This App</h2>
+              <h2 className="text-theme-primary text-2xl font-bold mb-4">About This App</h2>
               <div className="text-theme-secondary leading-relaxed">
                 {formatText(app.fullDescription)}
               </div>
@@ -359,7 +357,7 @@ const MobileDetailPage = () => {
             {/* Screenshots Section */}
             {app.screenshots && app.screenshots.length > 0 && (
               <section>
-                <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+                <h2 className="text-theme-primary text-2xl font-bold mb-4 flex items-center gap-2">
                   <Image size={24} />
                   <span>Screenshots</span>
                 </h2>
@@ -378,7 +376,7 @@ const MobileDetailPage = () => {
             )}
             
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+              <h2 className="text-theme-primary text-2xl font-bold mb-4 flex items-center gap-2">
                 <Code2 size={24} />
                 <span>Tech Stack</span>
               </h2>

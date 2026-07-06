@@ -20,7 +20,7 @@ const PerformanceMonitor = () => {
       })
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true })
       observers.push(lcpObserver)
-    } catch {}
+    } catch { /* observer type not supported */ }
 
     try {
       const fidObserver = new PerformanceObserver((list) => {
@@ -30,7 +30,7 @@ const PerformanceMonitor = () => {
       })
       fidObserver.observe({ type: 'first-input', buffered: true })
       observers.push(fidObserver)
-    } catch {}
+    } catch { /* observer type not supported */ }
 
     try {
       let clsValue = 0
@@ -44,7 +44,7 @@ const PerformanceMonitor = () => {
       })
       clsObserver.observe({ type: 'layout-shift', buffered: true })
       observers.push(clsObserver)
-    } catch {}
+    } catch { /* observer type not supported */ }
 
     return () => observers.forEach((o) => o.disconnect())
   }, [])

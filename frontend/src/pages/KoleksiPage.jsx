@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Bookmark, Trash2, Heart, Eye } from 'lucide-react'
+import { Bookmark, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import NewsExpandableCard from '../components/cards/NewsExpandableCard'
-import { Tiles } from '../components/ui/Tiles'
 import { Text_03 } from '../components/ui/Text03'
+import { PageBackground } from '../components/ui/PageBackground'
 
 const ITEMS_PER_PAGE = 8
 
@@ -16,6 +16,7 @@ const KoleksiPage = () => {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('saved_items') || '[]')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSavedItems(saved)
   }, [])
 
@@ -36,95 +37,93 @@ const KoleksiPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-theme relative">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
-      </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
-            <Text_03 text="Koleksi Saya" className="section-gradient-text" />
-          </h1>
-          <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
-          <p className="text-theme-muted text-base max-w-2xl mx-auto">
-            Artikel dan proyek yang telah Anda sukai, simpan, atau lihat
-          </p>
-        </motion.div>
+    <PageBackground>
+      <div className="min-h-screen relative z-0 pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
+              <Text_03 text="Koleksi Saya" className="section-gradient-text" />
+            </h1>
+            <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
+            <p className="text-theme-muted text-base max-w-2xl mx-auto">
+              Artikel dan proyek yang telah Anda sukai, simpan, atau lihat
+            </p>
+          </motion.div>
 
-        {/* Filter tabs */}
-        <div className="flex justify-center gap-2 mb-8">
-          {['all', 'project', 'news'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setCurrentPage(1) }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeTab === tab
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
-              }`}
-            >
-              {tab === 'all' ? 'Semua' : tab === 'project' ? 'Proyek' : 'Berita'}
-            </button>
-          ))}
-        </div>
-
-        {paginatedItems.length === 0 ? (
-          <div className="text-center py-16 glass-card rounded-3xl">
-            <Bookmark size={48} className="mx-auto mb-4 text-theme-muted" />
-            <p className="text-theme-muted text-lg">Belum ada koleksi</p>
-            <p className="text-theme-muted text-sm mt-2">Sukai, simpan, atau lihat konten untuk mengumpulkannya di sini</p>
-            <Link to="/ilkomgallery" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
-              Jelajahi Galeri
-            </Link>
+          {/* Filter tabs */}
+          <div className="flex justify-center gap-2 mb-8">
+            {['all', 'project', 'news'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setCurrentPage(1) }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                }`}
+              >
+                {tab === 'all' ? 'Semua' : tab === 'project' ? 'Proyek' : 'Berita'}
+              </button>
+            ))}
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {paginatedItems.map(item => (
-                <div key={item.id} className="relative">
-                  {item.type === 'project' ? (
-                    <ProjectExpandableCard project={item} />
-                  ) : (
-                    <NewsExpandableCard article={item} />
-                  )}
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="absolute top-2 right-2 z-10 p-2 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-8">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${
-                      currentPage === page
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
-                    }`}
-                  >
-                    {page}
-                  </button>
+          {paginatedItems.length === 0 ? (
+            <div className="text-center py-16 glass-card rounded-3xl">
+              <Bookmark size={48} className="mx-auto mb-4 text-theme-muted" />
+              <p className="text-theme-muted text-lg">Belum ada koleksi</p>
+              <p className="text-theme-muted text-sm mt-2">Sukai, simpan, atau lihat konten untuk mengumpulkannya di sini</p>
+              <Link to="/ilkomgallery" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
+                Jelajahi Galeri
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {paginatedItems.map(item => (
+                  <div key={item.id} className="relative">
+                    {item.type === 'project' ? (
+                      <ProjectExpandableCard project={item} />
+                    ) : (
+                      <NewsExpandableCard article={item} />
+                    )}
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="absolute top-2 right-2 z-10 p-2 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 ))}
               </div>
-            )}
-          </>
-        )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-8">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </PageBackground>
   )
 }
 

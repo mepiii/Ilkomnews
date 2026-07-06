@@ -1,27 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
 import { FileText, Activity, Users, Clock } from 'lucide-react'
 import { adminAudit } from '../../services/adminApi'
-
-const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    className="relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-color)]"
-  >
-    <div className={`absolute -top-6 -right-6 h-24 w-24 rounded-full ${color} opacity-20 blur-2xl`} />
-    <div className="relative flex items-center justify-between">
-      <div>
-        <p className="text-sm text-[var(--text-secondary)]">{label}</p>
-        <p className="mt-1 text-3xl font-bold text-[var(--text-primary)]">{value ?? '-'}</p>
-      </div>
-      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
-        <Icon size={20} className={iconColor} />
-      </div>
-    </div>
-  </motion.div>
-)
+import { formatDateTime } from '../../utils/formatters'
+import StatCard from '../../components/admin/ui/StatCard'
 
 const ACTION_OPTIONS = [
   { value: '', label: 'Semua Aksi' },
@@ -52,17 +33,6 @@ const ENTITY_OPTIONS = [
   { value: 'project_submission', label: 'Proyek' },
   { value: 'user', label: 'Pengguna' },
 ]
-
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState([])
@@ -123,30 +93,9 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          icon={Activity}
-          label="Total Log"
-          value={summary?.total}
-          color="bg-emerald-500/20"
-          iconColor="text-emerald-400"
-          delay={0}
-        />
-        <StatCard
-          icon={Clock}
-          label="Hari Ini"
-          value={summary?.today}
-          color="bg-blue-500/20"
-          iconColor="text-blue-400"
-          delay={0.05}
-        />
-        <StatCard
-          icon={Users}
-          label="Minggu Ini"
-          value={summary?.this_week}
-          color="bg-purple-500/20"
-          iconColor="text-purple-400"
-          delay={0.1}
-        />
+        <StatCard icon={Activity} label="Total Log" value={summary?.total} color="bg-emerald-500/20" iconColor="text-emerald-400" />
+        <StatCard icon={Clock} label="Hari Ini" value={summary?.today} color="bg-blue-500/20" iconColor="text-blue-400" />
+        <StatCard icon={Users} label="Minggu Ini" value={summary?.this_week} color="bg-purple-500/20" iconColor="text-purple-400" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -180,9 +129,7 @@ export default function AuditLogsPage() {
         </div>
       )}
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+      <div
         className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
       >
         <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
@@ -239,7 +186,7 @@ export default function AuditLogsPage() {
                         {log.ip_address || '-'}
                       </td>
                       <td className="px-5 py-3 text-[var(--text-secondary)] hidden lg:table-cell">
-                        {formatDate(log.created_at)}
+                        {formatDateTime(log.created_at)}
                       </td>
                     </tr>
                   ))}
@@ -272,7 +219,7 @@ export default function AuditLogsPage() {
             </>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

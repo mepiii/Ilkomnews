@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    exclude: ['e2e/**', '**/node_modules/**'],
+  },
   server: {
     port: 5173,
     open: true,
@@ -11,11 +14,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-      }
-    }
+      },
+    },
   },
   resolve: {
-    dedupe: ['react', 'react-dom', 'react-router-dom'],
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+    // Guarantee a single React instance across all chunks (prevents null dispatcher)
+    dedupe: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
   },
   build: {
     outDir: '../backend/public',
@@ -23,21 +30,39 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router')) {
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/react-router/') ||
+            id.includes('/node_modules/react-router-dom/') ||
+            id.includes('/node_modules/scheduler/')
+          ) {
             return 'react-vendor'
           }
-          if (id.includes('node_modules/framer-motion')) {
+          if (id.includes('/node_modules/framer-motion/')) {
             return 'motion'
           }
-          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/react-icons')) {
+          if (
+            id.includes('/node_modules/lucide-react/') ||
+            id.includes('/node_modules/react-icons/')
+          ) {
             return 'icons'
           }
-        }
-      }
+        },
+      },
     },
-    target: 'es2020'
+    target: 'es2020',
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion'],
-  }
+    include: [
+      'react',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-dom',
+      'react-dom/client',
+      'react-router-dom',
+      'lucide-react',
+      'framer-motion',
+    ],
+  },
 })

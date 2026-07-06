@@ -1,39 +1,8 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { MessageSquare, CheckCircle, XCircle, Clock, Zap, AlertCircle } from 'lucide-react'
 import { adminChatStats } from '../../services/adminApi'
-
-const StatCard = ({ icon: Icon, label, value, color, iconColor, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    className="relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-color)]"
-  >
-    <div className={`absolute -top-6 -right-6 h-24 w-24 rounded-full ${color} opacity-20 blur-2xl`} />
-    <div className="relative flex items-center justify-between">
-      <div>
-        <p className="text-sm text-[var(--text-secondary)]">{label}</p>
-        <p className="mt-1 text-3xl font-bold text-[var(--text-primary)]">{value ?? '-'}</p>
-      </div>
-      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
-        <Icon size={20} className={iconColor} />
-      </div>
-    </div>
-  </motion.div>
-)
-
-const SkeletonCard = () => (
-  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 animate-pulse">
-    <div className="flex items-center justify-between">
-      <div className="space-y-2">
-        <div className="h-4 w-20 rounded bg-[var(--bg-secondary)]" />
-        <div className="h-7 w-12 rounded bg-[var(--bg-secondary)]" />
-      </div>
-      <div className="h-11 w-11 rounded-xl bg-[var(--bg-secondary)]" />
-    </div>
-  </div>
-)
+import StatCard from '../../components/admin/ui/StatCard'
+import SkeletonCard from '../../components/admin/ui/SkeletonCard'
 
 export default function ChatStatsPage() {
   const [data, setData] = useState(null)
@@ -94,63 +63,16 @@ export default function ChatStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          icon={MessageSquare}
-          label="Total Query"
-          value={data?.total_queries}
-          color="bg-blue-500/10"
-          iconColor="text-blue-500"
-          delay={0}
-        />
-        <StatCard
-          icon={CheckCircle}
-          label="Berhasil"
-          value={data?.successful}
-          color="bg-emerald-500/10"
-          iconColor="text-emerald-500"
-          delay={0.05}
-        />
-        <StatCard
-          icon={XCircle}
-          label="Ditolak (Topik)"
-          value={data?.rejected}
-          color="bg-red-500/10"
-          iconColor="text-red-500"
-          delay={0.1}
-        />
-        <StatCard
-          icon={AlertCircle}
-          label="Tanpa Konteks"
-          value={data?.no_context}
-          color="bg-amber-500/10"
-          iconColor="text-amber-500"
-          delay={0.15}
-        />
-        <StatCard
-          icon={Zap}
-          label="Dibatasi Rate Limit"
-          value={data?.rate_limited}
-          color="bg-purple-500/10"
-          iconColor="text-purple-500"
-          delay={0.2}
-        />
-        <StatCard
-          icon={Clock}
-          label="Hari Ini"
-          value={data?.today}
-          color="bg-pink-500/10"
-          iconColor="text-pink-500"
-          delay={0.25}
-        />
+        <StatCard icon={MessageSquare} label="Total Query" value={data?.total_queries} color="bg-blue-500/10" iconColor="text-blue-500" />
+        <StatCard icon={CheckCircle} label="Berhasil" value={data?.successful} color="bg-emerald-500/10" iconColor="text-emerald-500" />
+        <StatCard icon={XCircle} label="Ditolak (Topik)" value={data?.rejected} color="bg-red-500/10" iconColor="text-red-500" />
+        <StatCard icon={AlertCircle} label="Tanpa Konteks" value={data?.no_context} color="bg-amber-500/10" iconColor="text-amber-500" />
+        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-purple-500/10" iconColor="text-purple-500" />
+        <StatCard icon={Clock} label="Hari Ini" value={data?.today} color="bg-pink-500/10" iconColor="text-pink-500" />
       </div>
 
       {dailyBreakdown.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
-        >
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
           <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
             <MessageSquare size={16} className="text-blue-400" />
             <h2 className="font-semibold text-[var(--text-primary)]">Aktivitas Harian</h2>
@@ -209,16 +131,11 @@ export default function ChatStatsPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {topIPs.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
-        >
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
           <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
             <Zap size={16} className="text-purple-400" />
             <h2 className="font-semibold text-[var(--text-primary)]">IP Address Teratas</h2>
@@ -245,7 +162,7 @@ export default function ChatStatsPage() {
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   )

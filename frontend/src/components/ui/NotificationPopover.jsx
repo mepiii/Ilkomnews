@@ -3,7 +3,7 @@ import { Bell, CheckCircle, XCircle } from 'lucide-react'
 import { fetchAdmin } from '../../services/adminApi'
 import { AdminAuthContext } from '../../context/AdminAuthContext'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+import { API_BASE } from '../../services/api'
 
 const typeConfig = {
   accepted: { icon: CheckCircle, color: 'text-green-500', label: 'Diterima' },
@@ -47,8 +47,8 @@ const NotificationPopover = () => {
   }, [isAuthenticated])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications()
-    // Set up periodic polling every 60 seconds
     const intervalId = setInterval(fetchNotifications, 60000)
     return () => clearInterval(intervalId)
   }, [fetchNotifications])

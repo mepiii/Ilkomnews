@@ -31,7 +31,7 @@ export default function NewsListPage() {
     e.dataTransfer.effectAllowed = 'move'
   }
 
-  const handleDragOver = (e, index) => {
+  const handleDragOver = (e) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
   }
@@ -50,7 +50,7 @@ export default function NewsListPage() {
     setDraggedIndex(null)
     try {
       await adminNews.reorder(reordered.map((item) => item.id))
-    } catch (err) {
+    } catch {
       fetchNews()
     }
   }
@@ -72,7 +72,7 @@ export default function NewsListPage() {
     }
   }, [page, search, status])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => { fetchNews() }, [fetchNews])
 
   const handleSearch = (e) => {
@@ -185,7 +185,7 @@ export default function NewsListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-color)]">
-                  {items.map((item) => (
+                  {items.map((item, index) => (
                     <tr key={item.id} className={`hover:bg-[var(--bg-secondary)] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}

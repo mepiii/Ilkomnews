@@ -6,9 +6,11 @@ import EventDetail from '../components/events/EventDetail'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
-import { mockNews, mockArticles, mockEvents } from '../services/api'
-import { getIdFromSlug, isNumericId, generateSlug } from '../utils/formatters'
-import { Tiles } from '../components/ui/Tiles'
+import { PageBackground } from '../components/ui/PageBackground'
+import { api } from '../services/api'
+import { isNumericId, generateSlug } from '../utils/formatters'
+
+const VALID_TYPES = ['news', 'articles', 'events', 'career']
 
 const DetailPage = ({ type }) => {
   const { slug } = useParams()
@@ -18,25 +20,19 @@ const DetailPage = ({ type }) => {
   const [error, setError] = useState(null)
   const [related, setRelated] = useState([])
 
-  const validTypes = ['news', 'articles', 'events', 'career']
-  if (!type || !validTypes.includes(type)) {
-    return (
-      <div className="min-h-screen bg-transparent relative z-0">
-        <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 relative z-10">
-          <Breadcrumb />
-          <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
-        </div>
-      </div>
-    )
-  }
+  // NOTE: all hooks must be called before any conditional return (Rules of Hooks)
+  const isValidType = Boolean(type && VALID_TYPES.includes(type))
 
   useEffect(() => {
+    if (!isValidType) return
+
     const fetchData = async () => {
       setLoading(true)
       setError(null)
       try {
-        const service = type === 'news' ? mockNews : type === 'articles' ? mockArticles : mockEvents
+        const service = type === 'news' ? api.news : type === 'articles' ? api.articles : api.events
         let result = null
+        let allData = []
 
         if (isNumericId(slug)) {
           result = await service.getById(parseInt(slug))
@@ -44,30 +40,27 @@ const DetailPage = ({ type }) => {
             navigate(`/${type}/${generateSlug(result.title)}`, { replace: true })
             return
           }
-        } else {
-          const allDataResponse = await service.getAll()
-          // Handle both array responses and object responses with data property
-          const allData = Array.isArray(allDataResponse)
-            ? allDataResponse
-            : allDataResponse?.data || []
+        }
 
+        // Always fetch full list for related items and slug fallback
+        const allDataResponse = await service.getAll()
+        allData = Array.isArray(allDataResponse)
+          ? allDataResponse
+          : allDataResponse?.data || []
+
+        if (!result) {
           result = allData.find(item => generateSlug(item.title) === slug)
-          if (!result) {
-            const lastPart = slug.split('-').pop()
-            const possibleId = parseInt(lastPart)
-            if (!isNaN(possibleId) && possibleId >= 1 && possibleId <= 999) {
-              result = await service.getById(possibleId)
-            }
+        }
+        if (!result) {
+          const lastPart = slug.split('-').pop()
+          const possibleId = parseInt(lastPart)
+          if (!isNaN(possibleId) && possibleId >= 1 && possibleId <= 999) {
+            result = allData.find(item => item.id === possibleId)
           }
         }
 
         if (result) {
           setData(result)
-          const allDataResponse = await service.getAll()
-          // Handle both array responses and object responses with data property
-          const allData = Array.isArray(allDataResponse)
-            ? allDataResponse
-            : allDataResponse?.data || []
           setRelated(allData.filter(item => item.id !== result.id).slice(0, 3))
         } else {
           setError('Konten tidak ditemukan')
@@ -79,10 +72,20 @@ const DetailPage = ({ type }) => {
       }
     }
     if (slug) fetchData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, slug])
+  }, [type, slug, navigate, isValidType])
 
   useEffect(() => { if (data) window.scrollTo(0, 0) }, [data])
+
+  if (!isValidType) {
+    return (
+      <div className="min-h-screen bg-transparent relative z-0">
+        <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 relative z-10">
+          <Breadcrumb />
+          <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
+        </div>
+      </div>
+    )
+  }
 
   if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
   if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
@@ -99,16 +102,14 @@ const DetailPage = ({ type }) => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
+    <PageBackground>
+      <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <Breadcrumb />
+          {renderDetail()}
+        </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 relative z-10">
-        <Breadcrumb />
-        {renderDetail()}
-      </div>
-    </div>
+    </PageBackground>
   )
 }
 

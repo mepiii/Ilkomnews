@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { adminNews } from '../../services/adminApi';
@@ -10,6 +10,7 @@ const INITIAL_STATE = {
   category: '',
   date: '',
   author: '',
+  author_image: null,
   image: null,
   tags: '',
   published: false,
@@ -22,9 +23,11 @@ export default function NewsFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const authorFileInputRef = useRef(null);
 
   const [form, setForm] = useState(INITIAL_STATE);
   const [imagePreview, setImagePreview] = useState(null);
+  const [authorImagePreview, setAuthorImagePreview] = useState(null);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -42,12 +45,16 @@ export default function NewsFormPage() {
           category: item.category || '',
           date: item.date ? item.date.split('T')[0] : '',
           author: item.author || '',
+          author_image: null,
           image: null, 
           tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
           published: Boolean(item.published),
         });
         if (item.image_url || item.image) {
           setImagePreview(item.image_url || item.image);
+        }
+        if (item.author_image) {
+          setAuthorImagePreview(item.author_image);
         }
       })
       .catch((err) => setServerError(err.message || 'Failed to fetch news'))
@@ -98,6 +105,23 @@ export default function NewsFormPage() {
     }
   };
 
+  const handleAuthorImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      updateField('author_image', file);
+      const url = URL.createObjectURL(file);
+      setAuthorImagePreview(url);
+    }
+  };
+
+  const removeAuthorImage = () => {
+    updateField('author_image', null);
+    setAuthorImagePreview(null);
+    if (authorFileInputRef.current) {
+      authorFileInputRef.current.value = '';
+    }
+  };
+
   const validate = () => {
     const errs = {};
     if (!form.title.trim()) errs.title = 'Judul wajib diisi';
@@ -139,6 +163,12 @@ export default function NewsFormPage() {
       } else if (isEdit && !imagePreview) {
         // user removed the image in edit mode
         formData.append('remove_image', '1');
+      }
+
+      if (form.author_image instanceof File) {
+        formData.append('author_image', form.author_image);
+      } else if (isEdit && !authorImagePreview) {
+        formData.append('remove_author_image', '1');
       }
 
       if (isEdit) {
@@ -232,6 +262,34 @@ export default function NewsFormPage() {
           <div className="space-y-1">
             <label className="block text-sm font-medium text-[var(--text-primary)]">Tags</label>
             <input type="text" value={form.tags} onChange={(e) => updateField('tags', e.target.value)} className={inputClass('tags')} placeholder="Berita, Kampus, Lomba (pisahkan dengan koma)" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">Foto Profil Penulis</label>
+          <div className="flex items-center gap-4">
+            <label className="relative group cursor-pointer shrink-0">
+              <input type="file" accept="image/*" ref={authorFileInputRef} onChange={handleAuthorImageChange} className="hidden" />
+              <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${authorImagePreview ? 'border-green-500/50' : 'border-[var(--border-color)] hover:border-[var(--accent)]'}`}>
+                {authorImagePreview ? (
+                  <img src={authorImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <Upload size={20} className="text-[var(--text-secondary)]" />
+                    <span className="text-[9px] text-[var(--text-muted)]">Foto</span>
+                  </div>
+                )}
+              </div>
+              {authorImagePreview && (
+                <button type="button" onClick={removeAuthorImage} className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                  <X size={12} />
+                </button>
+              )}
+            </label>
+            <div className="text-xs text-[var(--text-muted)]">
+              <p className="font-medium text-[var(--text-primary)]">Foto Profil</p>
+              <p>Opsional. JPG/PNG, max 5MB.</p>
+            </div>
           </div>
         </div>
 

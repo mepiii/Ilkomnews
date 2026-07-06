@@ -1,8 +1,49 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { AnimatedText } from '../ui/AnimatedText'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import heroImage from '../../assets/gedungfasilkom.jpg'
+
+const springConfig = { type: 'spring', stiffness: 200, damping: 20 }
+
+const TypewriterText = ({ text, delay = 0, onComplete }) => {
+  const [displayed, setDisplayed] = useState('')
+  const prefersReducedMotion = useReducedMotion()
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplayed(text)
+      onComplete?.()
+      return
+    }
+    let i = 0
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          setDisplayed(text.slice(0, i + 1))
+          i++
+        } else {
+          clearInterval(interval)
+          onComplete?.()
+        }
+      }, 50)
+      return () => clearInterval(interval)
+    }, delay * 1000)
+    return () => clearTimeout(timeout)
+  }, [text, delay, prefersReducedMotion, onComplete])
+
+  return (
+    <span>
+      {displayed}
+      {displayed.length < text.length && (
+        <span className="inline-block w-[2px] h-[1em] bg-purple-400 ml-0.5 animate-pulse align-middle" />
+      )}
+    </span>
+  )
+}
 
 const fadeUp = (delay = 0) => ({
   hidden: { opacity: 0, y: 30 },
@@ -25,27 +66,15 @@ const HeroSection = () => {
 
       {/* Ambient glow orbs */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]"
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-[120px]"
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/8 rounded-full blur-[100px]"
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/4 rounded-full blur-[100px]"
         animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
         transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
       />
-
-      {/* SVG Dot Pattern Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="hero-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="0.8" fill="white" fillOpacity="0.25" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#hero-dots)" />
-        </svg>
-      </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-32 text-center">
@@ -64,7 +93,7 @@ const HeroSection = () => {
             </div>
           </motion.div>
 
-          {/* Title */}
+          {/* Title with typewriter */}
           <motion.div
             variants={fadeUp(0.15)}
             initial="hidden"
@@ -72,24 +101,24 @@ const HeroSection = () => {
           >
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] tracking-tight">
               <span className="text-white block mb-1">
-                <AnimatedText>Selamat Datang Di</AnimatedText>
+                <TypewriterText text="Selamat Datang Di" delay={0.3} />
               </span>
               <div className="flex flex-wrap justify-center gap-2 md:gap-3 items-baseline">
                 <motion.span
                   className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-purple-400"
-                  style={{ fontFamily: 'CustomFont, sans-serif' }}
+                  style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
                   animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 >
-                  <AnimatedText delay={0.1} idle={false}>ILKOM</AnimatedText>
+                  <AnimatedText delay={0.8} idle={false}>ILKOM</AnimatedText>
                 </motion.span>
                 <motion.span
                   className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-300"
-                  style={{ fontFamily: 'CustomFont, sans-serif' }}
+                  style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
                   animate={{ backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'] }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 >
-                  <AnimatedText delay={0.2} idle={false}>NEWS</AnimatedText>
+                  <AnimatedText delay={1.0} idle={false}>NEWS</AnimatedText>
                 </motion.span>
               </div>
             </h1>
@@ -101,12 +130,12 @@ const HeroSection = () => {
             initial="hidden"
             animate="visible"
           >
-            <p className="text-white/50 text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
+            <p className="text-white/70 text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
               <AnimatedText delay={0.3}>Informasi terkini untuk mahasiswa FASILKOM Universitas Sriwijaya.</AnimatedText>
             </p>
           </motion.div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons with spring */}
           <motion.div
             variants={fadeUp(0.45)}
             initial="hidden"
@@ -116,9 +145,9 @@ const HeroSection = () => {
               <Link to="/news">
                 <motion.div
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-white font-semibold text-sm cursor-pointer"
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)' }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)', boxShadow: '0 0 40px rgba(159, 111, 255, 0.3)' }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={springConfig}
                 >
                   Jelajahi Berita
                 </motion.div>
@@ -126,9 +155,9 @@ const HeroSection = () => {
               <Link to="/ilkomgallery">
                 <motion.div
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-white font-semibold text-sm cursor-pointer"
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)' }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)', boxShadow: '0 0 40px rgba(159, 111, 255, 0.3)' }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={springConfig}
                 >
                   Ilkom Gallery
                 </motion.div>
@@ -150,8 +179,8 @@ const HeroSection = () => {
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <span className="text-white/25 text-[10px] tracking-widest uppercase">Gulir</span>
-          <ChevronDown size={16} className="text-white/25" />
+          <span className="text-white/40 text-[10px] tracking-widest uppercase">Gulir</span>
+          <ChevronDown size={16} className="text-white/40" />
         </motion.div>
       </motion.div>
     </div>

@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Calendar, User, Eye, Share2, Bookmark, Heart,
   ChevronRight, Link as LinkIcon, Check, Clock, Tag,
-  ArrowLeft, TrendingUp, Zap, Globe, Shield
+  ArrowLeft, TrendingUp
 } from 'lucide-react'
 import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { formatDate, formatRelativeTime, formatNumber, generateSlug } from '../../utils/formatters'
 import { viewTracker } from '../../services/api'
+import ImageWithFallback from '../ui/ImageWithFallback'
 
 const NewsDetail = ({ news, relatedNews = [] }) => {
   const navigate = useNavigate()
@@ -20,10 +21,10 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
   useEffect(() => {
     window.scrollTo(0, 0)
     const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsBookmarked(bookmarks.includes(news.id))
-    // Track real view count
     viewTracker.increment('news', news.id, news.views || 0).then(setRealViews)
-  }, [news.id])
+  }, [news.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShare = async (platform) => {
     const url = window.location.href
@@ -35,7 +36,7 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
       whatsapp: `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`
     }
     if (platform === 'copy') {
-      try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+      try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard may be unavailable */ }
     } else if (shareUrls[platform]) {
       window.open(shareUrls[platform], '_blank', 'width=600,height=400')
     }
@@ -52,11 +53,12 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
       {/* Hero Image */}
       <div className="relative rounded-2xl overflow-hidden mb-8">
         <div className="aspect-[16/7] bg-gradient-to-br from-purple-900 to-indigo-900">
-          {news.image ? (
-            <img src={news.image} alt={news.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center"><Zap size={60} className="text-purple-400/30" /></div>
-          )}
+          <ImageWithFallback
+            src={news.image_url || news.image}
+            alt={news.title}
+            className="w-full h-full object-cover"
+            fallbackText="No Image"
+          />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
@@ -171,7 +173,12 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
             {relatedNews.slice(0, 3).map(item => (
               <Link key={item.id} to={`/news/${generateSlug(item.title)}`} className="group rounded-xl overflow-hidden transition-all hover:-translate-y-1" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
                 <div className="aspect-[4/3] overflow-hidden">
-                  <img src={item.image || `https://picsum.photos/seed/news-${item.id}/400/300`} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <ImageWithFallback
+                    src={item.image_url || item.image || `https://picsum.photos/seed/news-${item.id}/400/300`}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fallbackText="No Image"
+                  />
                 </div>
                 <div className="p-4">
                   <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{formatDate(item.date)}</p>

@@ -1,14 +1,13 @@
-// src/pages/ilkomgallery/ProjectDetailPage.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   Play, X, ExternalLink,
-  User, Calendar, Code2, Brain, Award, Users,
-  Mail, ArrowLeft, AlertCircle
+  User, Calendar, Code2, Brain, Users,
+  ArrowLeft, AlertCircle
 } from 'lucide-react'
 import { FaGithub } from 'react-icons/fa'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+import { API_BASE } from '../../services/api'
 
 // Helper function to generate slug from title
 const generateSlug = (title) => {
@@ -25,7 +24,7 @@ const formatText = (text) => {
   if (!text) return null
   return text.split('\n').map((line, idx) => {
     if (line.startsWith('**') && line.endsWith('**')) {
-      return <h3 key={idx} className="text-lg font-bold text-white mt-4 mb-2">{line.slice(2, -2)}</h3>
+      return <h3 key={idx} className="text-lg font-bold text-theme-primary mt-4 mb-2">{line.slice(2, -2)}</h3>
     }
     if (line.startsWith('- ')) {
       return <li key={idx} className="text-theme-secondary ml-4 mb-1">{line.slice(2)}</li>
@@ -104,7 +103,7 @@ const ProjectDetailPage = () => {
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Memuat proyek...</p>
+          <p className="text-theme-primary">Memuat proyek...</p>
         </div>
       </div>
     )
@@ -117,7 +116,7 @@ const ProjectDetailPage = () => {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <AlertCircle size={32} className="text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Error</h2>
+          <h2 className="text-2xl font-bold text-theme-primary mb-2">Error</h2>
           <p className="text-theme-muted mb-4">{error}</p>
           <button
             onClick={() => navigate('/ilkomgallery')}
@@ -135,7 +134,7 @@ const ProjectDetailPage = () => {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-xl mb-4">Project tidak ditemukan</p>
+          <p className="text-theme-primary text-xl mb-4">Project tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-purple-500 hover:text-purple-400">
             Kembali ke Gallery
           </Link>
@@ -246,7 +245,7 @@ const ProjectDetailPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4">About This Project</h2>
+              <h2 className="text-theme-primary text-2xl font-bold mb-4">About This Project</h2>
               <div className="text-theme-secondary leading-relaxed">
                 {formatText(displayDescription)}
               </div>
@@ -254,7 +253,7 @@ const ProjectDetailPage = () => {
 
             {displayTechStack.length > 0 && (
               <section>
-                <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+                <h2 className="text-theme-primary text-2xl font-bold mb-4 flex items-center gap-2">
                   <Code2 size={24} />
                   <span>Tech Stack</span>
                 </h2>
@@ -269,7 +268,7 @@ const ProjectDetailPage = () => {
             )}
 
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4">Links & Resources</h2>
+              <h2 className="text-theme-primary text-2xl font-bold mb-4">Links & Resources</h2>
               <div className="flex flex-wrap gap-4">
                 {displayLiveDemo && (
                   <a href={displayLiveDemo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">

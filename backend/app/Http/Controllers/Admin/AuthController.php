@@ -34,9 +34,7 @@ class AuthController extends Controller
         // Check account lockout
         if (Cache::has($lockKey)) {
             $remainingMinutes = Cache::get($lockKey);
-            return back()->withErrors([
-                'email' => "Account locked. Try again in {$remainingMinutes} minutes."
-            ])->withInput($request->only('email'));
+            return $this->loginError($request, $email, "Account locked. Try again in {$remainingMinutes} minutes.");
         }
 
         // Check rate limit (login throttling)
@@ -47,9 +45,7 @@ class AuthController extends Controller
 
             $this->logAttempt($email, $ip, false, 'lockout');
 
-            return back()->withErrors([
-                'email' => "Too many failed attempts. Account locked for " . ceil($seconds / 60) . " minutes."
-            ])->withInput($request->only('email'));
+            return $this->loginError($request, $email, "Too many failed attempts. Account locked for " . ceil($seconds / 60) . " minutes.");
         }
 
         if (!Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
@@ -60,9 +56,7 @@ class AuthController extends Controller
             $attempts = RateLimiter::attempts($throttleKey);
             $remaining = self::MAX_FAILED_ATTEMPTS - $attempts;
 
-            return back()->withErrors([
-                'email' => "Email or password incorrect. {$remaining} attempts remaining."
-            ])->withInput($request->only('email'));
+            return $this->loginError($request, $email, "Email or password incorrect. {$remaining} attempts remaining.");
         }
 
         // Clear rate limiter on success
@@ -73,9 +67,7 @@ class AuthController extends Controller
         if (!$user->is_admin) {
             Auth::logout();
             $this->logAttempt($email, $ip, false, 'not_admin');
-            return back()->withErrors([
-                'email' => 'Access denied. Admin privileges required.'
-            ])->withInput($request->only('email'));
+            return $this->loginError($request, $email, 'Access denied. Admin privileges required.');
         }
 
         // Regenerate session (session fixation prevention)
@@ -83,7 +75,23 @@ class AuthController extends Controller
 
         $this->logAttempt($email, $ip, true, 'success');
 
+        // SPA JSON response (no token — relies on httpOnly session cookie)
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'user' => $user->only('id', 'name', 'email', 'is_admin'),
+            ]);
+        }
+
         return redirect()->route('admin.dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
+    }
+
+    private function loginError(Request $request, string $email, string $message)
+    {
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        return back()->withErrors(['email' => $message])->withInput($request->only('email'));
     }
 
     public function logout(Request $request)
@@ -101,6 +109,10 @@ class AuthController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Logged out']);
+        }
 
         return redirect()->route('admin.login')->with('status', 'You have been logged out successfully.');
     }

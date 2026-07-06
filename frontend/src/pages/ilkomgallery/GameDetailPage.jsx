@@ -1,12 +1,10 @@
-// src/pages/ilkomgallery/GameDetailPage.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
-  Play, X, ExternalLink, Download,
+  Play, X, Download,
   User, Calendar, Code2, Gamepad2, Award, Users,
   Mail, ArrowLeft
 } from 'lucide-react'
-import { FaGithub } from 'react-icons/fa'
 
 // Data game projects
 const gamesData = {
@@ -188,7 +186,7 @@ Game kuis multiplayer yang memungkinkan pemain berkompetisi secara real-time.
 const formatText = (text) => {
   return text.split('\n').map((line, idx) => {
     if (line.startsWith('**') && line.endsWith('**')) {
-      return <h3 key={idx} className="text-lg font-bold text-white mt-4 mb-2">{line.slice(2, -2)}</h3>
+      return <h3 key={idx} className="text-lg font-bold text-theme-primary mt-4 mb-2">{line.slice(2, -2)}</h3>
     }
     if (line.startsWith('- ')) {
       return <li key={idx} className="text-theme-secondary ml-4 mb-1">{line.slice(2)}</li>
@@ -207,9 +205,9 @@ const GameDetailPage = () => {
 
   useEffect(() => {
     const data = gamesData[slug]
-    if (data) {
-      setGame(data)
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (data) { setGame(data) }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(false)
   }, [slug])
 
@@ -218,7 +216,7 @@ const GameDetailPage = () => {
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Loading game...</p>
+          <p className="text-theme-primary">Loading game...</p>
         </div>
       </div>
     )
@@ -228,7 +226,7 @@ const GameDetailPage = () => {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-xl mb-4">Game tidak ditemukan</p>
+          <p className="text-theme-primary text-xl mb-4">Game tidak ditemukan</p>
           <Link to="/ilkomgallery" className="text-orange-500 hover:text-orange-400">
             Kembali ke Gallery
           </Link>
@@ -333,14 +331,14 @@ const GameDetailPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4">About This Game</h2>
+              <h2 className="text-theme-primary text-2xl font-bold mb-4">About This Game</h2>
               <div className="text-theme-secondary leading-relaxed">
                 {formatText(game.fullDescription)}
               </div>
             </section>
             
             <section>
-              <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+              <h2 className="text-theme-primary text-2xl font-bold mb-4 flex items-center gap-2">
                 <Code2 size={24} />
                 <span>Tech Stack</span>
               </h2>

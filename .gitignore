@@ -40,6 +40,8 @@ backend/graphify-out/
 # Frontend build output
 frontend/dist/
 frontend/public/build/
+frontend/playwright-report/
+frontend/test-results/
 
 # IDE
 *.swp
@@ -52,3 +54,9 @@ frontend/public/build/
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Claude session artifacts
+memory/
+.remember/
+.zcode/
+.playwright-mcp/

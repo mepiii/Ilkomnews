@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ProjectSubmission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class GalleryController extends Controller
 {
+    private const STATS_CACHE_KEY = 'admin:gallery:stats';
+    private const STATS_CACHE_TTL = 60;
     public function index(Request $request)
     {
         $query = ProjectSubmission::query();
@@ -80,6 +83,8 @@ class GalleryController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        Cache::forget(self::STATS_CACHE_KEY);
+
         if (request()->expectsJson()) {
             return response()->json(['data' => $submission->fresh()]);
         }
@@ -125,6 +130,8 @@ class GalleryController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        Cache::forget(self::STATS_CACHE_KEY);
+
         if ($request->expectsJson()) {
             return response()->json(['data' => $submission->fresh()]);
         }
@@ -156,6 +163,8 @@ class GalleryController extends Controller
 
         $submission->delete();
 
+        Cache::forget(self::STATS_CACHE_KEY);
+
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Proyek berhasil dihapus!']);
         }
@@ -165,7 +174,7 @@ class GalleryController extends Controller
 
     public function stats()
     {
-        return response()->json([
+        $stats = Cache::remember(self::STATS_CACHE_KEY, self::STATS_CACHE_TTL, fn () => [
             'total' => ProjectSubmission::count(),
             'pending' => ProjectSubmission::pending()->count(),
             'accepted' => ProjectSubmission::accepted()->count(),
@@ -176,5 +185,7 @@ class GalleryController extends Controller
             'game' => ProjectSubmission::where('category', 'game')->count(),
             'ai' => ProjectSubmission::where('category', 'ai')->count(),
         ]);
+
+        return response()->json($stats);
     }
 }

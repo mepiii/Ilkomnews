@@ -1,15 +1,15 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faInstagram, faYoutube, faTiktok, faLine } from '@fortawesome/free-brands-svg-icons'
+import { itemVariant } from '../../lib/animations'
+import { FaInstagram, FaYoutube, FaTiktok, FaLine } from 'react-icons/fa'
 import { ArrowUpRight, Heart, Mail, Phone } from 'lucide-react'
 import logo from '../../assets/BEM.png'
 
 const socialLinks = [
-  { icon: faInstagram, href: 'https://www.instagram.com/bemilkomunsri', label: 'Instagram', color: 'hover:bg-pink-500/20 hover:border-pink-400/40 hover:text-pink-400' },
-  { icon: faYoutube, href: 'https://youtube.com/@bemkmfasilkomunsri8050', label: 'YouTube', color: 'hover:bg-red-500/20 hover:border-red-400/40 hover:text-red-400' },
-  { icon: faTiktok, href: 'https://www.tiktok.com/@bemfasilkomunsri', label: 'TikTok', color: 'hover:bg-neutral-400/20 hover:border-neutral-300/40 hover:text-neutral-300' },
-  { icon: faLine, href: 'https://line.me/ti/p/~@bemilkomunsri', label: 'LINE', color: 'hover:bg-green-500/20 hover:border-green-400/40 hover:text-green-400' },
+  { icon: FaInstagram, href: 'https://www.instagram.com/bemilkomunsri', label: 'Instagram', color: 'hover:bg-pink-500/20 hover:border-pink-400/40 hover:text-pink-400' },
+  { icon: FaYoutube, href: 'https://youtube.com/@bemkmfasilkomunsri8050', label: 'YouTube', color: 'hover:bg-red-500/20 hover:border-red-400/40 hover:text-red-400' },
+  { icon: FaTiktok, href: 'https://www.tiktok.com/@bemfasilkomunsri', label: 'TikTok', color: 'hover:bg-neutral-400/20 hover:border-neutral-300/40 hover:text-neutral-300' },
+  { icon: FaLine, href: 'https://line.me/ti/p/~@bemilkomunsri', label: 'LINE', color: 'hover:bg-green-500/20 hover:border-green-400/40 hover:text-green-400' },
 ]
 
 const contactInfo = [
@@ -30,14 +30,7 @@ const legalLinks = [
   { href: 'https://unsri.ac.id/', label: 'Universitas Sriwijaya' },
 ]
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-}
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
-}
+
 
 export default function Footer() {
   return (
@@ -48,7 +41,7 @@ export default function Footer() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(191,148,255,0.08),transparent_60%)]" />
 
       <motion.div
-        variants={container}
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: '-80px' }}
@@ -56,14 +49,14 @@ export default function Footer() {
       >
         <div className="max-w-7xl mx-auto">
           {/* Top row */}
-          <motion.div variants={item} className="md:flex md:items-start md:justify-between mb-10">
+          <motion.div variants={itemVariant} className="md:flex md:items-start md:justify-between mb-10">
             <Link to="/" className="flex items-center gap-x-3 group" aria-label="ILKOM NEWS">
               <img src={logo} alt="ILKOM" className="h-9 w-auto group-hover:scale-105 transition-transform" />
               <span className="font-bold text-xl font-header text-white">ILKOM NEWS</span>
             </Link>
             <ul className="flex list-none mt-6 md:mt-0 gap-2">
               {socialLinks.map((link, i) => (
-                <motion.li key={i} variants={item}>
+                <motion.li key={i} variants={itemVariant}>
                   <a
                     href={link.href}
                     target="_blank"
@@ -71,7 +64,7 @@ export default function Footer() {
                     aria-label={link.label}
                     className={`inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-lg ${link.color}`}
                   >
-                    <FontAwesomeIcon icon={link.icon} className="text-sm" />
+                    <link.icon className="text-sm" />
                   </a>
                 </motion.li>
               ))}
@@ -79,7 +72,7 @@ export default function Footer() {
           </motion.div>
 
           {/* Contact info */}
-          <motion.div variants={item} className="mb-8">
+          <motion.div variants={itemVariant} className="mb-8">
             <ul className="flex flex-col gap-1.5">
               {contactInfo.map((c, i) => (
                 <li key={i}>
@@ -96,16 +89,16 @@ export default function Footer() {
           </motion.div>
 
           {/* Divider */}
-          <motion.div variants={item} className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+          <motion.div variants={itemVariant} className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
 
           {/* Bottom row */}
           <div className="md:flex md:items-center md:justify-between gap-6">
-            <motion.div variants={item} className="text-white/30 text-sm leading-6">
+            <motion.div variants={itemVariant} className="text-white/30 text-sm leading-6">
               <div>© {new Date().getFullYear()} ILKOM NEWS</div>
               <div className="text-white/20 text-xs mt-0.5">BEM FASILKOM UNSRI — Hak cipta dilindungi</div>
             </motion.div>
 
-            <motion.nav variants={item} className="mt-4 md:mt-0">
+            <motion.nav variants={itemVariant} className="mt-4 md:mt-0">
               <ul className="list-none flex flex-wrap gap-4">
                 {mainLinks.map((link, i) => (
                   <li key={i}>
@@ -136,7 +129,7 @@ export default function Footer() {
           </div>
 
           {/* Bottom accent line */}
-          <motion.div variants={item} className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-1.5 text-white/20 text-xs">
+          <motion.div variants={itemVariant} className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-1.5 text-white/20 text-xs">
             <span>Dibuat dengan</span>
             <Heart size={10} className="text-pink-400/60 fill-pink-400/60" />
             <span>oleh FASILKOM UNSRI</span>

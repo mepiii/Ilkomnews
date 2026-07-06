@@ -1,14 +1,15 @@
-import { useState, useEffect, Suspense, lazy } from 'react'
+import { Suspense, lazy } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
-import { FloatingChatWidget } from './components/chat/FloatingChatWidget'
-import IntroScreen from './components/common/IntroScreen'
+import WolfyWidget from './components/chat/WolfyWidget'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PerformanceMonitor from './components/common/PerformanceMonitor'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import AdminRoutes from './routes/AdminRoutes'
 import { Tiles } from './components/ui/Tiles'
+import { ScrollToTop } from './components/ui/ScrollToTop'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
@@ -34,50 +35,48 @@ const PageLoader = () => (
 )
 
 function AppContent() {
-  const [showIntro, setShowIntro] = useState(true)
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowIntro(false), 4000)
-    return () => clearTimeout(timer)
-  }, [])
-
   return (
     <div className="relative min-h-screen flex flex-col transition-colors duration-300">
-      {showIntro && <IntroScreen />}
       <PerformanceMonitor />
+      <ScrollToTop />
 
-      {/* Full-page Tiles background */}
+      {/* Tiles background - visible on all non-admin pages */}
       {!isAdminRoute && (
-        <Tiles fixed rows={100} cols={16} />
+        <div className="fixed inset-0 z-0">
+          <Tiles tileSize="md" />
+        </div>
       )}
 
       {!isAdminRoute && <Navbar />}
       <main className="relative z-0 flex-grow">
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/news/:slug" element={<DetailPage type="news" />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/events/:slug" element={<DetailPage type="events" />} />
-            <Route path="/ilkomgallery" element={<IlkomGalleryPage />} />
-            <Route path="/ilkomgallery/project/:slug" element={<ProjectDetailPage />} />
-            <Route path="/ilkomgallery/game/:slug" element={<GameDetailPage />} />
-            <Route path="/ilkomgallery/mobile/:slug" element={<MobileDetailPage />} />
-            <Route path="/ilkomgallery/uiux/:slug" element={<UiUxDetailPage />} />
-            <Route path="/ilkomgallery/web/:slug" element={<WebDetailPage />} />
-            <Route path="/submit" element={<SubmitProjectPage />} />
-            <Route path="/koleksi" element={<SavedItemsPage />} />
-            <Route path="/track" element={<TrackPage />} />
-            <Route path="/admin/*" element={<AdminRoutes />} />
-            <Route path="*" element={<HomePage />} />
-          </Routes>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/news/:slug" element={<DetailPage type="news" />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/events/:slug" element={<DetailPage type="events" />} />
+              <Route path="/ilkomgallery" element={<IlkomGalleryPage />} />
+              <Route path="/ilkomgallery/project/:slug" element={<ProjectDetailPage />} />
+              <Route path="/ilkomgallery/game/:slug" element={<GameDetailPage />} />
+              <Route path="/ilkomgallery/mobile/:slug" element={<MobileDetailPage />} />
+              <Route path="/ilkomgallery/uiux/:slug" element={<UiUxDetailPage />} />
+              <Route path="/ilkomgallery/web/:slug" element={<WebDetailPage />} />
+              <Route path="/submit" element={<SubmitProjectPage />} />
+              <Route path="/koleksi" element={<SavedItemsPage />} />
+              <Route path="/track" element={<TrackPage />} />
+              <Route path="/admin/*" element={<AdminRoutes />} />
+              <Route path="*" element={<HomePage />} />
+            </Routes>
+          </AnimatePresence>
         </Suspense>
       </main>
       {!isAdminRoute && <Footer />}
-      {!isAdminRoute && <FloatingChatWidget />}
+      {!isAdminRoute && <WolfyWidget />}
     </div>
   )
 }

@@ -51,7 +51,7 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'tags' => 'nullable', // Accept JSON string or array
+            'tags' => 'nullable|array',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240', // 10MB max
         ]);
 

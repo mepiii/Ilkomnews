@@ -2,10 +2,54 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\ProfileController;
+use App\Models\News;
+use App\Models\Article;
+use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
+});
+
+// ── SPA Admin Auth (web middleware for session/cookie support) ──
+Route::post('/api/admin/login', [Admin\AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/api/admin/logout', [Admin\AuthController::class, 'logout'])->middleware(['web', 'auth']);
+Route::get('/api/admin/user', [Admin\AuthController::class, 'user'])->middleware(['web', 'auth']);
+
+// ── Sitemap ──
+Route::get('/sitemap.xml', function () {
+    $baseUrl = config('app.url');
+    $news = News::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
+    $articles = Article::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
+    $events = Event::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+    // Static pages
+    $staticPages = ['', '/news', '/articles', '/events', '/ilkomgallery', '/gallery', '/submit', '/track', '/koleksi'];
+    foreach ($staticPages as $page) {
+        $xml .= '  <url>' . "\n";
+        $xml .= '    <loc>' . $baseUrl . $page . '</loc>' . "\n";
+        $xml .= '    <changefreq>weekly</changefreq>' . "\n";
+        $xml .= '    <priority>0.8</priority>' . "\n";
+        $xml .= '  </url>' . "\n";
+    }
+
+    // ponytail: extracted helper for repeated XML block
+    $sitemapUrl = fn ($item, $path) => '  <url>' . "\n" .
+        '    <loc>' . $baseUrl . $path . '/' . $item->slug . '</loc>' . "\n" .
+        '    <lastmod>' . $item->updated_at->toIso8601String() . '</lastmod>' . "\n" .
+        '    <changefreq>monthly</changefreq>' . "\n" .
+        '  </url>' . "\n";
+
+    $xml .= $news->map(fn ($n) => $sitemapUrl($n, 'news'))->implode('');
+    $xml .= $events->map(fn ($e) => $sitemapUrl($e, 'events'))->implode('');
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200)
+        ->header('Content-Type', 'application/xml');
 });
 
 // ── Redirect /login to /admin/login ──

@@ -11,16 +11,6 @@ export default {
         'primary': '#300B55',
         'secondary': '#7A47A6',
         'accent': '#FFC148',
-        'bg-light': '#FFEDCA',
-        'text-gray': '#A7A3A3',
-        glass: {
-          light: 'rgba(255, 255, 255, 0.7)',
-          dark: 'rgba(255, 255, 255, 0.05)',
-          border: {
-            light: 'rgba(255, 255, 255, 0.3)',
-            dark: 'rgba(255, 255, 255, 0.1)',
-          },
-        },
       },
       backdropBlur: {
         xs: '2px',
@@ -33,6 +23,8 @@ export default {
         'glow': 'glow 3s ease-in-out infinite alternate',
         'marquee': 'marquee 25s linear infinite',
         'marquee-reverse': 'marqueeReverse 25s linear infinite',
+        'shine': 'shine 8s ease-in-out infinite',
+        'shine-slow': 'shineSlow 12s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -62,6 +54,14 @@ export default {
         marqueeReverse: {
           '0%': { transform: 'translateX(-33.33%)' },
           '100%': { transform: 'translateX(0)' },
+        },
+        shine: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        shineSlow: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },

@@ -7,6 +7,8 @@ use App\Models\News;
 use App\Models\Article;
 use App\Models\ProjectSubmission;
 use App\Models\ChatLog;
+use App\Models\ChatConversation;
+use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -15,8 +17,6 @@ use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
-    private static array $sessions = [];
-
     private const MAX_INPUT_CHARS = 200;
     private const MAX_INPUT_WORDS = 40;
     private const MAX_OUTPUT_CHARS = 800;
@@ -96,6 +96,7 @@ PROMPT;
 
         $ip = $request->ip();
         $deviceId = $validated['device_id'] ?? null;
+        $visitorId = $deviceId ?? $ip;
         $sessionId = $validated['session_id'] ?? Str::random(32);
         $userMessage = trim($validated['message']);
 
@@ -150,7 +151,9 @@ PROMPT;
             }
 
             // Retrieve context (RAG)
-            $context = $this->retrieveContext($userMessage);
+            // RAG pipeline (vector search) with keyword LIKE fallback
+            $rag = app(\App\Services\RAGPipeline::class);
+            $context = $rag->retrieveOnly($userMessage) ?? $this->retrieveContext($userMessage);
 
             // Zero-hallucination check
             if (empty(trim($context))) {
@@ -167,23 +170,30 @@ PROMPT;
             // Build prompt with context and strict instructions
             $systemPrompt = self::SYSTEM_PROMPT . "\n\nKONTEKS DARI DATABASE:\n{$context}\n\nPENTING: Jawab HANYA berdasarkan konteks di atas. Jika konteks tidak mengandung jawaban yang relevan, katakan persis: 'Informasi yang Anda cari tidak ditemukan di database website.' JANGAN pernah menghasilkan informasi dari pengetahuan Anda sendiri.";
 
-            // Session management
-            if (!isset(self::$sessions[$sessionId])) {
-                self::$sessions[$sessionId] = [];
-            }
-            if (count(self::$sessions[$sessionId]) >= self::MAX_MESSAGES_PER_SESSION) {
-                array_shift(self::$sessions[$sessionId]);
-            }
-            self::$sessions[$sessionId][] = ['role' => 'user', 'parts' => [['text' => $userMessage]]];
+            // DB-backed session management
+            $conversation = ChatConversation::firstOrCreate(
+                ['session_id' => $sessionId],
+                ['visitor_id' => $visitorId]
+            );
 
-            // Convert session format to general standard
+            // Save user message
+            ChatMessage::create([
+                'conversation_id' => $conversation->id,
+                'role' => 'user',
+                'content' => $userMessage,
+            ]);
+
+            // Build messages array from DB history (last N messages)
+            $recentMessages = $conversation->messages()
+                ->latest()
+                ->limit(self::MAX_MESSAGES_PER_SESSION - 1)
+                ->get()
+                ->reverse()
+                ->values();
+
             $messages = [['role' => 'system', 'content' => $systemPrompt]];
-            foreach (self::$sessions[$sessionId] as $msg) {
-                if ($msg['role'] === 'user') {
-                    $messages[] = ['role' => 'user', 'content' => $msg['parts'][0]['text']];
-                } elseif ($msg['role'] === 'model') {
-                    $messages[] = ['role' => 'assistant', 'content' => $msg['parts'][0]['text']];
-                }
+            foreach ($recentMessages as $msg) {
+                $messages[] = ['role' => $msg->role, 'content' => $msg->content];
             }
 
             // Fetch active LLM Providers ordered by priority
@@ -306,8 +316,12 @@ PROMPT;
                 $reply = implode("\n", $output);
             }
 
-            // Add to session history
-            self::$sessions[$sessionId][] = ['role' => 'model', 'parts' => [['text' => $reply]]];
+            // Save assistant response to DB
+            ChatMessage::create([
+                'conversation_id' => $conversation->id,
+                'role' => 'assistant',
+                'content' => $reply,
+            ]);
 
             $this->logChat($sessionId, $userMessage, $reply, 'success', $ip);
 

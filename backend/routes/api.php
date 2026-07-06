@@ -9,11 +9,10 @@ use App\Http\Controllers\ProjectSubmissionController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Api\Admin\AdminProfileController;
+use App\Http\Controllers\Api\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\NotificationController;
 use Illuminate\Support\Facades\Route;
-
-// ── Admin Auth (no session) ──
-Route::post('/admin/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 // ── Public API (rate limited) ──
 Route::middleware('throttle:api')->group(function () {
@@ -113,4 +112,20 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')-
     Route::post('/chatbot-api', [Admin\ChatbotApiController::class, 'store']);
     Route::put('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'update']);
     Route::delete('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'destroy']);
+
+    // Admin Profile Management (separate endpoints for each field)
+    Route::get('/admins', [AdminProfileController::class, 'index']);
+    Route::post('/admins', [AdminProfileController::class, 'store']);
+    Route::get('/admins/{id}', [AdminProfileController::class, 'show']);
+    Route::put('/admins/{id}/name', [AdminProfileController::class, 'updateName']);
+    Route::put('/admins/{id}/email', [AdminProfileController::class, 'updateEmail']);
+    Route::put('/admins/{id}/password', [AdminProfileController::class, 'updatePassword']);
+    Route::delete('/admins/{id}', [AdminProfileController::class, 'destroy']);
+
+    // API Key Management (encrypted, never exposed to frontend)
+    Route::get('/api-keys', [ApiKeyController::class, 'index']);
+    Route::put('/api-keys/azure', [ApiKeyController::class, 'updateAzure']);
+    Route::put('/api-keys/gemini', [ApiKeyController::class, 'updateGemini']);
+    Route::post('/api-keys/test-azure', [ApiKeyController::class, 'testAzure']);
+    Route::post('/api-keys/test-gemini', [ApiKeyController::class, 'testGemini']);
 });

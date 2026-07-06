@@ -1,27 +1,9 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+import { API_BASE } from './api'
 
-const TOKEN_KEY = 'admin_token'
-
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY)
-}
-
-function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token)
-}
-
-function removeToken() {
-  localStorage.removeItem(TOKEN_KEY)
-}
-
+// ponytail: httpOnly cookie auth — no localStorage token, credentials:'include' on all requests
 export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
-  const token = getToken()
-  const headers = {
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  }
+  const headers = { ...options.headers }
 
-  // Only set Content-Type to application/json if it's not FormData
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json'
   }
@@ -33,12 +15,12 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include',
       signal: controller.signal,
     })
     clearTimeout(timeoutId)
 
     if (response.status === 401) {
-      removeToken()
       if (!window.location.pathname.includes('/admin/login')) {
         window.location.href = '/admin/login'
       }
@@ -50,14 +32,13 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
       throw new Error(error.message || error.error || `HTTP ${response.status}`)
     }
 
-    // Handle 204 No Content
     if (response.status === 204) return null
 
     return response.json()
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout')
+      throw new Error('Request timeout', { cause: error })
     }
     throw error
   }
@@ -68,16 +49,11 @@ export const adminAuth = {
     return fetchAdmin('/admin/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, remember }),
-    }).then((data) => {
-      setToken(data.token)
-      return data
     })
   },
 
   logout() {
-    return fetchAdmin('/admin/logout', { method: 'POST' }).finally(() => {
-      removeToken()
-    })
+    return fetchAdmin('/admin/logout', { method: 'POST' })
   },
 
   getUser() {

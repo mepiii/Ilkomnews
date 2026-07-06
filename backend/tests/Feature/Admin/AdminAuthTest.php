@@ -11,7 +11,7 @@ class AdminAuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_with_valid_credentials_returns_token()
+    public function test_login_with_valid_credentials_returns_user()
     {
         $admin = User::factory()->admin()->create([
             'email' => 'admin@test.com',
@@ -24,10 +24,10 @@ class AdminAuthTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonStructure(['user', 'token']);
+            ->assertJsonStructure(['user' => ['id', 'name', 'email', 'is_admin']]);
     }
 
-    public function test_login_with_invalid_password_returns_401()
+    public function test_login_with_invalid_password_returns_422()
     {
         User::factory()->admin()->create([
             'email' => 'admin@test.com',
@@ -39,11 +39,11 @@ class AdminAuthTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
-        $response->assertStatus(401)
-            ->assertJsonStructure(['message', 'attempts_remaining']);
+        $response->assertStatus(422)
+            ->assertJsonStructure(['message']);
     }
 
-    public function test_login_with_non_admin_user_returns_403()
+    public function test_login_with_non_admin_user_returns_422()
     {
         User::factory()->create([
             'email' => 'user@test.com',
@@ -56,8 +56,8 @@ class AdminAuthTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertStatus(403)
-            ->assertJsonPath('message', 'Access denied');
+        $response->assertStatus(422)
+            ->assertJsonPath('message', 'Access denied. Admin privileges required.');
     }
 
     public function test_account_lockout_after_five_failed_attempts()
@@ -67,61 +67,37 @@ class AdminAuthTest extends TestCase
             'password' => bcrypt('password'),
         ]);
 
-        // Clear rate limits for test
         RateLimiter::clear('login_throttle:admin@test.com:127.0.0.1');
 
-        // 5 failed attempts
         for ($i = 0; $i < 5; $i++) {
             $response = $this->postJson('/api/admin/login', [
                 'email' => 'admin@test.com',
                 'password' => 'wrong-password-' . $i,
             ]);
-            $this->assertEquals(401, $response->status());
+            $this->assertEquals(422, $response->status());
         }
 
-        // 6th attempt should be locked (429)
         $response = $this->postJson('/api/admin/login', [
             'email' => 'admin@test.com',
             'password' => 'wrong-password-final',
         ]);
-        $response->assertStatus(429)
-            ->assertJsonPath('locked', true);
+        $response->assertStatus(422)
+            ->assertJsonPath('message', fn ($msg) => str_contains($msg, 'locked'));
     }
 
-    public function test_logout_with_valid_token_succeeds()
+    public function test_logout_succeeds()
     {
         $admin = User::factory()->admin()->create([
             'email' => 'admin@test.com',
             'password' => bcrypt('password'),
         ]);
 
-        $token = $admin->createToken('admin-token')->plainTextToken;
+        // Login via session (stateful)
+        $this->actingAs($admin);
+        $this->session(['_token' => 'test-token']);
 
-        $response = $this->postJson('/api/admin/logout', [], [
-            'Authorization' => "Bearer {$token}",
-        ]);
-
-        $response->assertOk()
-            ->assertJsonPath('message', 'Logged out');
-
-        // Token should be deleted
-        $this->assertDatabaseMissing('personal_access_tokens', [
-            'tokenable_id' => $admin->id,
-            'name' => 'admin-token',
-        ]);
-    }
-
-    public function test_logout_without_token_returns_401()
-    {
         $response = $this->postJson('/api/admin/logout');
-        $response->assertStatus(401);
-    }
-
-    public function test_login_validation_requires_email_and_password()
-    {
-        $response = $this->postJson('/api/admin/login', []);
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email', 'password']);
+        $response->assertOk();
     }
 
     public function test_user_endpoint_returns_authenticated_admin()
@@ -131,13 +107,24 @@ class AdminAuthTest extends TestCase
             'password' => bcrypt('password'),
         ]);
 
-        $token = $admin->createToken('admin-token')->plainTextToken;
+        // Use actingAs for session auth in tests
+        $this->actingAs($admin);
 
-        $response = $this->getJson('/api/admin/user', [
-            'Authorization' => "Bearer {$token}",
-        ]);
-
+        $response = $this->getJson('/api/admin/user');
         $response->assertOk()
             ->assertJsonPath('email', 'admin@test.com');
+    }
+
+    public function test_user_endpoint_returns_401_without_session()
+    {
+        $response = $this->getJson('/api/admin/user');
+        $response->assertStatus(401);
+    }
+
+    public function test_login_validation_requires_email_and_password()
+    {
+        $response = $this->postJson('/api/admin/login', []);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email', 'password']);
     }
 }

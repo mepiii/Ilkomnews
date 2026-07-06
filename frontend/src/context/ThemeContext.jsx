@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 
 const THEME_STORAGE_KEY = 'ilkom-theme'
 
@@ -34,7 +35,7 @@ function applyThemeToDom(nextTheme) {
   }
   try {
     localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-  } catch (e) {
+  } catch {
     /* localStorage may be unavailable (private mode) — ignore */
   }
 }

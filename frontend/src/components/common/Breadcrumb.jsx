@@ -1,38 +1,20 @@
-import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight, Home } from 'lucide-react'
-import { getTitleFromSlug, hasIdInSlug } from '../../utils/formatters'
+import { getTitleFromSlug } from '../../utils/formatters'
+
+const capitalize = str => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
 
 const Breadcrumb = () => {
   const location = useLocation()
   const pathnames = location.pathname.split('/').filter(x => x)
-  const [detailTitle, setDetailTitle] = useState(null)
+  const lastPath = pathnames[pathnames.length - 1]
+  const isDetailPage = pathnames.length >= 2 &&
+    ['news', 'articles', 'events', 'career'].includes(pathnames[pathnames.length - 2])
 
-  useEffect(() => {
-    const lastPath = pathnames[pathnames.length - 1]
-    const isDetailPage = pathnames.length >= 2 &&
-      ['news', 'articles', 'events', 'career'].includes(pathnames[pathnames.length - 2])
-
-    if (isDetailPage && lastPath) {
-      if (hasIdInSlug(lastPath)) {
-        const titleFromSlug = getTitleFromSlug(lastPath)
-        const capitalized = titleFromSlug.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ')
-        setDetailTitle(capitalized)
-      } else if (/^\d+$/.test(lastPath)) {
-        setDetailTitle('Detail Berita')
-      } else {
-        const titleFromSlug = getTitleFromSlug(lastPath)
-        const capitalized = titleFromSlug.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ')
-        setDetailTitle(capitalized)
-      }
-    } else {
-      setDetailTitle(null)
-    }
-  }, [location.pathname])
+  // ponytail: derived from pathname — no state/effect needed
+  const detailTitle = isDetailPage && lastPath
+    ? (/^\d+$/.test(lastPath) ? 'Detail Berita' : capitalize(getTitleFromSlug(lastPath)))
+    : null
 
   const getPathName = (path, isLast = false) => {
     if (isLast && detailTitle) return detailTitle

@@ -1,38 +1,36 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { adminAuth } from '../services/adminApi'
 
 // Export the context so it can be imported directly
-export const AdminAuthContext = createContext(null)
+// Default value prevents crash when lazy-loaded children render before provider mounts
+export const AdminAuthContext = createContext({
+  user: null,
+  loading: true,
+  isAuthenticated: false,
+  login: async () => {},
+  logout: async () => {},
+})
 
 const REMEMBER_KEY = 'admin_remember'
 
 export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(() => localStorage.getItem('admin_token'))
   const [loading, setLoading] = useState(true)
 
-  const isAuthenticated = Boolean(token && user)
+  const isAuthenticated = Boolean(user)
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false)
-      return
-    }
-
+    // Try to get user from session cookie (httpOnly)
     adminAuth.getUser()
       .then((data) => setUser(data.user || data))
-      .catch(() => {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem(REMEMBER_KEY)
-        setToken(null)
-      })
+      .catch(() => setUser(null))
       .finally(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const login = useCallback(async (email, password, remember = false) => {
     const data = await adminAuth.login(email, password, remember)
-    setToken(data.token)
     setUser(data.user)
     if (remember) {
       localStorage.setItem(REMEMBER_KEY, 'true')
@@ -46,24 +44,20 @@ export function AdminAuthProvider({ children }) {
     try {
       await adminAuth.logout()
     } finally {
-      localStorage.removeItem('admin_token')
       localStorage.removeItem(REMEMBER_KEY)
-      setToken(null)
       setUser(null)
     }
   }, [])
 
   return (
-    <AdminAuthContext.Provider value={{ user, token, loading, isAuthenticated, login, logout }}>
+    <AdminAuthContext.Provider value={{ user, loading, isAuthenticated, login, logout }}>
       {children}
     </AdminAuthContext.Provider>
   )
 }
 
 export function useAdminAuth() {
-  const ctx = useContext(AdminAuthContext)
-  if (!ctx) throw new Error('useAdminAuth must be used within AdminAuthProvider')
-  return ctx
+  return useContext(AdminAuthContext)
 }
 
 export function ProtectedRoute({ children }) {

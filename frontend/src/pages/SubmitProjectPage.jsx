@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Upload, CheckCircle, Copy, ExternalLink, Plus, X, Globe, Smartphone, Palette, Gamepad2, Cpu, Image as ImageIcon } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
 import Breadcrumb from '../components/common/Breadcrumb'
 import { PageHeader } from '../components/ui/PageHeader'
-import { Tiles } from '../components/ui/Tiles'
+import { PageBackground } from '../components/ui/PageBackground'
 const CATEGORIES = [
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
   { id: 'mobile', label: 'Aplikasi Mobile', icon: Smartphone },
@@ -19,11 +19,12 @@ const MAJORS = [
   'D3 Manajemen Informatika', 'D3 Komputerisasi Akuntansi', 'D3 Teknik Komputer',
 ]
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+import { API_BASE } from '../services/api'
 
 const baseForm = {
   title: '', category: 'web', description: '', thumbnail: '', thumbnailFile: null,
   creator_name: '', creator_nim: '', creator_major: MAJORS[0], creator_year: 2024,
+  creator_avatar: '', creator_avatarFile: null,
   collaborators: [],
 }
 
@@ -76,6 +77,8 @@ const SubmitProjectPage = () => {
   const [techInput, setTechInput] = useState('')
   const [collabName, setCollabName] = useState('')
   const [collabNim, setCollabNim] = useState('')
+  const [collabAvatar, setCollabAvatar] = useState('')
+  const [collabAvatarFile, setCollabAvatarFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -92,7 +95,7 @@ const SubmitProjectPage = () => {
   }
   const removeTechTag = (idx) => setTechStackTags(prev => prev.filter((_, i) => i !== idx))
 
-  const addCollab = () => { if (collabName.trim()) { update('collaborators', [...form.collaborators, { name: collabName.trim(), nim: collabNim.trim() }]); setCollabName(''); setCollabNim('') } }
+  const addCollab = () => { if (collabName.trim()) { update('collaborators', [...form.collaborators, { name: collabName.trim(), nim: collabNim.trim(), avatar: collabAvatar, avatarFile: collabAvatarFile }]); setCollabName(''); setCollabNim(''); setCollabAvatar(''); setCollabAvatarFile(null) } }
   const removeCollab = (idx) => update('collaborators', form.collaborators.filter((_, i) => i !== idx))
 
   const handleFileUpload = (e) => {
@@ -106,6 +109,21 @@ const SubmitProjectPage = () => {
     update('thumbnailFile', file)
     update('thumbnail', URL.createObjectURL(file))
   }
+
+  const handleImageUpload = (e, onFile, onPreview) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) return
+    if (file.size > 500 * 1024) {
+      setError('Gambar harus di bawah 500KB')
+      return
+    }
+    onFile(file)
+    onPreview(URL.createObjectURL(file))
+  }
+
+  const handleAvatarUpload = (e) => handleImageUpload(e, (f) => update('creator_avatarFile', f), (u) => update('creator_avatar', u))
+  const handleCollabAvatarUpload = (e) => handleImageUpload(e, setCollabAvatarFile, setCollabAvatar)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -129,6 +147,13 @@ const SubmitProjectPage = () => {
       } else if (form.thumbnail && !form.thumbnail.startsWith('blob:')) {
         // If URL entered instead of file
         formData.append('thumbnail_url', form.thumbnail)
+      }
+
+      // Add creator avatar if uploaded
+      if (form.creator_avatarFile) {
+        formData.append('creator_avatar', form.creator_avatarFile)
+      } else if (form.creator_avatar && !form.creator_avatar.startsWith('blob:')) {
+        formData.append('creator_avatar_url', form.creator_avatar)
       }
 
       // Add tech stack as array
@@ -167,7 +192,7 @@ const SubmitProjectPage = () => {
       setResult(data)
       // Store tracking ID in localStorage for session-based tracking
       if (data.tracking_id) {
-        localStorage.setItem('tracking_id', data.tracking_id)
+        sessionStorage.setItem('tracking_id', data.tracking_id)
       }
     } catch (err) {
       setError(err.message)
@@ -181,117 +206,110 @@ const SubmitProjectPage = () => {
 
   if (result) {
     return (
-      <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-12">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
-      </div>
-        <div className="relative z-10 py-8">
-          <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}>
-              <GlowCard glowColor="green" className="rounded-3xl p-8 text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500/10 rounded-full mb-4">
-                  <CheckCircle size={40} className="text-green-500" />
-                </div>
-                <h2 className="text-2xl font-bold text-theme-primary mb-2 font-header">Proyek Berhasil Diajukan!</h2>
-                <p className="text-theme-muted mb-6">Proyek Anda telah diajukan untuk ditinjau.</p>
-                <div className="bg-theme-secondary border border-theme rounded-2xl p-5 mb-6">
-                  <p className="text-xs text-theme-muted mb-1 uppercase tracking-wider font-semibold">ID Pelacakan Anda</p>
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-3xl font-mono font-bold text-purple-600 dark:text-purple-400">{result.tracking_id}</span>
-                    <button onClick={copyTrackingId} className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors" title="Salin">
-                      <Copy size={16} className="text-theme-muted" />
-                    </button>
+      <PageBackground>
+        <div className="min-h-screen relative z-0 pt-24 pb-12">
+          <div className="relative z-10 py-8">
+            <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}>
+                <GlowCard glowColor="green" className="rounded-3xl p-8 text-center">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500/10 rounded-full mb-4">
+                    <CheckCircle size={40} className="text-green-500" />
                   </div>
-                  <p className="text-xs text-theme-muted mt-2">Simpan ini untuk memeriksa status pengajuan Anda</p>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Link to={`/track?id=${result.tracking_id}`}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors">
-                    Lacak Status <ExternalLink size={16} />
-                  </Link>
-                  <Link to="/ilkomgallery" className="text-sm text-theme-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                    Kembali ke Galeri
-                  </Link>
-                </div>
-              </GlowCard>
-            </motion.div>
+                  <h2 className="text-2xl font-bold text-theme-primary mb-2 font-header">Proyek Berhasil Diajukan!</h2>
+                  <p className="text-theme-muted mb-6">Proyek Anda telah diajukan untuk ditinjau.</p>
+                  <div className="bg-theme-secondary border border-theme rounded-2xl p-5 mb-6">
+                    <p className="text-xs text-theme-muted mb-1 uppercase tracking-wider font-semibold">ID Pelacakan Anda</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-3xl font-mono font-bold text-purple-600 dark:text-purple-400">{result.tracking_id}</span>
+                      <button onClick={copyTrackingId} className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors" title="Salin">
+                        <Copy size={16} className="text-theme-muted" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-theme-muted mt-2">Simpan ini untuk memeriksa status pengajuan Anda</p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <Link to={`/track?id=${result.tracking_id}`}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors">
+                      Lacak Status <ExternalLink size={16} />
+                    </Link>
+                    <Link to="/ilkomgallery" className="text-sm text-theme-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                      Kembali ke Galeri
+                    </Link>
+                  </div>
+                </GlowCard>
+              </motion.div>
+            </div>
           </div>
         </div>
-      </div>
+      </PageBackground>
     )
   }
 
   return (
-    <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-12">
-      <BGPattern variant="grid" size={60} mask="fade-edges" />
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-8">
-            <Breadcrumb />
-            <PageHeader
-              badge={
-                <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
-                  <div className="bg-card border border-theme rounded-2xl px-3 py-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span>
+    <PageBackground>
+      <div className="min-h-screen relative z-0 pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-8">
+              <Breadcrumb />
+              <PageHeader
+                badge={
+                  <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
+                    <div className="bg-card border border-theme rounded-2xl px-3 py-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span>
+                    </div>
+                    <p className="pr-3 text-xs text-theme-muted">Submit</p>
                   </div>
-                  <p className="pr-3 text-xs text-theme-muted">Submit</p>
-                </div>
-              }
-              title="Kirim Proyek"
-              subtitle="Bagikan proyek Anda dengan komunitas ILKOM"
-            />
-          </div>
+                }
+                title="Kirim Proyek"
+                subtitle="Bagikan proyek Anda dengan komunitas ILKOM"
+              />
+            </div>
 
-          {error && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
-              <p className="text-red-500 text-sm font-medium">{error}</p>
-            </motion.div>
-          )}
+            {error && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+                <p className="text-red-500 text-sm font-medium">{error}</p>
+              </motion.div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Category Selector */}
-            <GlowCard glowColor="purple" className="rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Kategori</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {CATEGORIES.map(cat => {
-                  const Icon = cat.icon
-                  return (
-                    <button key={cat.id} type="button" onClick={() => { update('category', cat.id); setExtraFields({}); setTechStackTags([]); }}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-all ${
-                        form.category === cat.id
-                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                      }`}>
-                      <Icon size={20} />
-                      <span className="text-center leading-tight">{cat.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </GlowCard>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Category Selector */}
+              <GlowCard glowColor="purple" className="rounded-3xl p-6">
+                <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Kategori</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                  {CATEGORIES.map(cat => {
+                    const Icon = cat.icon
+                    return (
+                      <button key={cat.id} type="button" onClick={() => { update('category', cat.id); setExtraFields({}); setTechStackTags([]); }}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-all ${
+                          form.category === cat.id
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                        }`}>
+                        <Icon size={20} />
+                        <span className="text-center leading-tight">{cat.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </GlowCard>
 
-            {/* Project Info */}
-            <GlowCard glowColor="purple" className="rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Detail Proyek</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className={labelCls}>Judul *</label>
-                  <input type="text" required value={form.title} onChange={e => update('title', e.target.value)} placeholder="Proyek Keren Saya" className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Deskripsi *</label>
-                  <textarea required rows={4} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Deskripsikan proyek Anda..." className={`${inputCls} resize-none`} />
-                </div>
-                <div>
-                  <label className={labelCls}>Gambar Thumbnail</label>
-                  <div className="flex items-center gap-3">
+              {/* Project Info */}
+              <GlowCard glowColor="purple" className="rounded-3xl p-6">
+                <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Detail Proyek</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelCls}>Judul *</label>
+                    <input type="text" required value={form.title} onChange={e => update('title', e.target.value)} placeholder="Proyek Keren Saya" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Deskripsi *</label>
+                    <textarea required rows={4} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Deskripsikan proyek Anda..." className={`${inputCls} resize-none`} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Gambar Thumbnail</label>
+                    <div className="flex items-center gap-3">
                     <label className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${form.thumbnail ? 'border-green-500/50 bg-green-500/5' : 'border-theme hover:border-purple-500/50'}`}>
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
                       {form.thumbnail ? (
@@ -318,7 +336,7 @@ const SubmitProjectPage = () => {
               <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Teknologi <span className="text-sm font-normal text-theme-muted">(Opsional)</span></h3>
               <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <select value="" onChange={e => { if (e.target.value && !techStackTags.includes(e.target.value)) { setTechStackTags(prev => [...prev, e.target.value]); setTechInput('') } e.target.value = '' }}
-                  className={`${inputCls} flex-1`}>
+                  className={`${inputCls} flex-1 uppercase`}>
                   <option value="">Pilih teknologi...</option>
                   {(TECH_STACK_OPTIONS[form.category] || []).filter(t => !techStackTags.includes(t)).map(t => (
                     <option key={t} value={t}>{t}</option>
@@ -334,12 +352,22 @@ const SubmitProjectPage = () => {
               </div>
               {techStackTags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {techStackTags.map((tag, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm rounded-full font-medium">
-                      {tag}
-                      <button type="button" onClick={() => removeTechTag(i)} className="hover:text-red-500 transition-colors"><X size={14} /></button>
-                    </span>
-                  ))}
+                  <AnimatePresence>
+                    {techStackTags.map((tag, i) => (
+                      <motion.span
+                        key={tag}
+                        initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                        whileHover={{ scale: 1.08, y: -3 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm rounded-full font-medium border border-purple-200 dark:border-purple-700/50 shadow-sm"
+                      >
+                        {tag}
+                        <button type="button" onClick={() => removeTechTag(i)} className="hover:text-red-500 transition-colors"><X size={14} /></button>
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
                 </div>
               )}
             </GlowCard>
@@ -355,7 +383,7 @@ const SubmitProjectPage = () => {
                     <div key={field.key}>
                       <label className={labelCls}>{field.label} {field.optional && <span className="text-theme-muted font-normal">(Opsional)</span>}</label>
                       {field.type === 'select' ? (
-                        <select value={extraFields[field.key] || ''} onChange={e => updateExtra(field.key, e.target.value)} className={inputCls}>
+                        <select value={extraFields[field.key] || ''} onChange={e => updateExtra(field.key, e.target.value)} className={`${inputCls} uppercase`}>
                           <option value="">Pilih {field.label}...</option>
                           {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
@@ -370,28 +398,53 @@ const SubmitProjectPage = () => {
 
             {/* Creator Info */}
             <GlowCard glowColor="purple" className="rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Creator Info</h3>
+              <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Informasi Pembuat</h3>
               <div className="space-y-4">
+                {/* Profile Photo Upload */}
+                <div className="flex items-center gap-4">
+                  <label className="relative group cursor-pointer shrink-0">
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${form.creator_avatar ? 'border-green-500/50' : 'border-theme hover:border-purple-500/50'}`}>
+                      {form.creator_avatar ? (
+                        <img src={form.creator_avatar} alt="Avatar" loading="lazy" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <ImageIcon size={20} className="text-theme-muted" />
+                          <span className="text-[9px] text-theme-muted">Foto</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Upload size={16} className="text-white" />
+                    </div>
+                  </label>
+                  <div className="text-xs text-theme-muted">
+                    <p className="font-medium text-theme-primary">Foto Profil</p>
+                    <p>Opsional. JPG/PNG, max 500KB.</p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Name *</label>
-                    <input type="text" required value={form.creator_name} onChange={e => update('creator_name', e.target.value)} placeholder="Your name" className={inputCls} />
+                    <label className={labelCls}>Nama *</label>
+                    <input type="text" required value={form.creator_name} onChange={e => update('creator_name', e.target.value)} placeholder="Nama lengkap" className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>NIM *</label>
-                    <input type="text" required value={form.creator_nim} onChange={e => update('creator_nim', e.target.value)} placeholder="20210101001" className={inputCls} />
+                    <label className={labelCls}>NIM <span className="text-theme-muted font-normal">(Opsional)</span></label>
+                    <input type="text" value={form.creator_nim} onChange={e => update('creator_nim', e.target.value)} placeholder="20210101001" className={inputCls} />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Major *</label>
-                    <select value={form.creator_major} onChange={e => update('creator_major', e.target.value)} className={inputCls}>
+                    <label className={labelCls}>Program Studi <span className="text-theme-muted font-normal">(Opsional)</span></label>
+                    <select value={form.creator_major} onChange={e => update('creator_major', e.target.value)} className={`${inputCls} uppercase`}>
+                      <option value="">Pilih program studi...</option>
                       {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Year *</label>
-                    <input type="number" required min={2000} max={2030} value={form.creator_year} onChange={e => update('creator_year', parseInt(e.target.value))} className={inputCls} />
+                    <label className={labelCls}>Angkatan <span className="text-theme-muted font-normal">(Opsional)</span></label>
+                    <input type="number" min={2000} max={2030} value={form.creator_year} onChange={e => update('creator_year', parseInt(e.target.value))} placeholder="2024" className={inputCls} />
                   </div>
                 </div>
               </div>
@@ -400,22 +453,46 @@ const SubmitProjectPage = () => {
             {/* Collaborators */}
             <GlowCard glowColor="purple" className="rounded-3xl p-6">
               <h3 className="text-lg font-bold text-theme-primary mb-4 font-header">Kolaborator <span className="text-sm font-normal text-theme-muted">(Opsional)</span></h3>
-              <div className="flex flex-col sm:flex-row gap-2 mb-3">
-                <input type="text" value={collabName} onChange={e => setCollabName(e.target.value)} placeholder="Nama" className={`${inputCls} flex-1`} />
-                <input type="text" value={collabNim} onChange={e => setCollabNim(e.target.value)} placeholder="NIM (opsional)" className={`${inputCls} flex-1`} />
-                <button type="button" onClick={addCollab}
-                  className="px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
-                  <Plus size={16} /> Tambah
-                </button>
+              <div className="flex flex-col gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <label className="relative group cursor-pointer shrink-0">
+                    <input type="file" accept="image/*" onChange={handleCollabAvatarUpload} className="hidden" />
+                    <div className={`w-12 h-12 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${collabAvatar ? 'border-green-500/50' : 'border-theme hover:border-purple-500/50'}`}>
+                      {collabAvatar ? (
+                        <img src={collabAvatar} alt="Avatar" loading="lazy" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon size={16} className="text-theme-muted" />
+                      )}
+                    </div>
+                  </label>
+                  <input type="text" value={collabName} onChange={e => setCollabName(e.target.value)} placeholder="Nama kolaborator" className={`${inputCls} flex-1`} />
+                  <input type="text" value={collabNim} onChange={e => setCollabNim(e.target.value)} placeholder="NIM (opsional)" className={`${inputCls} flex-1`} />
+                  <button type="button" onClick={addCollab}
+                    className="px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center gap-1 text-sm font-medium whitespace-nowrap">
+                    <Plus size={16} /> Tambah
+                  </button>
+                </div>
+                <p className="text-xs text-theme-muted">Foto profil opsional. JPG/PNG, max 500KB.</p>
               </div>
               {form.collaborators.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {form.collaborators.map((c, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm rounded-full font-medium">
-                      {typeof c === 'string' ? c : `${c.name}${c.nim ? ' (' + c.nim + ')' : ''}`}
-                      <button type="button" onClick={() => removeCollab(i)} className="hover:text-red-500 transition-colors"><X size={14} /></button>
-                    </span>
-                  ))}
+                  <AnimatePresence>
+                    {form.collaborators.map((c, i) => (
+                      <motion.span
+                        key={`${c.name}-${i}`}
+                        initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                        whileHover={{ scale: 1.08, y: -3 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm rounded-full font-medium border border-purple-200 dark:border-purple-700/50 shadow-sm"
+                      >
+                        {c.avatar && <img src={c.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                        {typeof c === 'string' ? c : `${c.name}${c.nim ? ' (' + c.nim + ')' : ''}`}
+                        <button type="button" onClick={() => removeCollab(i)} className="hover:text-red-500 transition-colors"><X size={14} /></button>
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
                 </div>
               )}
             </GlowCard>
@@ -432,7 +509,8 @@ const SubmitProjectPage = () => {
           </form>
         </div>
       </div>
-    </div>
+      </div>
+    </PageBackground>
   )
 }
 

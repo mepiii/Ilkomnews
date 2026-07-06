@@ -26,7 +26,7 @@ const InteractionBar = React.memo(function InteractionBar({
           compact ? "px-2 py-1 text-[11px]" : "px-2.5 py-1.5 text-xs",
           liked
             ? "bg-red-50 dark:bg-red-500/10 text-red-500"
-            : "text-gray-400 dark:text-white/40 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-red-400"
+            :          "text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-white/5 hover:text-red-400"
         )}
       >
         <Heart size={compact ? 12 : 14} fill={liked ? "currentColor" : "none"} />
@@ -40,7 +40,7 @@ const InteractionBar = React.memo(function InteractionBar({
           compact ? "px-2 py-1 text-[11px]" : "px-2.5 py-1.5 text-xs",
           saved
             ? "bg-blue-50 dark:bg-blue-500/10 text-blue-500"
-            : "text-gray-400 dark:text-white/40 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-blue-400"
+            :          "text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-white/5 hover:text-blue-400"
         )}
       >
         <Bookmark size={compact ? 12 : 14} fill={saved ? "currentColor" : "none"} />
@@ -52,7 +52,7 @@ const InteractionBar = React.memo(function InteractionBar({
         className={cn(
           "flex items-center gap-1 rounded-full transition-all",
           compact ? "px-2 py-1 text-[11px]" : "px-2.5 py-1.5 text-xs",
-          "text-gray-400 dark:text-white/40 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-green-400"
+          "text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-white/5 hover:text-green-400"
         )}
       >
         <Share2 size={compact ? 12 : 14} />
@@ -134,8 +134,11 @@ function ExpandableCard({
   React.useEffect(() => {
     if (itemId) {
       const c = getInteractionCounts(itemType, itemId)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLiked(c.isLiked)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSaved(c.isSaved)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCounts({ likes: c.likes, saves: c.saves, shares: c.shares })
     }
   }, [itemId, itemType, active])
@@ -169,11 +172,22 @@ function ExpandableCard({
     setCounts(prev => ({ ...prev, shares: newCount }))
   }, [itemId, itemType, title])
 
+  const scrollPositionRef = React.useRef(0)
+
   const handleExpand = React.useCallback(() => {
+    scrollPositionRef.current = window.scrollY
     handleMouseLeave()
     lockScroll()
     setActive(true)
   }, [handleMouseLeave])
+
+  const handleCollapse = React.useCallback(() => {
+    unlockScroll()
+    setActive(false)
+    setTimeout(() => {
+      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' })
+    }, 0)
+  }, [])
 
   React.useEffect(() => {
     const onKeyDown = (event) => {
@@ -218,15 +232,19 @@ function ExpandableCard({
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           onClick={handleExpand}
+          className={cn(
+            "w-full h-[380px] sm:h-[440px] flex flex-col justify-between items-stretch rounded-2xl cursor-pointer relative will-change-transform",
+            "backdrop-blur-md",
+            className
+          )}
           style={{
             rotateX,
             rotateY,
             transformStyle: "preserve-3d",
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--shadow-glass)',
           }}
-          className={cn(
-            "w-full h-[380px] sm:h-[440px] flex flex-col justify-between items-stretch bg-zinc-50 shadow-sm dark:shadow-none dark:bg-zinc-950 rounded-2xl cursor-pointer border border-gray-200/70 dark:border-zinc-900 relative will-change-transform",
-            className
-          )}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
           <motion.div
@@ -253,14 +271,16 @@ function ExpandableCard({
                   )}
                   <motion.h3
                     layoutId={`title-${title}-${id}`}
-                    className="text-black dark:text-white font-semibold line-clamp-2 break-words"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    className="text-[var(--text-primary)] font-semibold line-clamp-2 break-words cursor-pointer"
                   >
                     {title}
                   </motion.h3>
                   {description && (
                     <motion.p
                       layoutId={`description-${description}-${id}`}
-                      className="text-zinc-500 dark:text-zinc-400 text-sm font-medium mt-1 line-clamp-2 break-words"
+                      className="text-[var(--text-secondary)] text-sm font-medium mt-1 line-clamp-2 break-words"
                     >
                       {description}
                     </motion.p>
@@ -308,10 +328,10 @@ function ExpandableCard({
             >
               <motion.div
                 className="absolute inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-xl"
-                onClick={() => setActive(false)}
+                onClick={handleCollapse}
               />
 
-              <div className="absolute inset-0 grid place-items-center p-2 sm:p-6" onClick={() => setActive(false)}>
+              <div className="absolute inset-0 grid place-items-center p-2 sm:p-6" onClick={handleCollapse}>
                 <motion.div
                   ref={cardRef}
                   initial={{ opacity: 0, scale: 0.92, y: 20 }}
@@ -325,7 +345,7 @@ function ExpandableCard({
                     className={cn(
                       "w-[min(36rem,calc(100vw-1rem))] h-[min(95vh,720px)] flex flex-col overflow-hidden sm:rounded-3xl relative",
                       "bg-zinc-50 dark:bg-zinc-950",
-                      "shadow-2xl dark:shadow-purple-500/10",
+                      "shadow-lg dark:shadow-black/20",
                       classNameExpanded
                     )}
                   {...props}
@@ -349,11 +369,11 @@ function ExpandableCard({
                         {badge && (
                           <div className="mb-2">{badge}</div>
                         )}
-                        <h3 className="font-semibold text-black dark:text-white text-2xl sm:text-3xl break-words">
+                        <h3 className="font-semibold text-[var(--text-primary)] text-2xl sm:text-3xl break-words">
                           {title}
                         </h3>
                         {description && (
-                          <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base mt-1 break-words">
+                          <p className="text-[var(--text-secondary)] text-sm sm:text-base mt-1 break-words">
                             {description}
                           </p>
                         )}
@@ -365,7 +385,7 @@ function ExpandableCard({
                         ref={expandedCloseRef}
                         aria-label="Close card"
                         className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-950 text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-950 dark:text-white/70 text-black/70 border border-gray-200/90 dark:border-zinc-900 hover:border-gray-300/90 hover:text-black dark:hover:text-white dark:hover:border-zinc-800 transition-colors duration-300 focus:outline-none ml-3"
-                        onClick={() => setActive(false)}
+                        onClick={handleCollapse}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M18 6 6 18" />
@@ -380,7 +400,7 @@ function ExpandableCard({
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.15, duration: 0.3 }}
-                          className="text-zinc-500 dark:text-zinc-400 text-sm pb-8 flex flex-col items-start gap-4"
+                          className="text-[var(--text-secondary)] text-sm pb-8 flex flex-col items-start gap-4"
                         >
                           {children}
                         </motion.div>

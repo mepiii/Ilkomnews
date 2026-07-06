@@ -8,7 +8,6 @@ import { GlowCard } from '../ui/GlowCard'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import ProjectExpandableCard from '../cards/ProjectExpandableCard'
 import { projectsService } from '../../services/api'
-import { Tiles } from '../ui/Tiles'
 
 const TABS = [
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
@@ -17,8 +16,7 @@ const TABS = [
   { id: 'game', label: 'Pengembangan Game', icon: Gamepad2 },
   { id: 'ai', label: 'AI / Lainnya', icon: Sparkles },
 ]
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
-const itemVariant = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }
+import { container, itemVariant } from '../../lib/animations'
 
 const IlkomGallery = () => {
   const [activeTab, setActiveTab] = useState(TABS[0].id)
@@ -35,7 +33,7 @@ const IlkomGallery = () => {
   }, [activeTab])
   const items = projects.slice(0, 4)
   return (
-    <section className="py-20 md:py-24 relative z-0 overflow-hidden bg-theme">
+    <section className="py-20 md:py-24 relative z-0 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">

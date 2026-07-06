@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useLayoutEffect } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -10,7 +10,6 @@ import {
   MessageSquare,
   FileText,
   X,
-  Bot,
   Settings,
 } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
@@ -20,7 +19,7 @@ const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/news', label: 'Berita', icon: Newspaper },
   { to: '/admin/projects', label: 'Ilkom Gallery', icon: FolderOpen },
-  { to: '/admin/chatbot-api', label: 'Chatbot API', icon: Bot },
+  { to: '/admin/chatbot-api', label: 'Chatbot API', icon: MessageSquare },
   { to: '/admin/settings', label: 'Pengaturan', icon: Settings },
   { to: '/admin/security', label: 'Pusat Keamanan', icon: Shield },
   { to: '/admin/chat-stats', label: 'Statistik Chat', icon: MessageSquare },
@@ -38,7 +37,7 @@ const navItems = [
  *     full width with no competing in-flow sibling.
  *
  * Stacking: sidebar/overlay at z-40/z-50, header at z-30, content at z-0.
- * The BGPattern is layered at z-[-10] inside the content wrapper, so every
+ * The Tiles grid is layered at z-0 inside the content wrapper, so every
  * button/link above it stays fully clickable.
  */
 export default function AdminLayout() {
@@ -47,10 +46,9 @@ export default function AdminLayout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Close the mobile drawer on route change.
-  useEffect(() => {
-    setSidebarOpen(false)
-  }, [location.pathname])
+  // ponytail: useLayoutEffect avoids cascading render; sidebar must close before paint
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useLayoutEffect(() => { setSidebarOpen(false) }, [location.pathname])
 
   const handleLogout = async () => {
     await logout()

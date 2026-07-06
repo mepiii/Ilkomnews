@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
   Newspaper,
   Eye,
@@ -14,36 +13,8 @@ import {
   Activity,
 } from 'lucide-react'
 import { adminDashboard } from '../../services/adminApi'
-
-const StatCard = ({ icon: Icon, label, value, color, iconColor, trend }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -4, transition: { duration: 0.2 } }}
-    className="group relative overflow-hidden rounded-2xl border border-[var(--border-color)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-card)] to-[var(--bg-secondary)]/50 p-6 shadow-lg transition-all hover:border-[var(--border-hover)] hover:shadow-xl"
-  >
-    <div className={`absolute -top-8 -right-8 h-32 w-32 rounded-full ${color} opacity-20 blur-3xl transition-opacity group-hover:opacity-30`} />
-    <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 transition-opacity group-hover:opacity-5`} />
-    <div className="relative flex items-start justify-between">
-      <div className="flex-1">
-        <p className="text-sm font-medium text-[var(--text-secondary)]">{label}</p>
-        <div className="mt-2 flex items-end gap-3">
-          <p className="text-4xl font-bold text-[var(--text-primary)]">{value ?? '-'}</p>
-          {trend && (
-            <span className={`mb-1.5 flex items-center gap-1 text-sm font-semibold ${
-              trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'
-            }`}>
-              {trend > 0 ? '↑' : trend < 0 ? '↓' : '→'} {Math.abs(trend)}%
-            </span>
-          )}
-        </div>
-      </div>
-      <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color} shadow-lg transition-transform group-hover:scale-110`}>
-        <Icon size={24} className={iconColor} />
-      </div>
-    </div>
-  </motion.div>
-)
+import { formatDate as formatDateShort } from '../../utils/formatters'
+import StatCard from '../../components/admin/ui/StatCard'
 
 const SkeletonCard = () => (
   <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 animate-pulse">
@@ -52,7 +23,7 @@ const SkeletonCard = () => (
         <div className="h-4 w-20 rounded bg-[var(--bg-secondary)]" />
         <div className="h-7 w-12 rounded bg-[var(--bg-secondary)]" />
       </div>
-      <div className="h-11 w-11 rounded-xl bg-[var(--bg-secondary)]" />
+      <div className="h-12 w-12 rounded-xl bg-[var(--bg-secondary)]" />
     </div>
   </div>
 )
@@ -73,25 +44,20 @@ const TableSkeleton = () => (
 const QuickAction = ({ icon: Icon, label, to, color }) => (
   <Link
     to={to}
-    className="group relative overflow-hidden flex flex-col items-center gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-all hover:border-[var(--accent)] hover:shadow-xl hover:-translate-y-1"
+    className="flex flex-col items-center gap-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 transition-colors hover:bg-[var(--bg-secondary)]"
   >
-    <div className="absolute inset-0 bg-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-5" />
-    <div className={`relative flex h-12 w-12 items-center justify-center rounded-xl ${color} shadow-lg transition-all group-hover:scale-110 group-hover:shadow-xl`}>
-      <Icon size={20} className="text-white" />
+    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
+      <Icon size={18} className="text-white" />
     </div>
-    <span className="relative text-xs font-semibold text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-primary)]">{label}</span>
+    <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
   </Link>
 )
-
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-}
 
 export default function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [imgFailed, setImgFailed] = useState(false)
 
   useEffect(() => {
     adminDashboard.getStats()
@@ -147,115 +113,80 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl border border-[var(--border-color)] bg-gradient-to-br from-primary/10 via-[var(--bg-card)] to-[var(--bg-card)] p-6"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10" />
-        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-purple-500/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="relative flex items-center gap-5">
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-primary/30 bg-[var(--bg-secondary)] shadow-lg">
-            <img
-              src="/assets/mascot-idle.png"
-              alt="Wolfy"
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-                e.currentTarget.parentElement.innerHTML = '<span class="text-3xl">🐺</span>'
-              }}
-            />
+      {/* Welcome header */}
+      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--border-color)] bg-[var(--bg-secondary)]">
+            {imgFailed ? (
+              <span className="text-2xl">🐺</span>
+            ) : (
+              <img
+                src="/assets/mascot-idle.png"
+                alt="Wolfy"
+                className="h-full w-full object-cover"
+                onError={() => setImgFailed(true)}
+              />
+            )}
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Selamat datang kembali di panel admin ILKOM NEWS</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+            <p className="mt-0.5 text-sm text-[var(--text-secondary)]">Selamat datang kembali di panel admin ILKOM NEWS</p>
           </div>
           <div className="hidden text-right sm:block">
             <p className="text-xs text-[var(--text-muted)]">Hari ini</p>
-            <p className="mt-0.5 text-sm font-semibold text-[var(--text-primary)]">
+            <p className="mt-0.5 text-sm font-medium text-[var(--text-primary)]">
               {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
         </div>
-      </motion.div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={Newspaper}
-          label="Total Berita"
-          value={stats.total_news}
-          color="bg-purple-500/10"
-          iconColor="text-purple-500"
-          trend={8}
-        />
-        <StatCard
-          icon={Eye}
-          label="Tayang"
-          value={stats.published_news}
-          color="bg-emerald-500/10"
-          iconColor="text-emerald-500"
-          trend={12}
-        />
-        <StatCard
-          icon={FolderOpen}
-          label="Total Proyek"
-          value={stats.total_projects}
-          color="bg-blue-500/10"
-          iconColor="text-blue-500"
-          trend={5}
-        />
-        <StatCard
-          icon={Clock}
-          label="Menunggu Review"
-          value={stats.pending_projects}
-          color="bg-amber-500/10"
-          iconColor="text-amber-500"
-          trend={-3}
-        />
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Newspaper} label="Total Berita" value={stats.total_news} color="bg-purple-500/10" iconColor="text-purple-500" />
+        <StatCard icon={Eye} label="Tayang" value={stats.published_news} color="bg-emerald-500/10" iconColor="text-emerald-500" />
+        <StatCard icon={FolderOpen} label="Total Proyek" value={stats.total_projects} color="bg-blue-500/10" iconColor="text-blue-500" />
+        <StatCard icon={Clock} label="Menunggu Review" value={stats.pending_projects} color="bg-amber-500/10" iconColor="text-amber-500" />
+      </div>
+
+      {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
         <QuickAction icon={Plus} label="Buat Berita" to="/admin/news/create" color="bg-purple-600" />
         <QuickAction icon={FolderOpen} label="Lihat Proyek" to="/admin/projects" color="bg-blue-600" />
-        <QuickAction icon={ImageIcon} label="Galeri" to="/admin/gallery" color="bg-emerald-600" />
-        <QuickAction icon={BarChart3} label="Statistik" to="/admin/stats" color="bg-amber-600" />
+        <QuickAction icon={ImageIcon} label="Galeri" to="/admin/projects" color="bg-emerald-600" />
+        <QuickAction icon={BarChart3} label="Statistik" to="/admin/chat-stats" color="bg-amber-600" />
         <QuickAction icon={Newspaper} label="Semua Berita" to="/admin/news" color="bg-pink-600" />
         <QuickAction icon={Settings} label="Pengaturan" to="/admin/settings" color="bg-neutral-600" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
-      >
-        <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
+      {/* Recent Activity */}
+      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+        <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-3.5">
           <Activity size={16} className="text-[var(--accent)]" />
-          <h2 className="font-semibold text-[var(--text-primary)]">Aktivitas Terbaru</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Aktivitas Terbaru</h2>
         </div>
         <div className="divide-y divide-[var(--border-color)]">
           {recentActivity.length === 0 ? (
             <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada aktivitas</p>
           ) : (
             recentActivity.map((item) => (
-              <div key={item.id} className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-[var(--bg-secondary)]">
+              <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${
+                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
                       item.type === 'news' ? 'bg-purple-500/20' : 'bg-blue-500/20'
                     }`}>
                       {item.type === 'news' ? (
-                        <Newspaper size={12} className="text-purple-500" />
+                        <Newspaper size={10} className="text-purple-500" />
                       ) : (
-                        <FolderOpen size={12} className="text-blue-500" />
+                        <FolderOpen size={10} className="text-blue-500" />
                       )}
                     </span>
                     <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
                   </div>
-                  <p className="mt-0.5 pl-8 text-xs text-[var(--text-muted)]">{formatDate(item.date)}</p>
+                  <p className="mt-0.5 pl-7 text-xs text-[var(--text-muted)]">{formatDateShort(item.date)}</p>
                 </div>
-                <span className={`ml-3 rounded-full px-2 py-0.5 text-xs font-medium ${
+                <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                   item.status === 'published' || item.status === 'accepted'
                     ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                     : item.status === 'pending'
@@ -273,19 +204,15 @@ export default function DashboardPage() {
             ))
           )}
         </div>
-      </motion.div>
+      </div>
 
+      {/* Recent News & Projects side by side */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
-        >
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-4">
-            <h2 className="font-semibold text-[var(--text-primary)]">Berita Terbaru</h2>
-            <Link to="/admin/news" className="flex items-center gap-1 text-sm text-[var(--accent)] transition-colors hover:opacity-80">
-              Lihat semua <ArrowRight size={14} />
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-3.5">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Berita Terbaru</h2>
+            <Link to="/admin/news" className="flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:opacity-80 transition-opacity">
+              Lihat semua <ArrowRight size={12} />
             </Link>
           </div>
           <div className="divide-y divide-[var(--border-color)]">
@@ -293,12 +220,12 @@ export default function DashboardPage() {
               <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada berita</p>
             ) : (
               recentNews.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-[var(--bg-secondary)]">
+                <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{formatDate(item.date)}</p>
+                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{formatDateShort(item.date)}</p>
                   </div>
-                  <span className={`ml-3 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                     item.status === 'published'
                       ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                       : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
@@ -309,18 +236,13 @@ export default function DashboardPage() {
               ))
             )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]"
-        >
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-4">
-            <h2 className="font-semibold text-[var(--text-primary)]">Proyek Terbaru</h2>
-            <Link to="/admin/projects" className="flex items-center gap-1 text-sm text-[var(--accent)] transition-colors hover:opacity-80">
-              Lihat semua <ArrowRight size={14} />
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-3.5">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Proyek Terbaru</h2>
+            <Link to="/admin/projects" className="flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:opacity-80 transition-opacity">
+              Lihat semua <ArrowRight size={12} />
             </Link>
           </div>
           <div className="divide-y divide-[var(--border-color)]">
@@ -328,7 +250,7 @@ export default function DashboardPage() {
               <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada proyek</p>
             ) : (
               recentProjects.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-[var(--bg-secondary)]">
+                <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
                     <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.creator_name || item.creator}</p>
@@ -338,7 +260,7 @@ export default function DashboardPage() {
               ))
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )
@@ -358,7 +280,7 @@ function StatusBadge({ status }) {
   }
 
   return (
-    <span className={`ml-3 rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+    <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
       {labels[status] || status}
     </span>
   )

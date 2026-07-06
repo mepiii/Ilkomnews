@@ -1,6 +1,9 @@
 // Konfigurasi API
+// ponytail: single source of truth for API base URL — all consumers import from here
+export const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api')
+
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: API_BASE,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -32,7 +35,7 @@ const fetchAPI = async (endpoint, options = {}) => {
     return await response.json()
   } catch (error) {
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout')
+      throw new Error('Request timeout', { cause: error })
     }
     throw error
   }
@@ -429,11 +432,6 @@ export const api = {
   projects: projectsService,
 }
 
-// Default export untuk kompatibilitas dengan kode sebelumnya
-export const mockNews = newsService
-export const mockArticles = articlesService
-export const mockEvents = eventsService
-
 // ============ VIEW TRACKING ============
 // MySQL-backed view counter via API
 export const viewTracker = {
@@ -441,7 +439,9 @@ export const viewTracker = {
     try {
       const data = await fetchAPI(`/views/${type}/${id}`, { method: 'POST' })
       return data.views || baseViews + 1
-    } catch {
+    } catch (err) {
+      // View tracking is non-critical; fall back to client-side count
+      if (import.meta.env.DEV) console.warn(`View tracking failed for ${type}/${id}:`, err.message)
       return baseViews + 1
     }
   },
@@ -449,7 +449,8 @@ export const viewTracker = {
     try {
       const data = await fetchAPI(`/views/${type}/${id}`)
       return data.views || baseViews
-    } catch {
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn(`View count fetch failed for ${type}/${id}:`, err.message)
       return baseViews
     }
   }

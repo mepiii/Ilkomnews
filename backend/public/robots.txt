@@ -1,2 +1,5 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://ilkomnews.fasilkom.unsri.ac.id/sitemap.xml

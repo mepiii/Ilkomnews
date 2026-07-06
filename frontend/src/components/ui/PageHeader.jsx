@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { AnimatedText } from './AnimatedText'
+import { Text_03 } from './Text03'
 
 /**
  * PageHeader — animated page title matching the Hero section's visual energy.
@@ -25,7 +26,7 @@ const fadeUp = (delay = 0) => ({
   },
 })
 
-const PageHeader = ({ badge, title, subtitle, divider = true, className = '' }) => (
+const PageHeader = ({ badge, title, subtitle, divider = true, textStyle = 'gradient', className = '' }) => (
   <motion.div
     className={`text-center mb-8 ${className}`}
     initial="hidden"
@@ -43,9 +44,11 @@ const PageHeader = ({ badge, title, subtitle, divider = true, className = '' }) 
 
     <motion.div variants={fadeUp(0.12)}>
       <h1 className="text-4xl md:text-5xl font-black text-theme-primary mb-4 font-header">
-        <AnimatedText idle={false} hover={true}>
-          {title}
-        </AnimatedText>
+        {textStyle === 'animated' ? (
+          <AnimatedText idle={false} hover={true}>{title}</AnimatedText>
+        ) : (
+          <Text_03 text={title} className="section-gradient-text" />
+        )}
       </h1>
     </motion.div>
 

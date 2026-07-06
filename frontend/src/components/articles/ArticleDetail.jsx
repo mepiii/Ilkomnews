@@ -1,10 +1,10 @@
 // src/components/articles/ArticleDetail.js
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Calendar, User, Eye, Share2, Bookmark, Heart, 
   ChevronRight, Link as LinkIcon, Check, Clock, Tag, 
-  ArrowLeft, TrendingUp, Zap, Globe, Shield, Code, Cpu, Sparkles
+  ArrowLeft, Zap, Globe, Shield, Code, Cpu, Sparkles
 } from 'lucide-react'
 import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { formatDate, formatRelativeTime, formatNumber, formatReadTime } from '../../utils/formatters'
@@ -20,11 +20,13 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]')
-    setIsBookmarked(bookmarks.includes(article?.id))
-    // Track real view count
     viewTracker.increment('article', article?.id, article?.views || 0).then(setRealViews)
+  }, [article?.id, article?.views])
+
+  useEffect(() => {
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsBookmarked(bookmarks.includes(article?.id))
   }, [article?.id])
 
   // Jika article tidak ada, tampilkan error
@@ -65,7 +67,7 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
         console.error('Failed to copy:', err)
       }
     } else if (shareUrls[platform]) {
-      window.open(shareUrls[platform], '_blank', 'width=600,height=400')
+      window.open(shareUrls[platform], '_blank', 'width=600,height=400,noopener,noreferrer')
     }
     
     setShowShareMenu(false)
@@ -387,34 +389,7 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
         </div>
       )}
 
-      <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
-        
-        .prose-purple {
-          --tw-prose-links: #7c3aed;
-          --tw-prose-bold: #1f2937;
-        }
-        
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
+
     </div>
   )
 }

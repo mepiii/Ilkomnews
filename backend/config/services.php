@@ -36,7 +36,16 @@ return [
     ],
 
     'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
+        'api_key' => env('GEMINI_API_KEY'),
+        'chat_model' => env('GEMINI_CHAT_MODEL', 'gemini-2.5-flash'),
+        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
+    ],
+
+    'azure' => [
+        'openai_api_key' => env('AZURE_OPENAI_API_KEY'),
+        'openai_endpoint' => env('AZURE_OPENAI_ENDPOINT'),
+        'chat_deployment' => env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4o-mini'),
+        'embedding_deployment' => env('AZURE_EMBEDDING_DEPLOYMENT', 'text-embedding-3-small'),
     ],
 
     'github' => [

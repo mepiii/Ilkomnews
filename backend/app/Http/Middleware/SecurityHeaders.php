@@ -19,15 +19,20 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
-        // CSP — allow self + Gemini API (for chatbot backend proxy) + inline styles (Tailwind)
+        // CSP — single source of truth (removed frontend meta tag)
+        $connectSrc = config('app.env') === 'local'
+            ? "'self' http://localhost:5173 http://localhost:8000"
+            : "'self' https://ilkomnews.fasilkom.unsri.ac.id";
+
         $response->headers->set('Content-Security-Policy',
             "default-src 'self'; " .
-            "script-src 'self'; " .
-            "style-src 'self' 'unsafe-inline'; " .
-            "img-src 'self' data: https:; " .
+            "script-src 'self' 'unsafe-inline'; " .
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
             "font-src 'self' https://fonts.gstatic.com; " .
-            "connect-src 'self' https://generativelanguage.googleapis.com; " .
+            "img-src 'self' data: https: blob:; " .
+            "connect-src {$connectSrc}; " .
             "frame-src 'none'; " .
+            "frame-ancestors 'none'; " .
             "object-src 'none'; " .
             "base-uri 'self'; " .
             "form-action 'self'"

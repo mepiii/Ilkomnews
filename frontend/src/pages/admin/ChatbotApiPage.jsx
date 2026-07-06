@@ -27,6 +27,7 @@ export default function ChatbotApiPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchApis()
   }, [])
 
@@ -95,7 +96,7 @@ export default function ChatbotApiPage() {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-purple-600 transition-colors shadow-lg shadow-purple-500/25"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-purple-600 transition-colors shadow-md"
         >
           <Plus size={16} />
           Tambah API
@@ -302,7 +303,7 @@ export default function ChatbotApiPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 px-4 py-2 bg-[var(--accent)] hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-purple-500/25"
+                    className="flex-1 px-4 py-2 bg-[var(--accent)] hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 shadow-md"
                   >
                     {saving ? 'Menyimpan...' : 'Simpan'}
                   </button>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '../../lib/utils'
+import { useThemeMode } from '../../hooks/useThemeMode'
 
 const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -7,6 +8,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   const [hoverStyle, setHoverStyle] = useState({})
   const [activeStyle, setActiveStyle] = useState({ left: '0px', width: '0px' })
   const tabRefs = useRef([])
+  const isDark = useThemeMode()
 
   useEffect(() => {
     if (hoveredIndex !== null) {
@@ -25,36 +27,43 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   }, [activeIndex])
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      const el = tabRefs.current[0]
-      if (el) {
-        setActiveStyle({ left: `${el.offsetLeft}px`, width: `${el.offsetWidth}px` })
-      }
-    })
-  }, [])
+    const idx = tabs.findIndex(t => t.id === activeTab)
+    if (idx >= 0 && idx !== activeIndex) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveIndex(idx)
+    }
+  }, [activeTab, tabs])
 
   return (
     <div className={cn('relative', className)}>
       <div className="relative">
         <div
-          className="absolute h-[30px] transition-all duration-300 ease-out bg-[#0e0f1114] dark:bg-[#ffffff1a] rounded-[6px]"
-          style={{ ...hoverStyle, opacity: hoveredIndex !== null ? 1 : 0 }}
+          className="absolute h-[30px] transition-all duration-300 ease-out rounded-[6px]"
+          style={{
+            ...hoverStyle,
+            opacity: hoveredIndex !== null ? 1 : 0,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          }}
         />
         <div
-          className="absolute bottom-[-6px] h-[2px] bg-[#0e0f11] dark:bg-white transition-all duration-300 ease-out"
-          style={activeStyle}
+          className="absolute bottom-[-6px] h-[2px] transition-all duration-300 ease-out"
+          style={{
+            ...activeStyle,
+            backgroundColor: isDark ? '#fff' : '#1a1a2e',
+          }}
         />
         <div className="relative flex space-x-[6px] items-center">
           {tabs.map((tab, index) => (
             <div
               key={tab.id}
               ref={el => (tabRefs.current[index] = el)}
-              className={cn(
-                'px-3 py-2 cursor-pointer transition-colors duration-300 h-[30px]',
-                index === activeIndex
-                  ? 'text-[#0e0e10] dark:text-white'
-                  : 'text-[#0e0f1199] dark:text-[#ffffff99]'
-              )}
+              className="px-3 py-2 cursor-pointer transition-colors duration-300 h-[30px]"
+              style={{
+                color: index === activeIndex
+                  ? (isDark ? '#ffffff' : '#1a1a2e')
+                  : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(26,26,46,0.5)'),
+                fontWeight: index === activeIndex ? 600 : 500,
+              }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
               onClick={() => {
@@ -62,7 +71,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
                 onTabChange?.(tab.id)
               }}
             >
-              <div className="text-sm font-medium leading-5 whitespace-nowrap flex items-center justify-center h-full gap-2">
+              <div className="text-sm leading-5 whitespace-nowrap flex items-center justify-center h-full gap-2">
                 {tab.icon && <tab.icon size={14} />}
                 {tab.label}
               </div>

@@ -121,15 +121,27 @@
             <!-- Reject Button -->
             <form method="POST" action="{{ route('admin.projects.reject', $project->id) }}" onsubmit="return confirm('Reject this project submission? This action can be reversed later.');">
                 @csrf
-                <button
-                    type="submit"
-                    class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Reject Project
-                </button>
+                <div class="space-y-3">
+                    <label for="rejection_reason" class="block text-sm font-medium text-gray-300">Alasan Penolakan <span class="text-red-400">*</span></label>
+                    <textarea
+                        id="rejection_reason"
+                        name="rejection_reason"
+                        rows="3"
+                        required
+                        maxlength="500"
+                        placeholder="Jelaskan alasan penolakan proyek ini..."
+                        class="w-full px-4 py-3 bg-[#0a0a0a] border border-red-900/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition-all text-sm resize-none"
+                    ></textarea>
+                    <button
+                        type="submit"
+                        class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Reject Project
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -177,8 +189,9 @@
             <p class="text-sm text-gray-400 mb-3">Need to change the status?</p>
             <div class="flex gap-3">
                 @if($project->status === 'accepted')
-                <form method="POST" action="{{ route('admin.projects.reject', $project->id) }}" class="inline" onsubmit="return confirm('Change status to rejected?');">
+                <form method="POST" action="{{ route('admin.projects.reject', $project->id) }}" class="inline" onsubmit="var reason = prompt('Masukkan alasan penolakan:'); if (!reason || reason.trim().length < 1) { alert('Alasan penolakan wajib diisi.'); return false; } this.rejection_reason.value = reason; return confirm('Change status to rejected?');">
                     @csrf
+                    <input type="hidden" name="rejection_reason" value="">
                     <button type="submit" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 font-medium rounded-lg transition-all">
                         Change to Rejected
                     </button>
