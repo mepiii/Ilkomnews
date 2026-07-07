@@ -1,6 +1,6 @@
 // Konfigurasi API
 // ponytail: single source of truth for API base URL — all consumers import from here
-export const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api')
+export const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 const API_CONFIG = {
   baseURL: API_BASE,

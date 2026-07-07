@@ -59,10 +59,10 @@ const EventsPage = () => {
 
           <PageHeader
             badge={
-              <>
+              <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
                 <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1"><span className="text-xs font-semibold uppercase tracking-wider">Event & Kegiatan</span></div>
                 <p className="pr-3 text-xs text-theme-muted">Aktivitas</p>
-              </>
+              </div>
             }
             title="Event & Kegiatan"
             subtitle="Ikuti berbagai event menarik untuk mengembangkan diri"

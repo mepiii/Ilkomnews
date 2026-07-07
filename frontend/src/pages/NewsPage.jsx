@@ -67,12 +67,12 @@ const NewsPage = () => {
           {/* Section Header */}
           <PageHeader
             badge={
-              <>
+              <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
                 <span className="bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-2xl px-3 py-1">
                   <span className="text-xs font-semibold uppercase tracking-wider text-neutral-900 dark:text-white">Berita Terkini</span>
                 </span>
                 <p className="pr-3 text-xs text-neutral-500 dark:text-neutral-400">Terbaru</p>
-              </>
+              </div>
             }
             title="Berita Terkini"
             subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"

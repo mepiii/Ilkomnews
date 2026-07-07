@@ -64,18 +64,6 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black/90" />
       </motion.div>
 
-      {/* Ambient glow orbs */}
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-[120px]"
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/4 rounded-full blur-[100px]"
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-32 text-center">
         <div className="text-center">
@@ -103,16 +91,15 @@ const HeroSection = () => {
               <span className="text-white block mb-1">
                 <TypewriterText text="Selamat Datang Di" delay={0.3} />
               </span>
-              <div className="flex flex-wrap justify-center gap-2 md:gap-3 items-baseline">
+              <span className="block">
                 <motion.span
-                  className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-purple-400"
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-purple-400 mr-3"
                   style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
                   animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 >
                   <AnimatedText delay={0.8} idle={false}>ILKOM</AnimatedText>
-                </motion.span>
-                <motion.span
+                </motion.span><motion.span
                   className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-300"
                   style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
                   animate={{ backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'] }}
@@ -120,7 +107,7 @@ const HeroSection = () => {
                 >
                   <AnimatedText delay={1.0} idle={false}>NEWS</AnimatedText>
                 </motion.span>
-              </div>
+              </span>
             </h1>
           </motion.div>
 

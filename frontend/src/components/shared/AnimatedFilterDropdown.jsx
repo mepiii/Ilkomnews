@@ -47,9 +47,9 @@ const AnimatedFilterDropdown = ({ options, value, onChange, icon: Icon }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(4px)' }}
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={springTransition}
             className="absolute left-0 top-full mt-2 z-[60] min-w-[220px] rounded-2xl border border-neutral-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden p-1.5"
             role="listbox"

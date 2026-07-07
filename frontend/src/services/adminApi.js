@@ -4,6 +4,9 @@ import { API_BASE } from './api'
 export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
   const headers = { ...options.headers }
 
+  const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
+  if (xsrf) headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf)
+
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json'
   }
@@ -45,7 +48,8 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
 }
 
 export const adminAuth = {
-  login(email, password, remember = false) {
+  async login(email, password, remember = false) {
+    await fetch('/sanctum/csrf-cookie', { credentials: 'include' })
     return fetchAdmin('/admin/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, remember }),

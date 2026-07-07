@@ -13,9 +13,9 @@ const navItems = [
 ]
 
 const activityItems = [
-  { name: 'Submit Proyek', path: '/submit', icon: Send },
-  { name: 'Lacak Status', path: '/track', icon: Search },
-  { name: 'Koleksi Saya', path: '/koleksi', icon: Bookmark },
+  { name: 'SUBMIT PROYEK', path: '/submit', icon: Send },
+  { name: 'LACAK STATUS', path: '/track', icon: Search },
+  { name: 'KOLEKSI SAYA', path: '/koleksi', icon: Bookmark },
 ]
 
 const bemApps = [
@@ -143,7 +143,7 @@ const LampNavbar = () => {
                           <Link
                             to={item.path}
                             onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold tracking-wide uppercase transition-all duration-200 ${
                               isActive
                                 ? 'bg-gradient-to-r from-purple-100 to-purple-50 dark:from-purple-900/40 dark:to-purple-900/20 text-purple-700 dark:text-purple-300 shadow-sm'
                                 : 'text-neutral-700 dark:text-neutral-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300'
