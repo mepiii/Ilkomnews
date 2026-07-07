@@ -52,7 +52,7 @@ class NewsController extends Controller
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240', // 10MB max
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500', // 500KB max
         ]);
 
         if ($request->hasFile('image')) {

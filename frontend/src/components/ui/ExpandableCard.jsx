@@ -350,7 +350,7 @@ function ExpandableCard({
                     )}
                   {...props}
                 >
-                  <div className="relative shrink-0">
+                  <div className="relative shrink-0 overflow-hidden rounded-t-3xl">
                     <img
                       src={src}
                       alt={title}

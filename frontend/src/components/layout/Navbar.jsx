@@ -124,9 +124,9 @@ const LampNavbar = () => {
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95, filter: 'blur(4px)' }}
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="absolute top-full left-0 mt-2 w-60 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 border border-neutral-200/50 dark:border-neutral-700/50 overflow-hidden p-1.5"
                   >
@@ -191,9 +191,9 @@ const LampNavbar = () => {
               <AnimatePresence>
                 {bemDropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95, filter: 'blur(4px)' }}
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="absolute top-full right-0 mt-2 w-56 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 border border-neutral-200/50 dark:border-neutral-700/50 overflow-hidden p-1.5"
                   >
