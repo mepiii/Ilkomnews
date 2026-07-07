@@ -13,9 +13,9 @@ const navItems = [
 ]
 
 const activityItems = [
-  { name: 'SUBMIT PROYEK', path: '/submit', icon: Send },
-  { name: 'LACAK STATUS', path: '/track', icon: Search },
-  { name: 'KOLEKSI SAYA', path: '/koleksi', icon: Bookmark },
+  { name: 'Submit proyek', path: '/submit', icon: Send },
+  { name: 'Lacak status', path: '/track', icon: Search },
+  { name: 'Koleksi saya', path: '/koleksi', icon: Bookmark },
 ]
 
 const bemApps = [
@@ -74,10 +74,10 @@ const LampNavbar = () => {
           className="fixed top-3 left-0 right-0 z-50 flex justify-center px-4"
         >
           {/* Desktop — solid navbar */}
-          <div className="hidden md:flex items-center justify-center gap-1 bg-white/70 dark:bg-black/70 backdrop-blur-xl py-1.5 px-2 rounded-full border border-black/[0.08] dark:border-white/[0.12] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
+          <div className="hidden md:flex items-center justify-center gap-1 bg-white/70 dark:bg-black/70 backdrop-blur-xl py-1.5 px-2 rounded-full border border-black/[0.08] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
             <Link to="/" className="flex items-center gap-2 px-3 py-1.5 mr-1 shrink-0" onClick={() => setActiveTab('Beranda')}>
               <img src={logo} alt="ILKOM" className="h-7 w-auto" />
-              <span className="text-sm font-bold tracking-tight text-black dark:text-white hidden min-[800px]:inline">ILKOM NEWS</span>
+              <span className="text-sm font-bold tracking-tight hidden min-[800px]:inline" style={{ color: 'var(--accent)' }}></span>
             </Link>
 
             {navItems.map((item) => {
@@ -103,24 +103,17 @@ const LampNavbar = () => {
 
             {/* Aktivitas Dropdown */}
             <div className="relative" data-dropdown>
-              <motion.button
+              <button
                 onClick={() => { setDropdownOpen(!dropdownOpen); setBemDropdownOpen(false) }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className={`flex items-center gap-1.5 cursor-pointer px-4 py-2 rounded-full transition-all text-[13px] font-semibold tracking-wide uppercase ${
                   activeTab === 'Aktivitas'
-                    ? 'bg-purple-100/80 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
                     : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                 }`}
               >
                 <span className="hidden md:inline">Aktivitas</span>
-                <motion.div
-                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                >
-                  <ChevronDown size={14} />
-                </motion.div>
-              </motion.button>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
@@ -130,41 +123,26 @@ const LampNavbar = () => {
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="absolute top-full left-0 mt-2 w-60 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 border border-neutral-200/50 dark:border-neutral-700/50 overflow-hidden p-1.5"
                   >
-                    {activityItems.map((item, index) => {
+                    {activityItems.map((item) => {
                       const Icon = item.icon
                       const isActive = location.pathname === item.path
                       return (
-                        <motion.div
+                        <Link
                           key={item.name}
-                          initial={{ opacity: 0, x: -15 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                          to={item.path}
+                          onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold tracking-wide uppercase transition-colors duration-150 ${
+                            isActive
+                              ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                              : 'text-neutral-700 dark:text-neutral-200 hover:bg-[var(--accent)]/10 dark:hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] dark:hover:text-[var(--accent)]'
+                          }`}
                         >
-                          <Link
-                            to={item.path}
-                            onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold tracking-wide uppercase transition-all duration-200 ${
-                              isActive
-                                ? 'bg-gradient-to-r from-purple-100 to-purple-50 dark:from-purple-900/40 dark:to-purple-900/20 text-purple-700 dark:text-purple-300 shadow-sm'
-                                : 'text-neutral-700 dark:text-neutral-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300'
-                            }`}
-                          >
-                            <motion.div
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                            >
-                              <Icon size={16} className={isActive ? 'text-purple-600 dark:text-purple-400' : ''} />
-                            </motion.div>
-                            <span>{item.name}</span>
-                            {isActive && (
-                              <motion.div
-                                layoutId="aktivitas-active"
-                                className="ml-auto w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400"
-                                transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                              />
-                            )}
-                          </Link>
-                        </motion.div>
+                          <Icon size={16} className={isActive ? 'text-[var(--accent)]' : ''} />
+                          <span>{item.name}</span>
+                          {isActive && (
+                            <span className="ml-auto w-2 h-2 rounded-full bg-[var(--accent)]" />
+                          )}
+                        </Link>
                       )
                     })}
                   </motion.div>
@@ -174,20 +152,13 @@ const LampNavbar = () => {
 
             {/* BEM Apps Dropdown */}
             <div className="relative" data-dropdown-bem>
-              <motion.button
+              <button
                 onClick={() => { setBemDropdownOpen(!bemDropdownOpen); setDropdownOpen(false) }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className="flex items-center gap-1.5 cursor-pointer px-4 py-2 rounded-full transition-all text-[13px] font-semibold tracking-wide uppercase text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               >
                 <span className="hidden md:inline">BEM Apps</span>
-                <motion.div
-                  animate={{ rotate: bemDropdownOpen ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                >
-                  <ChevronDown size={14} />
-                </motion.div>
-              </motion.button>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${bemDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
               <AnimatePresence>
                 {bemDropdownOpen && (
                   <motion.div
@@ -197,31 +168,20 @@ const LampNavbar = () => {
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="absolute top-full right-0 mt-2 w-56 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 border border-neutral-200/50 dark:border-neutral-700/50 overflow-hidden p-1.5"
                   >
-                    {bemApps.map((app, index) => {
+                    {bemApps.map((app) => {
                       const Icon = app.icon
                       return (
-                        <motion.div
+                        <a
                           key={app.name}
-                          initial={{ opacity: 0, x: 15 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                          href={app.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-[var(--accent)]/10 dark:hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] dark:hover:text-[var(--accent)] transition-colors duration-150"
                         >
-                          <a
-                            href={app.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200"
-                          >
-                            <motion.div
-                              whileHover={{ scale: 1.1, rotate: -5 }}
-                              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                            >
-                              <Icon size={16} />
-                            </motion.div>
-                            <span>{app.name}</span>
-                            <ExternalLink size={12} className="ml-auto opacity-40" />
-                          </a>
-                        </motion.div>
+                          <Icon size={16} />
+                          <span>{app.name}</span>
+                          <ExternalLink size={12} className="ml-auto opacity-40" />
+                        </a>
                       )
                     })}
                   </motion.div>
@@ -236,10 +196,10 @@ const LampNavbar = () => {
           </div>
 
           {/* Mobile — solid navbar */}
-          <div className="md:hidden flex items-center justify-between w-full bg-white/70 dark:bg-black/70 backdrop-blur-xl py-2 px-4 rounded-2xl border border-black/[0.08] dark:border-white/[0.12] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
+          <div className="md:hidden flex items-center justify-between w-full bg-white/70 dark:bg-black/70 backdrop-blur-xl py-2 px-4 rounded-2xl border border-black/[0.08] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.05)]">
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img src={logo} alt="ILKOM" className="h-7 w-auto" />
-              <span className="text-sm font-bold text-black dark:text-white hidden min-[360px]:inline">ILKOM NEWS</span>
+              <span className="text-sm font-bold hidden min-[360px]:inline" style={{ color: 'var(--accent)' }}></span>
             </Link>
             <div className="flex items-center gap-2">
               <NotificationPopover />

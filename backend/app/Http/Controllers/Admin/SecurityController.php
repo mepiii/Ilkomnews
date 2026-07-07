@@ -24,6 +24,6 @@ class SecurityController extends Controller
                 ->groupBy('ip_address')->having('failed_count', '>=', 3)->orderByDesc('failed_count')->get(),
         ];
 
-        return view('admin.security.index', compact('stats'));
+        return response()->json($stats);
     }
 }

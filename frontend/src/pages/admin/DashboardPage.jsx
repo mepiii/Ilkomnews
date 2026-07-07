@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { adminDashboard } from '../../services/adminApi'
 import { formatDate as formatDateShort } from '../../utils/formatters'
+import logo from '../../assets/BEM.png'
 import StatCard from '../../components/admin/ui/StatCard'
 
 const SkeletonCard = () => (
@@ -57,8 +58,6 @@ export default function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [imgFailed, setImgFailed] = useState(false)
-
   useEffect(() => {
     adminDashboard.getStats()
       .then(setData)
@@ -117,16 +116,11 @@ export default function DashboardPage() {
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--border-color)] bg-[var(--bg-secondary)]">
-            {imgFailed ? (
-              <span className="text-2xl">🐺</span>
-            ) : (
-              <img
-                src="/assets/mascot-idle.png"
-                alt="Wolfy"
-                className="h-full w-full object-cover"
-                onError={() => setImgFailed(true)}
-              />
-            )}
+            <img
+              src={logo}
+              alt="BEM ILKOM"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
@@ -143,7 +137,7 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Newspaper} label="Total Berita" value={stats.total_news} color="bg-purple-500/10" iconColor="text-purple-500" />
+        <StatCard icon={Newspaper} label="Total Berita" value={stats.total_news} color="bg-[var(--accent)]/10" iconColor="text-[var(--accent)]" />
         <StatCard icon={Eye} label="Tayang" value={stats.published_news} color="bg-emerald-500/10" iconColor="text-emerald-500" />
         <StatCard icon={FolderOpen} label="Total Proyek" value={stats.total_projects} color="bg-blue-500/10" iconColor="text-blue-500" />
         <StatCard icon={Clock} label="Menunggu Review" value={stats.pending_projects} color="bg-amber-500/10" iconColor="text-amber-500" />
@@ -151,7 +145,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-        <QuickAction icon={Plus} label="Buat Berita" to="/admin/news/create" color="bg-purple-600" />
+        <QuickAction icon={Plus} label="Buat Berita" to="/admin/news/create" color="bg-[var(--accent)]" />
         <QuickAction icon={FolderOpen} label="Lihat Proyek" to="/admin/projects" color="bg-blue-600" />
         <QuickAction icon={ImageIcon} label="Galeri" to="/admin/projects" color="bg-emerald-600" />
         <QuickAction icon={BarChart3} label="Statistik" to="/admin/chat-stats" color="bg-amber-600" />
@@ -174,10 +168,10 @@ export default function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
-                      item.type === 'news' ? 'bg-purple-500/20' : 'bg-blue-500/20'
+                      item.type === 'news' ? 'bg-[var(--accent)]/20' : 'bg-blue-500/20'
                     }`}>
                       {item.type === 'news' ? (
-                        <Newspaper size={10} className="text-purple-500" />
+                        <Newspaper size={10} className="text-[var(--accent)]" />
                       ) : (
                         <FolderOpen size={10} className="text-blue-500" />
                       )}

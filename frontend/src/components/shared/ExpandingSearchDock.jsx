@@ -22,7 +22,7 @@ const ExpandingSearchDock = ({ value, onChange, placeholder = 'Cari...' }) => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsExpanded(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm shadow-sm transition-all duration-300 hover:shadow-md"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 dark:border-neutral-700/30 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm shadow-sm transition-all duration-300 hover:shadow-md"
             aria-label="Buka pencarian"
           >
             <Search className="h-4 w-4 text-[var(--accent)]" />
@@ -37,7 +37,7 @@ const ExpandingSearchDock = ({ value, onChange, placeholder = 'Cari...' }) => {
             onSubmit={(e) => e.preventDefault()}
             className="relative"
           >
-            <div className="relative flex items-center gap-2 overflow-hidden rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm shadow-sm">
+            <div className="relative flex items-center gap-2 overflow-hidden rounded-full border border-neutral-200 dark:border-neutral-700/30 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm shadow-sm">
               <div className="ml-3.5">
                 <Search className="h-4 w-4 text-[var(--accent)]" />
               </div>

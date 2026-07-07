@@ -142,7 +142,7 @@ const EventDetail = ({ event, onRegister }) => {
                     className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                     placeholder="Ceritakan alasan Anda ingin mengikuti event ini..." />
                 </div>
-                <button type="submit" className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-all">
+                <button type="submit" className="w-full text-white py-3 rounded-lg font-semibold transition-all" style={{ background: 'var(--accent)' }}>
                   Kirim Pendaftaran
                 </button>
               </form>

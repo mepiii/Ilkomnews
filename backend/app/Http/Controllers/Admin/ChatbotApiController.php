@@ -28,6 +28,7 @@ class ChatbotApiController extends Controller
             'api_key'       => 'required|string|max:500',
             'base_url'      => 'nullable|url|max:255',
             'model'         => 'required|string|max:100',
+            'prefix'        => 'nullable|string|max:5000',
             'is_active'     => 'boolean',
         ]);
 
@@ -54,6 +55,7 @@ class ChatbotApiController extends Controller
             'api_key'       => 'sometimes|required|string|max:500',
             'base_url'      => 'nullable|url|max:255',
             'model'         => 'sometimes|required|string|max:100',
+            'prefix'        => 'nullable|string|max:5000',
             'is_active'     => 'boolean',
         ]);
 

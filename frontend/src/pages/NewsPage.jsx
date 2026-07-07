@@ -11,7 +11,7 @@ import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { PageBackground } from '../components/ui/PageBackground'
 import { api } from '../services/api'
 import { parseTags } from '../utils/parsers'
-import { Newspaper, Filter, Tag } from 'lucide-react'
+import { Newspaper, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
@@ -22,6 +22,7 @@ const TABS = [
 ]
 
 const SORT_OPTIONS = ['Terbaru', 'Terlama', 'Terpopuler']
+const ITEMS_PER_PAGE = 8
 
 import { container, itemVariant } from '../lib/animations'
 
@@ -32,6 +33,7 @@ const NewsPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
   const [selectedTag, setSelectedTag] = useState('Semua')
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     api.news.getAll()
@@ -57,6 +59,13 @@ const NewsPage = () => {
       if (sortBy === 'Terpopuler') return (b.views || 0) - (a.views || 0)
       return new Date(b.date) - new Date(a.date)
     }), [allNews, activeTab, selectedTag, searchQuery, sortBy])
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const paginatedItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab, selectedTag, sortBy, searchQuery])
 
   return (
     <PageBackground>
@@ -103,12 +112,12 @@ const NewsPage = () => {
           {/* News Grid */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab + selectedTag + sortBy}
+              key={activeTab + selectedTag + sortBy + currentPage}
               variants={container}
               initial="hidden"
               animate="show"
               exit={{ opacity: 0, y: -12 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+              className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4"
             >
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
@@ -116,7 +125,7 @@ const NewsPage = () => {
                     <div className="h-64 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                   </motion.div>
                 ))
-              ) : filtered.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <EmptyResults
                   icon={<Newspaper size={40} className="text-[var(--accent)]" />}
                   title="Tidak ada berita yang ditemukan"
@@ -124,7 +133,7 @@ const NewsPage = () => {
                   onReset={() => { setActiveTab('all'); setSearchQuery(''); setSortBy('Terbaru'); setSelectedTag('Semua') }}
                 />
               ) : (
-                filtered.map((article, i) => (
+                paginatedItems.map((article, i) => (
                   <motion.div key={article.id || i} variants={itemVariant}>
                     <GlowCard glowColor="purple" className="rounded-2xl">
                       <NewsExpandableCard article={article} />
@@ -134,6 +143,39 @@ const NewsPage = () => {
               )}
             </motion.div>
           </AnimatePresence>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+              >
+                <ChevronLeft size={18} className="text-[var(--accent)]" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-10 h-10 rounded-full text-sm font-medium transition-all ${
+                    currentPage === page
+                      ? 'bg-[var(--accent)] text-white shadow-md'
+                      : 'border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+              >
+                <ChevronRight size={18} className="text-[var(--accent)]" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </PageBackground>

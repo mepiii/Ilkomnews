@@ -13,8 +13,8 @@ class ProjectSubmission extends Model
         'tracking_id', 'status', 'title', 'category', 'description',
         'thumbnail', 'tech_stack', 'live_demo', 'github_link',
         'download_link', 'figma_link', 'screenshots',
-        'creator_name', 'creator_nim', 'creator_major', 'creator_year',
-        'collaborators', 'rejection_reason', 'reviewed_by', 'reviewed_at',
+        'creator_name', 'creator_type', 'creator_nim', 'creator_major', 'creator_year',
+        'creator_avatar', 'collaborators', 'rejection_reason', 'reviewed_by', 'reviewed_at',
     ];
 
     protected $casts = [
@@ -24,7 +24,7 @@ class ProjectSubmission extends Model
         'reviewed_at' => 'datetime',
     ];
 
-    protected $appends = ['thumbnail_url', 'screenshots_urls'];
+    protected $appends = ['thumbnail_url', 'screenshots_urls', 'creator_avatar_url'];
 
     protected static function booted(): void
     {
@@ -33,6 +33,15 @@ class ProjectSubmission extends Model
                 $submission->tracking_id = strtoupper(Str::random(12));
             }
         });
+    }
+
+    public function getCreatorAvatarUrlAttribute(): ?string
+    {
+        if (!$this->creator_avatar) return null;
+        if (filter_var($this->creator_avatar, FILTER_VALIDATE_URL)) {
+            return $this->creator_avatar;
+        }
+        return asset('storage/' . $this->creator_avatar);
     }
 
     public function getThumbnailUrlAttribute(): ?string

@@ -3,7 +3,8 @@ import { ExpandableCard } from '../ui/ExpandableCard'
 import { Globe, Smartphone, Palette, Gamepad2, Cpu } from 'lucide-react'
 
 const categoryIcons = { web: Globe, mobile: Smartphone, uiux: Palette, game: Gamepad2, ai: Cpu }
-const categoryLabels = { web: 'Pengembangan Web', mobile: 'Aplikasi Mobile', uiux: 'Desain UI/UX', game: 'Pengembangan Game', ai: 'AI / Lainnya' }
+const categoryLabels = { web: 'Web', mobile: 'Mobile', uiux: 'UI/UX', game: 'Game', ai: 'AI' }
+const categoryThemes = { web: '220 60% 35%', mobile: '150 50% 30%', uiux: '280 50% 35%', game: '0 60% 40%', ai: '270 50% 40%' }
 
 const parseTechStack = (tech_stack) => {
     if (!tech_stack) return []
@@ -16,54 +17,73 @@ const ProjectExpandableCard = ({ project }) => {
   const CatIcon = categoryIcons[project.category] || Globe
   const techItems = parseTechStack(project.tech_stack)
   const collaborators = Array.isArray(project.collaborators) ? project.collaborators : []
+  const themeColor = categoryThemes[project.category] || '270 50% 40%'
 
   return (
     <ExpandableCard
       title={project.title}
-      src={project.thumbnail_url || 'https://placehold.co/800x500/8B5CF6/white?text=Tidak+Ada+Gambar'}
+      src={project.thumbnail_url || 'https://placehold.co/600x800/8B5CF6/white?text=Tidak+Ada+Gambar'}
       itemType="project"
       itemId={project.id}
+      themeColor={themeColor}
       badge={
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-600/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25">
-          <CatIcon size={12} /> {categoryLabels[project.category] || project.category}
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-black/40 text-white backdrop-blur-sm">
+          <CatIcon size={10} /> {categoryLabels[project.category] || project.category}
         </span>
       }
       meta={
-        <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
           {project.creator_name && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-white/50 flex-wrap">
-              <span className="font-medium">{project.creator_name}</span>
-              {collaborators.length > 0 && (
-                <><span>+</span><span>{collaborators.length} Kolaborator</span></>
+            <div className="flex items-center gap-1">
+              {project.creator_avatar_url ? (
+                <img src={project.creator_avatar_url} alt={project.creator_name} className="w-4 h-4 rounded-full object-cover" />
+              ) : (
+                <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold bg-purple-600">
+                  {project.creator_name.charAt(0)}
+                </div>
               )}
+              <span>{project.creator_name}</span>
             </div>
           )}
           {techItems.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {techItems.slice(0, 3).map((tech, idx) => (
-                <span key={idx} className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-purple-100 dark:bg-purple-600/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25">
-                  {tech}
-                </span>
-              ))}
-              {techItems.length > 3 && (
-                <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-purple-100 dark:bg-purple-600/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25">
-                  +{techItems.length - 3}
-                </span>
-              )}
-            </div>
+            <>
+              <span>·</span>
+              <span>{techItems.slice(0, 2).join(', ')}</span>
+            </>
           )}
         </div>
       }
     >
-      <div className="w-full space-y-5">
-        {collaborators.length > 0 && (
-          <div className="rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 min-w-0">
-            <h4 className="text-gray-700 dark:text-white/80 text-xs font-semibold uppercase tracking-wider mb-2">
-              Kolaborator <span className="text-gray-400 dark:text-white/40 font-normal">({collaborators.length})</span>
-            </h4>
-            <div className="space-y-1.5 text-sm">
+      <div className="w-full space-y-3">
+        {/* Creator + Collaborators */}
+        {(project.creator_name || collaborators.length > 0) && (
+          <div>
+            <h4 className="text-[var(--text-muted)] text-[10px] font-semibold uppercase tracking-wider mb-1.5">Tim</h4>
+            <div className="space-y-1.5">
+              {project.creator_name && (
+                <div className="flex items-center gap-2">
+                  {project.creator_avatar_url ? (
+                    <img src={project.creator_avatar_url} alt={project.creator_name} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold bg-purple-600">
+                      {project.creator_name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{project.creator_name}</span>
+                    <span className="text-[9px] font-medium px-1 py-0.5 rounded bg-purple-500/10 text-purple-500 dark:text-purple-400">Pembuat</span>
+                  </div>
+                </div>
+              )}
               {collaborators.map((collab, idx) => (
-                <p key={idx} className="text-gray-600 dark:text-white/70 break-words">{typeof collab === 'string' ? collab : collab.name || '-'}</p>
+                <div key={idx} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold bg-purple-500/60">
+                    {typeof collab === 'string' ? collab.charAt(0) : (collab.name || '?').charAt(0)}
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {typeof collab === 'string' ? collab : collab.name || 'Unknown'}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
@@ -71,21 +91,19 @@ const ProjectExpandableCard = ({ project }) => {
 
         {project.description && (
           <div>
-            <h4 className="text-gray-700 dark:text-white/80 text-xs font-semibold uppercase tracking-wider mb-2">Deskripsi</h4>
-            <p className="text-gray-600 dark:text-white/60 text-sm leading-relaxed break-words">{project.description}</p>
+            <h4 className="text-[var(--text-muted)] text-[10px] font-semibold uppercase tracking-wider mb-1.5">Deskripsi</h4>
+            <p className="text-xs leading-relaxed break-words" style={{ color: 'var(--text-secondary)' }}>{project.description}</p>
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <Link
-            to={`/ilkomgallery/project/${project.id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-600/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25 text-xs font-medium hover:bg-purple-200 dark:hover:bg-purple-600/25 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Lihat Detail
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </Link>
-        </div>
+        <Link
+          to={`/ilkomgallery/project/${project.id}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-[11px] font-medium hover:bg-[var(--accent)]/20 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Lihat Detail
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </Link>
       </div>
     </ExpandableCard>
   )

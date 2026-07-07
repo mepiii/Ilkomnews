@@ -10,26 +10,28 @@ const MarqueeContent = ({ children }) => (
 
 const AnimatedSeparator = ({ variant = 'purple' }) => {
   const textStyle = { fontFamily: 'CustomFont, sans-serif', letterSpacing: '1px' }
+  const iconColor = 'rgb(122, 71, 166)'
+  const fadeColor = 'rgba(122, 71, 166, 0.5)'
 
   if (variant === 'purple') {
     const text = (
       <>
-        <Newspaper size={12} className="text-purple-300 inline" />
+        <Newspaper size={12} style={{ color: iconColor }} className="inline" />
         <span className="font-custom" style={textStyle}>ILKOM NEWS</span>
-        <ChevronRight size={10} className="text-purple-300/50" />
+        <ChevronRight size={10} style={{ color: fadeColor }} />
         <span className="font-custom" style={textStyle}>BERITA TERKINI</span>
-        <ChevronRight size={10} className="text-purple-300/50" />
+        <ChevronRight size={10} style={{ color: fadeColor }} />
         <span className="font-custom" style={textStyle}>FAKULTAS ILMU KOMPUTER</span>
-        <ChevronRight size={10} className="text-purple-300/50" />
+        <ChevronRight size={10} style={{ color: fadeColor }} />
         <span className="font-custom" style={textStyle}>UNIKOM</span>
-        <Radio size={12} className="text-purple-300 inline" />
+        <Radio size={12} style={{ color: iconColor }} className="inline" />
       </>
     )
 
     return (
       <div className="relative w-full py-2.5 border-y border-theme">
         <div className="absolute inset-0 w-full h-full">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 animate-shine" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[rgba(122,71,166,0.08)] via-transparent to-[rgba(122,71,166,0.08)] animate-shine" />
         </div>
         <div className="relative flex overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap" style={{ width: 'fit-content' }}>
@@ -43,19 +45,19 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
   if (variant === 'gallery') {
     const text = (
       <>
-        <Bell size={12} className="text-purple-300" />
+        <Bell size={12} style={{ color: iconColor }} />
         <span className="font-custom" style={textStyle}>ILKOM GALLERY</span>
-        <ChevronRight size={10} className="text-purple-300/50" />
+        <ChevronRight size={10} style={{ color: fadeColor }} />
         <span className="font-custom" style={textStyle}>MOMENT TERBAIK</span>
-        <ChevronRight size={10} className="text-purple-300/50" />
+        <ChevronRight size={10} style={{ color: fadeColor }} />
         <span className="font-custom" style={textStyle}>DOKUMENTASI KEGIATAN</span>
-        <Bell size={12} className="text-purple-300" />
+        <Bell size={12} style={{ color: iconColor }} />
       </>
     )
 
     return (
       <div className="relative w-full py-2.5 border-y border-theme">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-50/20 via-transparent to-purple-50/20 animate-shine-slow" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(122,71,166,0.06)] via-transparent to-[rgba(122,71,166,0.06)] animate-shine-slow" />
         <div className="relative flex overflow-hidden">
           <div className="flex animate-marquee-reverse whitespace-nowrap" style={{ width: 'fit-content' }}>
             <MarqueeContent>{text}</MarqueeContent>
@@ -68,7 +70,7 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
   if (variant === 'line') {
     return (
       <div className="relative w-full py-3">
-        <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+        <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-[rgb(122,71,166)] to-transparent" />
       </div>
     )
   }
@@ -77,8 +79,8 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
     return (
       <div className="relative w-full py-4">
         <div className="flex flex-col gap-2">
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent" />
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-purple-600 to-transparent" />
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-[rgb(122,71,166)]/60 to-transparent" />
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-[rgb(48,11,85)] to-transparent" />
         </div>
       </div>
     )
@@ -87,18 +89,19 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
   // Default purple variant
   const text = (
     <>
-      <Newspaper size={12} className="text-purple-500" />
+      <Newspaper size={12} style={{ color: iconColor }} />
       <span className="font-custom" style={textStyle}>ILKOM NEWS</span>
-      <ChevronRight size={10} className="text-purple-300/50" />
+      <ChevronRight size={10} style={{ color: fadeColor }} />
       <span className="font-custom" style={textStyle}>BERITA TERKINI</span>
-      <ChevronRight size={10} className="text-purple-300/50" />
+      <ChevronRight size={10} style={{ color: fadeColor }} />
       <span className="font-custom" style={textStyle}>FAKULTAS ILMU KOMPUTER</span>
-      <Radio size={12} className="text-purple-500" />
+      <Radio size={12} style={{ color: iconColor }} />
     </>
   )
 
   return (
-    <div className="relative w-full overflow-hidden bg-theme-secondary py-2.5 border-y border-theme">        <div className="relative flex overflow-hidden">
+    <div className="relative w-full overflow-hidden bg-theme-secondary py-2.5 border-y border-theme">
+      <div className="relative flex overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap" style={{ width: 'fit-content' }}>
           <MarqueeContent>{text}</MarqueeContent>
         </div>

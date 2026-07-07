@@ -66,8 +66,7 @@ abstract class BasePublishableController extends Controller
         $modelClass = $this->getModelClass();
         return response()->json(
             $modelClass::published()
-                ->where('id', $id)
-                ->orWhere('slug', $id)
+                ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
                 ->firstOrFail()
         );
     }

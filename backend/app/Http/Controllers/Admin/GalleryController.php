@@ -20,6 +20,10 @@ class GalleryController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->has('category') && $request->category !== '') {
+            $query->where('category', $request->category);
+        }
+
         if ($request->has('search') && $request->search !== '') {
             $search = addcslashes($request->search, '%_');
             $query->where(function ($q) use ($search) {

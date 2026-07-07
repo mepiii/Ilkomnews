@@ -102,7 +102,7 @@ export default function SecurityCenterPage() {
 
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
         <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
-          <Shield size={16} className="text-purple-400" />
+          <Shield size={16} style={{ color: 'var(--accent)' }} />
           <h2 className="font-semibold text-[var(--text-primary)]">Aktivitas Login Terbaru</h2>
         </div>
         <div className="overflow-x-auto">

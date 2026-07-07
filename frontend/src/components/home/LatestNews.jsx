@@ -7,7 +7,9 @@ import { GlowCard } from '../ui/GlowCard'
 import { Text_03 } from '../ui/Text03'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import { newsService } from '../../services/api'
-import { Newspaper } from 'lucide-react'
+import { parseTags } from '../../utils/parsers'
+import AnimatedFilterDropdown from '../shared/AnimatedFilterDropdown'
+import { Newspaper, Tag } from 'lucide-react'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
@@ -24,6 +26,7 @@ const LatestNews = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
+  const [selectedTag, setSelectedTag] = useState('Semua')
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -41,9 +44,12 @@ const LatestNews = () => {
     fetchNews()
   }, [])
 
-  const filtered = activeTab === 'all'
-    ? news
-    : news.filter(n => n.category === activeTab)
+  const uniqueTags = [...new Set(news.flatMap(n => parseTags(n.tags)))]
+  const TAG_OPTIONS = ['Semua', ...uniqueTags]
+
+  const filtered = news
+    .filter(n => activeTab === 'all' || n.category === activeTab)
+    .filter(n => selectedTag === 'Semua' || parseTags(n.tags).includes(selectedTag))
 
   const items = filtered.slice(0, 4)
 
@@ -56,7 +62,7 @@ const LatestNews = () => {
             <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
           </div>
           <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header"><Text_03 text="Berita Terkini" className="section-gradient-text" /></h2>
-          <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
+          <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Informasi terbaru seputar kegiatan mahasiswa dan kampus</p>
         </motion.div>
 
@@ -64,8 +70,14 @@ const LatestNews = () => {
           <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
+        {TAG_OPTIONS.length > 1 && (
+          <div className="flex justify-center mb-6">
+            <AnimatedFilterDropdown options={TAG_OPTIONS} value={selectedTag} onChange={setSelectedTag} icon={Tag} />
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
-          <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <motion.div key={i} variants={itemVariant}>

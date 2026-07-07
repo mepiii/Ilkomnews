@@ -21,7 +21,7 @@ class ErrorBoundary extends Component {
                 {this.state.error.stack}
               </pre>
               <button onClick={() => window.location.reload()}
-                className="mt-6 px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700">
+                className="mt-6 px-6 py-2 text-white rounded-xl" style={{ background: 'var(--accent)' }}>
                 Reload
               </button>
             </div>
@@ -36,7 +36,7 @@ class ErrorBoundary extends Component {
               An unexpected error occurred. Please try reloading the page.
             </p>
             <button onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700">
+              className="px-6 py-2 text-white rounded-xl" style={{ background: 'var(--accent)' }}>
               Reload
             </button>
           </div>

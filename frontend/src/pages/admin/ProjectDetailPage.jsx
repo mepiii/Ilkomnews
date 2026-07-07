@@ -119,7 +119,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -138,7 +138,8 @@ export default function ProjectDetailPage() {
   if (!project) return null
 
   const isPending = project.status === 'pending'
-  const screenshots = project.screenshots || project.images || []
+  const screenshots = project.screenshots_urls || []
+  const collaborators = project.collaborators || []
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -171,11 +172,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Project Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6"
-      >
+      <div className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6">
         {/* Title + Status */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h1 className="text-xl font-bold text-[var(--text-primary)]">{project.title}</h1>
@@ -189,6 +186,56 @@ export default function ProjectDetailPage() {
           <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6 whitespace-pre-line">{project.description}</p>
         )}
 
+        {/* Thumbnail */}
+        {(project.thumbnail_url || project.thumbnail) && (
+          <img
+            src={project.thumbnail_url || project.thumbnail}
+            alt={project.title}
+            className="w-full max-h-64 object-cover rounded-lg mb-6 border border-[var(--border-color)] shadow-[0_4px_20px_rgba(124,58,237,0.15)]"
+          />
+        )}
+
+        {/* Tim — Combined Creator + Collaborators */}
+        <div className="mb-6">
+          <p className="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Tim</p>
+          <div className="space-y-2">
+            {/* Creator */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)]">
+              {project.creator_avatar ? (
+                <img src={project.creator_avatar} alt={project.creator_name} className="w-9 h-9 rounded-full object-cover border border-[var(--border-color)]" />
+              ) : (
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[var(--accent)]">
+                  {(project.creator_name || "?").charAt(0)}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{project.creator_name || '-'}</p>
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[var(--accent)]/15 text-[var(--accent)]">Pembuat</span>
+                  {project.creator_type && project.creator_type !== 'mahasiswa' && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">{project.creator_type}</span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--text-muted)]">{[project.creator_nim, project.creator_major, project.creator_year].filter(Boolean).join(' · ')}</p>
+              </div>
+            </div>
+            {/* Collaborators */}
+            {collaborators.map((collab, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)]">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[var(--accent)] opacity-70">
+                  {typeof collab === 'string' ? collab.charAt(0) : (collab.name || '?').charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{typeof collab === 'string' ? collab : collab.name || 'Unknown'}</p>
+                  {typeof collab === 'object' && (
+                    <p className="text-xs text-[var(--text-muted)]">{[collab.major, collab.nim ? 'NIM: ' + collab.nim : null, collab.year ? 'Angkatan ' + collab.year : null].filter(Boolean).join(' · ')}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Meta grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <MetaItem icon={User} label="Pembuat" value={project.creator_name || project.creator || '-'} />
@@ -196,7 +243,7 @@ export default function ProjectDetailPage() {
           {project.creator_major && <MetaItem icon={FolderOpen} label="Jurusan" value={project.creator_major} />}
           {project.creator_year && <MetaItem icon={Calendar} label="Angkatan" value={project.creator_year} />}
           {project.tracking_id && <MetaItem icon={Tag} label="Tracking ID" value={project.tracking_id} />}
-          <MetaItem icon={FolderOpen} label="Kategori" value={project.category || '-'} />
+          <MetaItem icon={FolderOpen} label="Kategori" value={({ web: 'Web', mobile: 'Mobile', uiux: 'UI/UX', game: 'Game', ai: 'AI/ML' })[project.category] || project.category || '-'} />
           <MetaItem icon={Calendar} label="Tanggal Submit" value={
             project.created_at ? new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'
           } />
@@ -208,27 +255,13 @@ export default function ProjectDetailPage() {
           {project.reviewed_by && <MetaItem icon={User} label="Ditinjau oleh" value={project.reviewed_by} />}
         </div>
 
-        {/* Team members */}
-        {project.team_members && Array.isArray(project.team_members) && project.team_members.length > 0 && (
-          <div className="mb-6">
-            <p className="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Anggota Tim</p>
-            <div className="flex flex-wrap gap-2">
-              {project.team_members.map((member, i) => (
-                <span key={i} className="px-2.5 py-1 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs rounded-full">
-                  {typeof member === 'string' ? member : member.name || member}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Tech stack tags */}
         {project.tech_stack && Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && (
           <div className="mb-6">
             <p className="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Tech Stack</p>
             <div className="flex flex-wrap gap-2">
               {project.tech_stack.map((tech, i) => (
-                <span key={i} className="px-2.5 py-1 bg-secondary/10 text-secondary dark:text-purple-300 text-xs rounded-full font-medium">
+                <span key={i} className="px-2.5 py-1 bg-[var(--accent)]/10 text-[var(--accent)] text-xs rounded-full font-medium">
                   {tech}
                 </span>
               ))}
@@ -237,26 +270,30 @@ export default function ProjectDetailPage() {
         )}
 
         {/* Links */}
-        {(project.demo_url || project.github_url || project.link || project.url) && (
+        {(project.live_demo || project.github_link || project.download_link || project.figma_link) && (
           <div className="flex flex-wrap gap-3 mb-6">
-            {(project.demo_url || project.link || project.url) && (
-              <a
-                href={project.demo_url || project.link || project.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-secondary/20 transition-colors"
-              >
+            {project.live_demo && (
+              <a href={project.live_demo} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-medium rounded-lg hover:bg-[var(--accent)]/20 transition-colors">
                 <ExternalLink size={14} /> Demo
               </a>
             )}
-            {project.github_url && (
-              <a
-                href={project.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--border-color)] transition-colors"
-              >
+            {project.github_link && (
+              <a href={project.github_link} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
                 <GitFork size={14} /> GitHub
+              </a>
+            )}
+            {project.download_link && (
+              <a href={project.download_link} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                <ExternalLink size={14} /> Download
+              </a>
+            )}
+            {project.figma_link && (
+              <a href={project.figma_link} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                <ExternalLink size={14} /> Figma
               </a>
             )}
           </div>
@@ -269,16 +306,11 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-red-700">{project.rejection_reason}</p>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Screenshots */}
       {screenshots.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6"
-        >
+        <div className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] p-6">
           <h2 className="font-semibold text-[var(--text-primary)] mb-4">Tangkapan Layar</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {screenshots.map((src, i) => (
@@ -287,7 +319,7 @@ export default function ProjectDetailPage() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Reject Modal */}

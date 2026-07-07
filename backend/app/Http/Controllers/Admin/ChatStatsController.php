@@ -27,6 +27,6 @@ class ChatStatsController extends Controller
                 ->where('created_at', '>=', $from)->groupBy('ip_address')->orderByDesc('count')->take(10)->get(),
         ];
 
-        return view('admin.chat.stats', compact('stats'));
+        return response()->json($stats);
     }
 }

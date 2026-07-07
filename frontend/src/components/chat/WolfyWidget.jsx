@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, User, Sparkles, MessageCircle } from 'lucide-react'
+import { X, Send, User, Sparkles, MessageCircle, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useVisitorId } from '@/hooks/useVisitorId'
 import { useThemeMode } from '@/hooks/useThemeMode'
@@ -99,8 +99,35 @@ const WolfyWidget = () => {
   const accent = '#7c3aed'
   const accentLight = isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.08)'
 
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <>
+      {/* Scroll to Top — above chatbot */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-20 right-6 z-50 w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg cursor-pointer"
+            style={{ boxShadow: 'rgba(159, 111, 255, 0.3) 0px 4px 20px' }}
+            aria-label="Scroll to top"
+          >
+            <ChevronUp size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* FAB Button */}
       <AnimatePresence>
         {!isOpen && (
@@ -115,7 +142,7 @@ const WolfyWidget = () => {
             aria-label="Chat dengan Wolfy"
           >
             <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-            <div className="hidden w-full h-full items-center justify-center bg-purple-100 dark:bg-purple-900/30"><span className="text-xl">🐺</span></div>
+            <div className="hidden w-full h-full items-center justify-center bg-[var(--accent)]/10 dark:bg-[var(--accent)]/20"><span className="text-xl">🐺</span></div>
           </motion.button>
         )}
       </AnimatePresence>
@@ -151,7 +178,7 @@ const WolfyWidget = () => {
                   >
                     <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
                     <div className="hidden w-full h-full bg-white/20 items-center justify-center"><span className="text-lg">🐺</span></div>
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-purple-600">
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-black dark:border-white">
                       <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75" />
                     </span>
                   </motion.div>
@@ -199,7 +226,7 @@ const WolfyWidget = () => {
                         className="w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] leading-snug transition-all duration-150 group"
                         style={glassFaq}>
                         <span className="flex items-center gap-2" style={{ color: textPrimary }}>
-                          <MessageCircle size={13} className="text-purple-500 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <MessageCircle size={13} className="text-[var(--accent)] opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
                           {item.q}
                         </span>
                       </motion.button>
@@ -242,8 +269,8 @@ const WolfyWidget = () => {
                           {msg.content}
                         </motion.div>
                         {msg.role === 'user' && (
-                          <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ring-1 ring-purple-500/10" style={{ background: accentLight }}>
-                            <User size={13} className="text-purple-600 dark:text-purple-400" />
+                          <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ring-1 ring-[var(--accent)]/10" style={{ background: accentLight }}>
+                            <User size={13} className="text-[var(--accent)]" />
                           </div>
                         )}
                       </motion.div>

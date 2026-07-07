@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Globe, Smartphone, Palette, Gamepad2, Sparkles, Filter } from 'lucide-react'
+import { Globe, Smartphone, Palette, Gamepad2, Sparkles, Filter, Tag } from 'lucide-react'
 import Breadcrumb from '../components/common/Breadcrumb'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import { GlowCard } from '../components/ui/GlowCard'
@@ -11,6 +11,7 @@ import { SmoothTabs } from '../components/ui/SmoothTabs'
 import ExpandingSearchDock from '../components/shared/ExpandingSearchDock'
 import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { PageBackground } from '../components/ui/PageBackground'
+import { parseTags } from '../utils/parsers'
 import { projectsService } from '../services/api'
 
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
 ]
 
 const SORT_OPTIONS = ['Terbaru', 'Terlama', 'Terpopuler']
+const ITEMS_PER_PAGE = 8
 
 import { container, itemVariant } from '../lib/animations'
 
@@ -33,6 +35,8 @@ const IlkomGalleryPage = () => {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedTag, setSelectedTag] = useState('Semua')
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -54,7 +58,7 @@ const IlkomGalleryPage = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
-    projectsService.getAll({ category: activeTab })
+    projectsService.getAll(activeTab === 'all' ? {} : { category: activeTab })
       .then(res => setProjects(Array.isArray(res.data) ? res.data : []))
       .catch(() => setProjects([]))
       .finally(() => setLoading(false))
@@ -70,17 +74,28 @@ const IlkomGalleryPage = () => {
     navigate(`/ilkomgallery?tab=${id}`, { replace: true })
   }
 
+  const uniqueTags = useMemo(() => [...new Set(projects.flatMap(p => parseTags(p.tags || [])))], [projects])
+  const TAG_OPTIONS = useMemo(() => ['Semua', ...uniqueTags], [uniqueTags])
+
   const filtered = useMemo(() => projects
     .filter(p => {
       if (!searchQuery) return true
       const s = searchQuery.toLowerCase()
       return p.title?.toLowerCase().includes(s) || p.creator_name?.toLowerCase().includes(s) || p.description?.toLowerCase().includes(s)
     })
+    .filter(p => selectedTag === 'Semua' || parseTags(p.tags || []).includes(selectedTag))
     .sort((a, b) => {
       if (sortBy === 'Terlama') return new Date(a.created_at) - new Date(b.created_at)
       if (sortBy === 'Terpopuler') return (b.views || 0) - (a.views || 0)
       return new Date(b.created_at) - new Date(a.created_at)
     }), [projects, searchQuery, sortBy])
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const paginatedItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab, sortBy, searchQuery, selectedTag])
 
   return (
     <PageBackground>
@@ -109,6 +124,9 @@ const IlkomGalleryPage = () => {
           <div className="flex items-center gap-3 flex-wrap justify-center mb-6">
             <ExpandingSearchDock value={searchQuery} onChange={setSearchQuery} placeholder="Cari project, creator..." />
             <AnimatedFilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} icon={Filter} />
+            {TAG_OPTIONS.length > 1 && (
+              <AnimatedFilterDropdown options={TAG_OPTIONS} value={selectedTag} onChange={setSelectedTag} icon={Tag} />
+            )}
           </div>
 
           {/* Count */}
@@ -120,22 +138,22 @@ const IlkomGalleryPage = () => {
 
           {/* Projects Grid — same as homepage */}
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <motion.div key={activeTab + currentPage + selectedTag} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <motion.div key={i} variants={itemVariant}>
                     <div className="h-64 rounded-xl bg-theme-secondary animate-pulse" />
                   </motion.div>
                 ))
-              ) : filtered.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <EmptyResults
                   icon={<Globe size={40} className="text-accent" />}
                   title="Tidak ada project yang ditemukan"
                   description="Coba ubah filter atau cari dengan kata kunci lain"
-                  onReset={() => { handleTabChange('web'); setSearchQuery('') }}
+                  onReset={() => { handleTabChange('all'); setSearchQuery(''); setSelectedTag('Semua') }}
                 />
               ) : (
-                filtered.map((project, _i) => (
+                paginatedItems.map((project, _i) => (
                   <motion.div key={project.id || _i} variants={itemVariant}>
                     <GlowCard glowColor="purple" className="rounded-2xl">
                       <ProjectExpandableCard project={project} />
@@ -145,6 +163,39 @@ const IlkomGalleryPage = () => {
               )}
             </motion.div>
           </AnimatePresence>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+              >
+                <ChevronLeft size={18} className="text-[var(--accent)]" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-10 h-10 rounded-full text-sm font-medium transition-all ${
+                    currentPage === page
+                      ? 'bg-[var(--accent)] text-white shadow-md'
+                      : 'border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+              >
+                <ChevronRight size={18} className="text-[var(--accent)]" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </PageBackground>

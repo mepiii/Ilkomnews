@@ -17,6 +17,7 @@ class LlmProvider extends Model
         'priority',
         'is_active',
         'provider_type',
+        'prefix',
     ];
 
     protected $casts = [

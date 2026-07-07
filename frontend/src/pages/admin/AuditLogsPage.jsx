@@ -95,7 +95,7 @@ export default function AuditLogsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={Activity} label="Total Log" value={summary?.total} color="bg-emerald-500/20" iconColor="text-emerald-400" />
         <StatCard icon={Clock} label="Hari Ini" value={summary?.today} color="bg-blue-500/20" iconColor="text-blue-400" />
-        <StatCard icon={Users} label="Minggu Ini" value={summary?.this_week} color="bg-purple-500/20" iconColor="text-purple-400" />
+        <StatCard icon={Users} label="Minggu Ini" value={summary?.this_week} color="bg-[var(--accent)]/20" iconColor="text-[var(--accent)]" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -169,7 +169,7 @@ export default function AuditLogsPage() {
                                 : log.action === 'delete'
                                   ? 'bg-red-500/20 text-red-400'
                                   : log.action === 'login'
-                                    ? 'bg-purple-500/20 text-purple-400'
+                                    ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
                                     : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
                           }`}
                         >

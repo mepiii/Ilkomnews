@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Search, Eye, FolderOpen } from 'lucide-react'
 import { adminProjects } from '../../services/adminApi'
 
@@ -19,6 +18,8 @@ const CATEGORY_OPTIONS = [
   { value: 'ai', label: 'AI/ML' },
   { value: 'uiux', label: 'UI/UX' },
 ]
+
+const CATEGORY_LABELS = Object.fromEntries(CATEGORY_OPTIONS.filter(o => o.value).map(o => [o.value, o.label]))
 
 const PAGE_SIZE = 10
 
@@ -116,8 +117,7 @@ export default function ProjectsListPage() {
         <div className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 rounded-lg text-red-600 dark:text-red-400 text-sm">{error}</div>
       )}
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden">
+      <div className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-[var(--text-muted)] text-sm">Memuat...</div>
         ) : items.length === 0 ? (
@@ -146,7 +146,7 @@ export default function ProjectsListPage() {
                         <span className="font-medium text-[var(--text-primary)] truncate block">{item.title}</span>
                       </td>
                       <td className="px-5 py-3 hidden md:table-cell text-[var(--text-secondary)]">{item.creator_name || item.creator || '-'}</td>
-                      <td className="px-5 py-3 hidden md:table-cell text-[var(--text-secondary)]">{item.category || '-'}</td>
+                      <td className="px-5 py-3 hidden md:table-cell text-[var(--text-secondary)]">{CATEGORY_LABELS[item.category] || item.category || '-'}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[item.status] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
                           {STATUS_LABELS[item.status] || item.status}
@@ -186,7 +186,7 @@ export default function ProjectsListPage() {
             )}
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }

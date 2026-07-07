@@ -67,7 +67,7 @@ export default function ChatStatsPage() {
         <StatCard icon={CheckCircle} label="Berhasil" value={data?.successful} color="bg-emerald-500/10" iconColor="text-emerald-500" />
         <StatCard icon={XCircle} label="Ditolak (Topik)" value={data?.rejected} color="bg-red-500/10" iconColor="text-red-500" />
         <StatCard icon={AlertCircle} label="Tanpa Konteks" value={data?.no_context} color="bg-amber-500/10" iconColor="text-amber-500" />
-        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-purple-500/10" iconColor="text-purple-500" />
+        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-[var(--accent)]/10" iconColor="text-[var(--accent)]" />
         <StatCard icon={Clock} label="Hari Ini" value={data?.today} color="bg-pink-500/10" iconColor="text-pink-500" />
       </div>
 
@@ -137,7 +137,7 @@ export default function ChatStatsPage() {
       {topIPs.length > 0 && (
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
           <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
-            <Zap size={16} className="text-purple-400" />
+            <Zap size={16} style={{ color: 'var(--accent)' }} />
             <h2 className="font-semibold text-[var(--text-primary)]">IP Address Teratas</h2>
           </div>
           <div className="overflow-x-auto">

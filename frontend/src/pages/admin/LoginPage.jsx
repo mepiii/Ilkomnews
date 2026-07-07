@@ -45,8 +45,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(48,11,85,0.1)' }} />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(122,71,166,0.1)' }} />
       </div>
 
       <motion.div
@@ -62,7 +62,7 @@ export default function LoginPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-              className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md"
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md" style={{ background: 'linear-gradient(135deg, rgb(48,11,85), rgb(122,71,166))' }}
             >
               <Lock size={28} className="text-white" />
             </motion.div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@ilkom.example.com"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all placeholder:text-[var(--text-muted)]"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] transition-all placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan password"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all placeholder:text-[var(--text-muted)]"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] transition-all placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
                 id="remember"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--border-color)] text-purple-600 focus:ring-purple-500/30 accent-purple-600"
+                className="w-4 h-4 rounded border-[var(--border-color)] accent-[var(--accent)]"
               />
               <label htmlFor="remember" className="text-sm text-[var(--text-secondary)]">
                 Ingat saya
@@ -139,7 +139,7 @@ export default function LoginPage() {
               disabled={submitting}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              className="w-full py-3 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md" style={{ background: 'linear-gradient(135deg, rgb(48,11,85), rgb(122,71,166))' }}
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">

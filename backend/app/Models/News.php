@@ -12,7 +12,8 @@ class News extends Model
 
     protected $fillable = [
         'title', 'slug', 'summary', 'content', 'category',
-        'date', 'author', 'image', 'views', 'tags', 'published',
+        'date', 'author', 'author_image', 'author_institution', 'author_position',
+        'image', 'views', 'tags', 'published',
     ];
 
     protected $casts = [
@@ -22,7 +23,16 @@ class News extends Model
         'published' => 'boolean',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'author_image_url'];
+
+    public function getAuthorImageUrlAttribute(): ?string
+    {
+        if (!$this->author_image) return null;
+        if (filter_var($this->author_image, FILTER_VALIDATE_URL)) {
+            return $this->author_image;
+        }
+        return asset('storage/' . $this->author_image);
+    }
 
     public function getImageUrlAttribute(): ?string
     {

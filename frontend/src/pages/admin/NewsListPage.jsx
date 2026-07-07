@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Search, Plus, Edit, Trash2, Newspaper, GripVertical } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
 
@@ -157,11 +156,7 @@ export default function NewsListPage() {
       )}
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden"
-      >
+      <div className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-[var(--text-muted)] text-sm">Memuat...</div>
         ) : items.length === 0 ? (
@@ -206,11 +201,11 @@ export default function NewsListPage() {
                       <td className="px-5 py-3 hidden lg:table-cell text-[var(--text-secondary)] text-right">{item.views ?? 0}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.status === 'published'
+                          item.published
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                             : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                         }`}>
-                          {item.status === 'published' ? 'Tayang' : 'Draft'}
+                          {item.published ? 'Tayang' : 'Draft'}
                         </span>
                       </td>
                       <td className="px-5 py-3">
@@ -261,7 +256,7 @@ export default function NewsListPage() {
             )}
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }

@@ -19,7 +19,7 @@ class AuditLogController extends Controller
 
         $logs = $query->latest()->paginate(20)->withQueryString();
 
-        return view('admin.audit.index', compact('logs'));
+        return response()->json($logs);
     }
 
     public function summary()

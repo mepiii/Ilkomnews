@@ -55,7 +55,7 @@ const PageHeader = ({ badge, title, subtitle, divider = true, textStyle = 'gradi
     {divider && (
       <motion.div
         variants={fadeUp(0.2)}
-        className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5"
+        className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }}
       />
     )}
 

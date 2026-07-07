@@ -10,6 +10,9 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json'
   }
+  if (!headers['Accept']) {
+    headers['Accept'] = 'application/json'
+  }
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 15000)

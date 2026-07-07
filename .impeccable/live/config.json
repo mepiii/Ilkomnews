@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "devCommand": "npm run dev:frontend",
+  "devUrl": "http://localhost:5173",
+  "rootDir": "frontend"
+}

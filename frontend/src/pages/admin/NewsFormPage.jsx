@@ -10,13 +10,17 @@ const INITIAL_STATE = {
   category: '',
   date: '',
   author: '',
+  author_institution: '',
+  author_position: '',
   author_image: null,
   image: null,
   tags: '',
   published: false,
 };
 
-const CATEGORIES = ['Workshop', 'Kompetisi', 'Pelatihan', 'Seminar', 'Berita', 'Tutorial', 'Pembelajaran', 'Event'];
+const CATEGORIES = ['Workshop', 'Kompetisi', 'Pelatihan', 'Seminar'];
+
+const TAG_OPTIONS = ['Berita', 'Kampus', 'Lomba', 'Teknologi', 'Workshop', 'Seminar', 'Kompetisi', 'Pelatihan', 'Event', 'Tutorial', 'Pembelajaran', 'Fasilkom', 'Unsri', 'Open Source', 'AI', 'Web Development', 'Mobile', 'UI/UX', 'Cyber Security', 'Data Science'];
 
 export default function NewsFormPage() {
   const { id } = useParams();
@@ -45,6 +49,8 @@ export default function NewsFormPage() {
           category: item.category || '',
           date: item.date ? item.date.split('T')[0] : '',
           author: item.author || '',
+          author_institution: item.author_institution || '',
+          author_position: item.author_position || '',
           author_image: null,
           image: null, 
           tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
@@ -153,6 +159,8 @@ export default function NewsFormPage() {
       
       if (form.summary) formData.append('summary', form.summary);
       if (form.author) formData.append('author', form.author);
+      if (form.author_institution) formData.append('author_institution', form.author_institution);
+      if (form.author_position) formData.append('author_position', form.author_position);
       if (form.tags) {
         const tagsArray = form.tags.split(',').map((t) => t.trim()).filter(Boolean);
         formData.append('tags', JSON.stringify(tagsArray));
@@ -212,7 +220,7 @@ export default function NewsFormPage() {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] font-header">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {isEdit ? 'Edit Berita' : 'Tambah Berita'}
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">Lengkapi form di bawah untuk artikel berita.</p>
@@ -260,15 +268,35 @@ export default function NewsFormPage() {
             <input type="text" value={form.author} onChange={(e) => updateField('author', e.target.value)} className={inputClass('author')} placeholder="Nama Penulis" />
           </div>
           <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Institusi/Perusahaan</label>
+            <input type="text" value={form.author_institution} onChange={(e) => updateField('author_institution', e.target.value)} className={inputClass('author_institution')} placeholder="Contoh: FASILKOM Unsri" />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)]">Jabatan</label>
+            <input type="text" value={form.author_position} onChange={(e) => updateField('author_position', e.target.value)} className={inputClass('author_position')} placeholder="Contoh: Ketua BEM" />
+          </div>
+          <div className="space-y-1">
             <label className="block text-sm font-medium text-[var(--text-primary)]">Tags</label>
-            <input type="text" value={form.tags} onChange={(e) => updateField('tags', e.target.value)} className={inputClass('tags')} placeholder="Berita, Kampus, Lomba (pisahkan dengan koma)" />
+            <select
+              value={form.tags ? form.tags.split(',')[0]?.trim() || '' : ''}
+              onChange={(e) => updateField('tags', e.target.value)}
+              className={inputClass('tags')}
+            >
+              <option value="">-- Pilih Tag --</option>
+              {TAG_OPTIONS.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
           </div>
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[var(--text-primary)]">Foto Profil Penulis</label>
           <div className="flex items-center gap-4">
-            <label className="relative group cursor-pointer shrink-0">
+            <div
+              onClick={() => authorFileInputRef.current?.click()}
+              className="relative group cursor-pointer shrink-0"
+            >
               <input type="file" accept="image/*" ref={authorFileInputRef} onChange={handleAuthorImageChange} className="hidden" />
               <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${authorImagePreview ? 'border-green-500/50' : 'border-[var(--border-color)] hover:border-[var(--accent)]'}`}>
                 {authorImagePreview ? (
@@ -281,11 +309,11 @@ export default function NewsFormPage() {
                 )}
               </div>
               {authorImagePreview && (
-                <button type="button" onClick={removeAuthorImage} className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                <button type="button" onClick={(e) => { e.stopPropagation(); removeAuthorImage(); }} className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
                   <X size={12} />
                 </button>
               )}
-            </label>
+            </div>
             <div className="text-xs text-[var(--text-muted)]">
               <p className="font-medium text-[var(--text-primary)]">Foto Profil</p>
               <p>Opsional. JPG/PNG, max 5MB.</p>
@@ -301,11 +329,21 @@ export default function NewsFormPage() {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[var(--text-primary)]">Thumbnail Berita</label>
-          <div className="mt-2 border-2 border-dashed border-[var(--border-color)] rounded-xl p-6 bg-[var(--bg-secondary)] text-center transition-colors hover:border-[var(--accent)]">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="mt-2 block border-2 border-dashed border-[var(--border-color)] rounded-xl p-6 bg-[var(--bg-secondary)] text-center transition-colors hover:border-[var(--accent)] cursor-pointer"
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
             {imagePreview ? (
               <div className="relative inline-block">
                 <img src={imagePreview} alt="Preview" className="max-h-64 rounded-lg shadow-sm" />
-                <button type="button" onClick={removeImage} className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
                   <X size={16} />
                 </button>
               </div>
@@ -315,9 +353,7 @@ export default function NewsFormPage() {
                   <Upload size={24} className="text-[var(--text-secondary)]" />
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">
-                  <label htmlFor="file-upload" className="cursor-pointer font-medium text-[var(--accent)] hover:underline">Upload file</label>
-                  <span> atau drag and drop</span>
-                  <input id="file-upload" name="file-upload" type="file" ref={fileInputRef} className="sr-only" accept="image/*" onChange={handleImageChange} />
+                  <span className="font-medium text-[var(--accent)]">Klik atau seret gambar</span>
                 </div>
                 <p className="text-xs text-[var(--text-muted)]">PNG, JPG, GIF up to 5MB</p>
               </div>

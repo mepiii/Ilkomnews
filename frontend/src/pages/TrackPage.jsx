@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Search, Clock, CheckCircle, XCircle, AlertCircle, Bell, BellRing, Users } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
 import Breadcrumb from '../components/common/Breadcrumb'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -19,6 +19,7 @@ const TrackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [trackingId, setTrackingId] = useState(searchParams.get('id') || '')
   const [result, setResult] = useState(null)
+  const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -37,6 +38,11 @@ const TrackPage = () => {
       if (!res.ok) throw new Error('Submission not found')
       setResult(await res.json())
       setSearchParams({ id: id.trim() })
+      // Fetch notifications for this tracking ID
+      fetch(`${API_BASE}/notifications/${id.trim()}`)
+        .then(r => r.json())
+        .then(data => setNotifications(data.data || []))
+        .catch(() => setNotifications([]))
     } catch (err) {
       if (err.name === 'AbortError') setError('Request timeout')
       else setError(err.message)
@@ -81,7 +87,7 @@ const TrackPage = () => {
                   placeholder="Masukkan ID pelacakan (contoh: ABC12345)"
                   className="flex-1 px-4 py-3 bg-theme-secondary border border-theme rounded-xl text-theme-primary font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors" />
                 <button type="submit" disabled={loading || !trackingId.trim()}
-                  className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm">
+                  className="w-full sm:w-auto px-6 py-3 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm" style={{ background: 'var(--accent)' }}>
                   {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Search size={18} /> Track</>}
                 </button>
               </div>
@@ -116,7 +122,7 @@ const TrackPage = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">ID Pelacakan</p>
-                      <p className="font-mono text-xl text-purple-600 dark:text-purple-400 font-bold mt-1">{result.tracking_id}</p>
+                      <p className="font-mono text-xl text-[var(--accent)] font-bold mt-1">{result.tracking_id}</p>
                     </div>
                     <div className="h-px bg-theme" />
                     <div>
@@ -150,13 +156,69 @@ const TrackPage = () => {
                         <p className="text-green-600 dark:text-green-400 text-sm font-medium">Proyek Anda telah diterima dan akan segera muncul di galeri!</p>
                       </div>
                     )}
+                    {result.collaborators && result.collaborators.length > 0 && (
+                      <div>
+                        <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold flex items-center gap-1.5 mb-2"><Users size={12} /> Kolaborator</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.collaborators.map((c, i) => (
+                            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-theme-secondary border border-theme rounded-full text-xs font-medium text-theme-primary">
+                              {typeof c === 'object' && c.avatar && <img src={c.avatar} alt="" className="w-4 h-4 rounded-full object-cover" />}
+                              {typeof c === 'string' ? c : `${c.name}${c.nim ? ' (' + c.nim + ')' : ''}`}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </GlowCard>
               </motion.div>
             )}
 
+            {/* Notifications */}
+            {result && notifications.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <BellRing size={16} style={{ color: 'var(--accent)' }} />
+                  <p className="text-sm font-semibold text-theme-primary">Notifikasi</p>
+                </div>
+                <div className="space-y-3">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className={`rounded-2xl p-4 border ${
+                      notif.type === 'accepted' ? 'bg-green-500/5 border-green-500/20' :
+                      notif.type === 'rejected' ? 'bg-red-500/5 border-red-500/20' :
+                      'bg-blue-500/5 border-blue-500/20'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-0.5 ${
+                          notif.type === 'accepted' ? 'text-green-500' :
+                          notif.type === 'rejected' ? 'text-red-500' :
+                          'text-blue-500'
+                        }`}>
+                          {notif.type === 'accepted' ? <CheckCircle size={18} /> :
+                           notif.type === 'rejected' ? <XCircle size={18} /> :
+                           <Bell size={18} />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-theme-primary">{notif.title}</p>
+                          <p className="text-xs text-theme-muted mt-0.5">{notif.message}</p>
+                          <p className="text-[10px] text-theme-muted mt-1">
+                            {new Date(notif.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             <div className="mt-8 text-center">
-              <Link to="/submit" className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium">Ajukan proyek baru</Link>
+              <Link
+                to="/submit"
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              >
+                Ajukan Proyek Baru
+              </Link>
             </div>
           </div>
         </div>

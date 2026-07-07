@@ -51,6 +51,9 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_institution' => 'nullable|string|max:255',
+            'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500', // 500KB max
         ]);
@@ -59,8 +62,19 @@ class NewsController extends Controller
             $validated['image'] = $request->file('image')->store('news', 'public');
         }
 
+        if ($request->hasFile('author_image')) {
+            $validated['author_image'] = $request->file('author_image')->store('news/authors', 'public');
+        }
+
         $validated['published'] = $request->boolean('published');
-        $validated['slug'] = Str::slug($validated['title']);
+        $baseSlug = Str::slug($validated['title']);
+        $slug = $baseSlug;
+        $i = 1;
+        while (News::where('slug', $slug)->exists()) {
+            $slug = "{$baseSlug}-{$i}";
+            $i++;
+        }
+        $validated['slug'] = $slug;
         $validated['views'] = 0;
         
         if (empty($validated['summary'])) {
@@ -123,14 +137,30 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_institution' => 'nullable|string|max:255',
+            'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
             'remove_image' => 'nullable|boolean',
+            'remove_author_image' => 'nullable|boolean',
         ]);
 
         if ($request->boolean('remove_image') && $news->image) {
             Storage::disk('public')->delete($news->image);
             $validated['image'] = null;
+        }
+
+        if ($request->boolean('remove_author_image') && $news->author_image) {
+            Storage::disk('public')->delete($news->author_image);
+            $validated['author_image'] = null;
+        }
+
+        if ($request->hasFile('author_image')) {
+            if ($news->author_image) {
+                Storage::disk('public')->delete($news->author_image);
+            }
+            $validated['author_image'] = $request->file('author_image')->store('news/authors', 'public');
         }
 
         if ($request->hasFile('image')) {
@@ -143,7 +173,14 @@ class NewsController extends Controller
         $validated['published'] = $request->boolean('published');
 
         if ($news->title !== $validated['title']) {
-            $validated['slug'] = Str::slug($validated['title']);
+            $baseSlug = Str::slug($validated['title']);
+            $slug = $baseSlug;
+            $i = 1;
+            while (News::where('slug', $slug)->where('id', '!=', $news->id)->exists()) {
+                $slug = "{$baseSlug}-{$i}";
+                $i++;
+            }
+            $validated['slug'] = $slug;
         }
 
         if (empty($validated['summary'])) {

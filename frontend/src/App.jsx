@@ -9,7 +9,7 @@ import PerformanceMonitor from './components/common/PerformanceMonitor'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import AdminRoutes from './routes/AdminRoutes'
 import { Tiles } from './components/ui/Tiles'
-import { ScrollToTop } from './components/ui/ScrollToTop'
+
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
@@ -28,7 +28,7 @@ const SavedItemsPage = lazy(() => import('./pages/KoleksiPage'))
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-center">
-      <div className="w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+      <div className="w-10 h-10 border-3 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
       <p className="text-theme-muted text-sm">Memuat...</p>
     </div>
   </div>
@@ -41,7 +41,6 @@ function AppContent() {
   return (
     <div className="relative min-h-screen flex flex-col transition-colors duration-300">
       <PerformanceMonitor />
-      <ScrollToTop />
 
       {/* Tiles background - visible on all non-admin pages */}
       {!isAdminRoute && (

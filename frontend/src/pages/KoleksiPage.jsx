@@ -1,28 +1,49 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Bookmark, Trash2 } from 'lucide-react'
+import { Bookmark, Heart, Eye, Trash2, FolderOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import NewsExpandableCard from '../components/cards/NewsExpandableCard'
 import { Text_03 } from '../components/ui/Text03'
 import { PageBackground } from '../components/ui/PageBackground'
+import { getAllItems } from '../services/interactions'
 
 const ITEMS_PER_PAGE = 8
 
+const TABS = [
+  { id: 'all', label: 'Semua', icon: FolderOpen },
+  { id: 'viewed', label: 'Dilihat', icon: Eye },
+  { id: 'liked', label: 'Disukai', icon: Heart },
+  { id: 'saved', label: 'Disimpan', icon: Bookmark },
+]
+
+const TYPE_TABS = [
+  { id: 'all', label: 'Semua' },
+  { id: 'project', label: 'Proyek' },
+  { id: 'news', label: 'Berita' },
+]
+
 const KoleksiPage = () => {
-  const [savedItems, setSavedItems] = useState([])
-  const [activeTab, setActiveTab] = useState('all')
+  const [items, setItems] = useState([])
+  const [activeTab, setActiveTab] = useState('viewed')
+  const [activeType, setActiveType] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('saved_items') || '[]')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSavedItems(saved)
+    const allItems = getAllItems()
+    setItems(allItems)
   }, [])
 
-  const filteredItems = activeTab === 'all'
-    ? savedItems
-    : savedItems.filter(item => item.type === activeTab)
+  const filteredItems = items.filter(item => {
+    // Filter by status
+    if (activeTab === 'viewed' && !item.viewed) return false
+    if (activeTab === 'liked' && !item.liked) return false
+    if (activeTab === 'saved' && !item.saved) return false
+
+    // Filter by type
+    if (activeType !== 'project' && activeType !== 'news') return true
+    return item.type === activeType
+  })
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE)
   const paginatedItems = filteredItems.slice(
@@ -30,10 +51,11 @@ const KoleksiPage = () => {
     currentPage * ITEMS_PER_PAGE
   )
 
-  const removeItem = (id) => {
-    const updated = savedItems.filter(item => item.id !== id)
-    setSavedItems(updated)
-    localStorage.setItem('saved_items', JSON.stringify(updated))
+  const counts = {
+    all: items.length,
+    viewed: items.filter(i => i.viewed).length,
+    liked: items.filter(i => i.liked).length,
+    saved: items.filter(i => i.saved).length,
   }
 
   return (
@@ -49,25 +71,53 @@ const KoleksiPage = () => {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
               <Text_03 text="Koleksi Saya" className="section-gradient-text" />
             </h1>
-            <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
+            <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
             <p className="text-theme-muted text-base max-w-2xl mx-auto">
-              Artikel dan proyek yang telah Anda sukai, simpan, atau lihat
+              Artikel dan proyek yang telah Anda lihat, sukai, atau simpan
             </p>
           </motion.div>
 
-          {/* Filter tabs */}
+          {/* Status tabs */}
+          <div className="flex justify-center gap-2 mb-4">
+            {TABS.map(tab => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); setCurrentPage(1) }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-[var(--accent)] text-white shadow-md'
+                      : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                  }`}
+                >
+                  <Icon size={14} />
+                  {tab.label}
+                  {counts[tab.id] > 0 && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      activeTab === tab.id ? 'bg-white/20' : 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                    }`}>
+                      {counts[tab.id]}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Type filter */}
           <div className="flex justify-center gap-2 mb-8">
-            {['all', 'project', 'news'].map(tab => (
+            {TYPE_TABS.map(tab => (
               <button
-                key={tab}
-                onClick={() => { setActiveTab(tab); setCurrentPage(1) }}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                key={tab.id}
+                onClick={() => { setActiveType(tab.id); setCurrentPage(1) }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  activeType === tab.id
+                    ? 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20'
+                    : 'text-theme-muted hover:text-theme-primary'
                 }`}
               >
-                {tab === 'all' ? 'Semua' : tab === 'project' ? 'Proyek' : 'Berita'}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -76,27 +126,25 @@ const KoleksiPage = () => {
             <div className="text-center py-16 glass-card rounded-3xl">
               <Bookmark size={48} className="mx-auto mb-4 text-theme-muted" />
               <p className="text-theme-muted text-lg">Belum ada koleksi</p>
-              <p className="text-theme-muted text-sm mt-2">Sukai, simpan, atau lihat konten untuk mengumpulkannya di sini</p>
-              <Link to="/ilkomgallery" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
-                Jelajahi Galeri
+              <p className="text-theme-muted text-sm mt-2">
+                {activeTab === 'viewed' ? 'Klik kartu untuk melihat konten' :
+                 activeTab === 'liked' ? 'Suka konten untuk mengumpulkannya di sini' :
+                 'Simpan konten untuk mengumpulkannya di sini'}
+              </p>
+              <Link to="/news" className="mt-4 inline-block hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                Jelajahi Berita
               </Link>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {paginatedItems.map(item => (
-                  <div key={item.id} className="relative">
+                  <div key={`${item.type}-${item.id}`} className="relative">
                     {item.type === 'project' ? (
                       <ProjectExpandableCard project={item} />
                     ) : (
                       <NewsExpandableCard article={item} />
                     )}
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="absolute top-2 right-2 z-10 p-2 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -110,7 +158,7 @@ const KoleksiPage = () => {
                       onClick={() => setCurrentPage(page)}
                       className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${
                         currentPage === page
-                          ? 'bg-purple-600 text-white'
+                          ? 'bg-[var(--accent)] text-white'
                           : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
                       }`}
                     >

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { hoverScale } from '../../lib/animations'
 
 // Idle float duration — computed once at module load, stable across renders
 const IDLE_DURATION = 4 + Math.random() * 2
@@ -53,7 +54,7 @@ const AnimatedText = ({
           hover
             ? {
                 scale: 1.05,
-                textShadow: '0 0 12px rgba(122, 71, 166, 0.1)',
+                textShadow: '0 0 12px var(--accent)',
                 transition: { duration: 0.3 },
               }
             : undefined
@@ -95,8 +96,8 @@ const AnimatedText = ({
                   hover
                     ? {
                         scale: 1.1,
-                        color: 'rgba(122, 71, 166, 1)',
-                        textShadow: '0 0 10px rgba(122, 71, 166, 0.08)',
+                        color: 'var(--accent)',
+                        textShadow: '0 0 10px var(--accent)',
                         transition: { duration: 0.2 },
                       }
                     : undefined

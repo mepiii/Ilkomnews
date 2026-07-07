@@ -9,7 +9,7 @@ export default function ChatbotApiPage() {
   const [error, setError] = useState(null)
   
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [formData, setFormData] = useState({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', is_active: false })
+  const [formData, setFormData] = useState({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', prefix: '', is_active: false })
   const [saving, setSaving] = useState(false)
   
   const [showKeys, setShowKeys] = useState({})
@@ -34,16 +34,16 @@ export default function ChatbotApiPage() {
   const handleOpenModal = (api = null) => {
     if (api) {
       // Backend returns model_id (DB column) but our form uses model
-      setFormData({ ...api, model: api.model_id || api.model || '' })
+      setFormData({ ...api, model: api.model_id || api.model || '', prefix: api.prefix || '' })
     } else {
-      setFormData({ id: null, name: '', provider_type: 'openai', model: 'gpt-3.5-turbo', api_key: '', base_url: '', is_active: true })
+      setFormData({ id: null, name: '', provider_type: 'openai', model: 'gpt-3.5-turbo', api_key: '', base_url: '', prefix: '', is_active: true })
     }
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
-    setFormData({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', is_active: false })
+    setFormData({ id: null, name: '', provider_type: '', model: '', api_key: '', base_url: '', prefix: '', is_active: false })
   }
 
   const handleSubmit = async (e) => {
@@ -96,7 +96,7 @@ export default function ChatbotApiPage() {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:bg-purple-600 transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-xl hover:opacity-90 transition-colors shadow-md"
         >
           <Plus size={16} />
           Tambah API
@@ -279,6 +279,17 @@ export default function ChatbotApiPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">System Prompt / Prefix (Opsional)</label>
+                  <textarea
+                    value={formData.prefix || ''}
+                    onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
+                    rows={2}
+                    placeholder="e.g. You are a helpful assistant..."
+                    className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+                  />
+                </div>
+
                 <div className="flex items-center gap-3 pt-2">
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -303,7 +314,7 @@ export default function ChatbotApiPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 px-4 py-2 bg-[var(--accent)] hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 shadow-md"
+                    className="flex-1 px-4 py-2 bg-[var(--accent)] hover:opacity-90 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 shadow-md"
                   >
                     {saving ? 'Menyimpan...' : 'Simpan'}
                   </button>

@@ -1,49 +1,7 @@
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { AnimatedText } from '../ui/AnimatedText'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { Link } from 'react-router-dom'
 import heroImage from '../../assets/gedungfasilkom.jpg'
-
-const springConfig = { type: 'spring', stiffness: 200, damping: 20 }
-
-const TypewriterText = ({ text, delay = 0, onComplete }) => {
-  const [displayed, setDisplayed] = useState('')
-  const prefersReducedMotion = useReducedMotion()
-
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayed(text)
-      onComplete?.()
-      return
-    }
-    let i = 0
-    const timeout = setTimeout(() => {
-      const interval = setInterval(() => {
-        if (i < text.length) {
-          setDisplayed(text.slice(0, i + 1))
-          i++
-        } else {
-          clearInterval(interval)
-          onComplete?.()
-        }
-      }, 50)
-      return () => clearInterval(interval)
-    }, delay * 1000)
-    return () => clearTimeout(timeout)
-  }, [text, delay, prefersReducedMotion, onComplete])
-
-  return (
-    <span>
-      {displayed}
-      {displayed.length < text.length && (
-        <span className="inline-block w-[2px] h-[1em] bg-purple-400 ml-0.5 animate-pulse align-middle" />
-      )}
-    </span>
-  )
-}
 
 const fadeUp = (delay = 0) => ({
   hidden: { opacity: 0, y: 30 },
@@ -67,87 +25,51 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-32 text-center">
         <div className="text-center">
-          {/* Badge */}
+          {/* Title - Variative styling */}
           <motion.div
             variants={fadeUp(0)}
             initial="hidden"
             animate="visible"
           >
-            <div className="inline-flex items-center gap-2.5 border border-white/15 rounded-full bg-white/5 backdrop-blur-sm p-1 text-sm text-white mb-8">
-              <div className="bg-white/10 border border-white/15 rounded-2xl px-3 py-1">
-                <p className="text-xs font-semibold tracking-wide uppercase">Fakultas Ilmu Komputer</p>
-              </div>
-              <p className="pr-3 text-xs text-white/50">Universitas Sriwijaya</p>
-            </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.05] tracking-tight">
+              <span className="text-white block mb-2">
+                Selamat Datang Di
+              </span>
+              <span className="block whitespace-nowrap">
+                <span
+                  className="mr-3 inline-block"
+                  style={{ fontFamily: 'CustomFont, sans-serif', color: 'rgb(160,130,210)', letterSpacing: '-0.02em' }}
+                >
+                  ILKOM
+                </span>
+                <span
+                  className="inline-block"
+                  style={{ fontFamily: 'CustomFont, sans-serif', color: 'rgb(120,90,180)', letterSpacing: '0.05em', fontSize: '0.85em', fontWeight: 500 }}
+                >
+                  NEWS
+                </span>
+              </span>
+            </h1>
           </motion.div>
 
-          {/* Title with typewriter */}
+          {/* CTA Buttons */}
           <motion.div
             variants={fadeUp(0.15)}
             initial="hidden"
             animate="visible"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] tracking-tight">
-              <span className="text-white block mb-1">
-                <TypewriterText text="Selamat Datang Di" delay={0.3} />
-              </span>
-              <span className="block">
-                <motion.span
-                  className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-purple-400 mr-3"
-                  style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
-                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                >
-                  <AnimatedText delay={0.8} idle={false}>ILKOM</AnimatedText>
-                </motion.span><motion.span
-                  className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-300"
-                  style={{ fontFamily: 'CustomFont, sans-serif', backgroundSize: '200% auto' }}
-                  animate={{ backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                >
-                  <AnimatedText delay={1.0} idle={false}>NEWS</AnimatedText>
-                </motion.span>
-              </span>
-            </h1>
-          </motion.div>
-
-          {/* Description */}
-          <motion.div
-            variants={fadeUp(0.3)}
-            initial="hidden"
-            animate="visible"
-          >
-            <p className="text-white/70 text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
-              <AnimatedText delay={0.3}>Informasi terkini untuk mahasiswa FASILKOM Universitas Sriwijaya.</AnimatedText>
-            </p>
-          </motion.div>
-
-          {/* CTA Buttons with spring */}
-          <motion.div
-            variants={fadeUp(0.45)}
-            initial="hidden"
-            animate="visible"
-          >
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/news">
-                <motion.div
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-white font-semibold text-sm cursor-pointer"
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)', boxShadow: '0 0 40px rgba(159, 111, 255, 0.3)' }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={springConfig}
-                >
-                  Jelajahi Berita
-                </motion.div>
+              <Link
+                to="/news"
+                className="px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] transition-all duration-300"
+              >
+                Jelajahi Berita
               </Link>
-              <Link to="/ilkomgallery">
-                <motion.div
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-white font-semibold text-sm cursor-pointer"
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(122, 71, 166, 0.3)', borderColor: 'rgba(191, 148, 255, 0.4)', boxShadow: '0 0 40px rgba(159, 111, 255, 0.3)' }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={springConfig}
-                >
-                  Ilkom Gallery
-                </motion.div>
+              <Link
+                to="/ilkomgallery"
+                className="px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-[rgb(122,71,166)] hover:border-[rgb(122,71,166)] transition-all duration-300"
+              >
+                Ilkom Gallery
               </Link>
             </div>
           </motion.div>

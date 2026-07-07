@@ -16,6 +16,8 @@ class ProjectSubmissionController extends Controller
             'description' => 'required|string|max:5000',
             'thumbnail' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             'thumbnail_url' => 'nullable|string|max:500',
+            'creator_avatar' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:500',
+            'creator_avatar_url' => 'nullable|string|max:500',
             'tech_stack' => 'nullable|array|max:20',
             'live_demo' => 'nullable|string|max:500',
             'github_link' => 'nullable|string|max:500',
@@ -45,6 +47,14 @@ class ProjectSubmissionController extends Controller
         } elseif ($request->has('thumbnail_url') && !empty($request->thumbnail_url)) {
             $validated['thumbnail'] = $validated['thumbnail_url'];
         }
+
+        // Handle creator_avatar - file upload takes precedence over URL
+        if ($request->hasFile('creator_avatar')) {
+            $validated['creator_avatar'] = $request->file('creator_avatar')->store('projects/avatars', 'public');
+        } elseif ($request->has('creator_avatar_url') && !empty($request->creator_avatar_url)) {
+            $validated['creator_avatar'] = $validated['creator_avatar_url'];
+        }
+        unset($validated['creator_avatar_url']);
 
         // Handle screenshots file uploads
         if ($request->hasFile('screenshots')) {

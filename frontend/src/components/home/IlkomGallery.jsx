@@ -10,6 +10,7 @@ import ProjectExpandableCard from '../cards/ProjectExpandableCard'
 import { projectsService } from '../../services/api'
 
 const TABS = [
+  { id: 'all', label: 'Semua', icon: Sparkles },
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
   { id: 'mobile', label: 'Aplikasi Mobile', icon: Smartphone },
   { id: 'uiux', label: 'Desain UI/UX', icon: Palette },
@@ -19,14 +20,14 @@ const TABS = [
 import { container, itemVariant } from '../../lib/animations'
 
 const IlkomGallery = () => {
-  const [activeTab, setActiveTab] = useState(TABS[0].id)
+  const [activeTab, setActiveTab] = useState('all')
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true)
-      try { const result = await projectsService.getAll({ category: activeTab }); setProjects(Array.isArray(result.data) ? result.data : []); setError(null) }
+      try { const result = await projectsService.getAll(activeTab === 'all' ? {} : { category: activeTab }); setProjects(Array.isArray(result.data) ? result.data : []); setError(null) }
       catch { setProjects([]); setError('Gagal memuat proyek') } finally { setLoading(false) }
     }
     fetchProjects()
@@ -41,12 +42,12 @@ const IlkomGallery = () => {
             <p className="pr-3 text-xs text-theme-muted">Proyek Mahasiswa</p>
           </div>
           <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header"><Text_03 text="ILKOM Gallery" className="section-gradient-text" /></h2>
-          <div className="w-20 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto rounded-full mb-5" />
+          <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Galeri karya dan proyek mahasiswa Fakultas Ilmu Komputer</p>
         </motion.div>
         <div className="flex justify-center mb-8"><SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} /></div>
         <AnimatePresence mode="wait">
-          <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <motion.div key={activeTab} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {loading ? Array.from({ length: 4 }).map((_, i) => (<motion.div key={i} variants={itemVariant}><div className="h-64 rounded-xl bg-theme-secondary animate-pulse" /></motion.div>))
             : error ? <div className="col-span-full text-center py-10"><p className="text-theme-muted text-sm">{error}</p></div>
             : items.length === 0 ? <div className="col-span-full text-center py-10"><p className="text-theme-muted text-sm">Belum ada proyek di kategori ini</p></div>

@@ -18,57 +18,55 @@ const EventExpandableCard = ({ event }) => {
   return (
     <ExpandableCard
       title={event.title}
-      src={event.image || 'https://placehold.co/800x500/8B5CF6/white?text=Tidak+Ada+Gambar'}
+      src={event.image || 'https://placehold.co/600x800/8B5CF6/white?text=Tidak+Ada+Gambar'}
       description={event.summary || event.title}
       itemType="event"
       itemId={event.id}
       badge={
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${status.color} text-white`}>
+        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full ${status.color} text-white`}>
           {status.text}
         </span>
       }
       meta={
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
-            <MapPin size={12} />
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <MapPin size={10} />
             <span>{event.location}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
-            <Clock size={12} />
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <Clock size={10} />
             <span>{formatDate(event.date)}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
-            <Users size={12} />
-            <span>{event.registered}/{event.capacity} peserta</span>
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <Users size={10} />
+            <span>{event.registered}/{event.capacity}</span>
           </div>
         </div>
       }
     >
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-3">
         {event.description && (
           <div>
-            <h4 className="text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider mb-2">Deskripsi</h4>
-            <p className="text-[var(--text-secondary)] text-sm leading-relaxed break-words">{event.description}</p>
+            <h4 className="text-[var(--text-muted)] text-[10px] font-semibold uppercase tracking-wider mb-1.5">Deskripsi</h4>
+            <p className="text-xs leading-relaxed break-words" style={{ color: 'var(--text-secondary)' }}>{event.description}</p>
           </div>
         )}
 
         {event.schedule && (
           <div>
-            <h4 className="text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider mb-2">Jadwal</h4>
-            <p className="text-[var(--text-secondary)] text-sm leading-relaxed break-words">{event.schedule}</p>
+            <h4 className="text-[var(--text-muted)] text-[10px] font-semibold uppercase tracking-wider mb-1.5">Jadwal</h4>
+            <p className="text-xs leading-relaxed break-words" style={{ color: 'var(--text-secondary)' }}>{event.schedule}</p>
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <Link
-            to={`/events/${event.id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-600/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25 text-xs font-medium hover:bg-purple-200 dark:hover:bg-purple-600/25 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Lihat Detail
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </Link>
-        </div>
+        <Link
+          to={`/events/${event.id}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-[11px] font-medium hover:bg-[var(--accent)]/20 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Lihat Detail
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </Link>
       </div>
     </ExpandableCard>
   )
