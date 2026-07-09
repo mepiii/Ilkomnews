@@ -44,11 +44,15 @@ const PageHeader = ({ badge, title, subtitle, divider = true, textStyle = 'gradi
 
     <motion.div variants={fadeUp(0.12)}>
       <h1 className="text-4xl md:text-5xl font-black text-theme-primary mb-4 font-header">
-        {textStyle === 'animated' ? (
-          <AnimatedText idle={false} hover={true}>{title}</AnimatedText>
-        ) : (
-          <Text_03 text={title} className="section-gradient-text" />
-        )}
+        {title.split('\n').map((line, i) => (
+          <span key={i} className="block">
+            {textStyle === 'animated' ? (
+              <AnimatedText idle={false} hover={true}>{line}</AnimatedText>
+            ) : (
+              <Text_03 text={line} className="section-gradient-text" />
+            )}
+          </span>
+        ))}
       </h1>
     </motion.div>
 

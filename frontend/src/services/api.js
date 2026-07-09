@@ -11,34 +11,61 @@ const API_CONFIG = {
 }
 
 // Helper untuk fetch dengan error handling
-const fetchAPI = async (endpoint, options = {}) => {
+// Implements:
+//  - hard timeout (10s)
+//  - automatic retry on 429 with exponential backoff (max 3 retries)
+//  - honour Retry-After header from the server
+//  - AbortController signal support so callers can cancel
+const fetchAPI = async (endpoint, options = {}, retryOptions = {}) => {
+  const { maxRetries = 3, baseDelay = 600 } = retryOptions
   const controller = new AbortController()
+  // Honor caller-provided signal
+  if (options.signal) {
+    if (options.signal.aborted) controller.abort()
+    options.signal.addEventListener('abort', () => controller.abort(), { once: true })
+  }
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout)
 
-  try {
-    const response = await fetch(`${API_CONFIG.baseURL}${endpoint}`, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        ...API_CONFIG.headers,
-        ...options.headers,
+  const attempt = async (n) => {
+    try {
+      const response = await fetch(`${API_CONFIG.baseURL}${endpoint}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          ...API_CONFIG.headers,
+          ...options.headers,
+        }
+      })
+
+      if (response.status === 429 && n < maxRetries) {
+        const retryAfter = Number(response.headers.get('Retry-After')) * 1000
+        const delay = retryAfter || baseDelay * Math.pow(2, n) + Math.random() * 200
+        clearTimeout(timeoutId)
+        await new Promise(r => setTimeout(r, delay))
+        return attempt(n + 1)
       }
-    })
 
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      clearTimeout(timeoutId)
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout', { cause: error })
+      }
+      // Network error — retry once more if budget allows
+      if (n < maxRetries && !options.signal?.aborted) {
+        const delay = baseDelay * Math.pow(2, n) + Math.random() * 200
+        await new Promise(r => setTimeout(r, delay))
+        return attempt(n + 1)
+      }
+      throw error
     }
-
-    return await response.json()
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout', { cause: error })
-    }
-    throw error
   }
+  return attempt(0)
 }
 
 // ============ MOCK DATA ============
@@ -220,21 +247,21 @@ const mockCareersData = [
 // News Service
 export const newsService = {
   // Get all news
-  getAll: async () => {
+  getAll: async (options = {}) => {
     // Untuk development, gunakan mock data
     if (import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API) {
       return Promise.resolve([...mockNewsData].sort((a, b) => new Date(b.date) - new Date(a.date)))
     }
-    return fetchAPI('/news')
+    return fetchAPI('/news', options)
   },
 
   // Get latest news
-  getLatest: async (limit = 5) => {
+  getLatest: async (limit = 5, options = {}) => {
     if (import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API) {
       const news = [...mockNewsData].sort((a, b) => new Date(b.date) - new Date(a.date))
       return Promise.resolve(news.slice(0, limit))
     }
-    return fetchAPI(`/news/latest?limit=${limit}`)
+    return fetchAPI(`/news/latest?limit=${limit}`, options)
   },
 
   // Get news by ID
@@ -279,7 +306,7 @@ export const newsService = {
 }
 
 // Articles Service
-export const articlesService = {
+const articlesService = {
   getAll: async () => {
     if (import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API) {
       return Promise.resolve([...mockArticlesData].sort((a, b) => new Date(b.date) - new Date(a.date)))
@@ -320,7 +347,7 @@ export const articlesService = {
 }
 
 // Events Service
-export const eventsService = {
+const eventsService = {
   getAll: async () => {
     if (import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API) {
       return Promise.resolve([...mockEventsData])
@@ -364,7 +391,7 @@ export const eventsService = {
 }
 
 // Careers Service
-export const careersService = {
+const careersService = {
   getAll: async () => {
     if (import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API) {
       return Promise.resolve([...mockCareersData])
@@ -409,9 +436,9 @@ export const careersService = {
 
 // Public Projects Service (accepted only)
 export const projectsService = {
-  getAll: async (params = {}) => {
+  getAll: async (params = {}, options = {}) => {
     const queryString = new URLSearchParams(params).toString()
-    return fetchAPI(`/projects${queryString ? `?${queryString}` : ''}`)
+    return fetchAPI(`/projects${queryString ? `?${queryString}` : ''}`, options)
   },
 
   getById: async (id) => {
@@ -455,6 +482,3 @@ export const viewTracker = {
     }
   }
 }
-export const mockCareers = careersService
-
-export default api

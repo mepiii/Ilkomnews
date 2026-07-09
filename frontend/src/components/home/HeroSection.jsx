@@ -8,9 +8,21 @@ const fadeUp = (delay = 0) => ({
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay, ease: [0.25, 0.46, 0.45, 0.94] } },
 })
 
+const letterAnimation = {
+  hidden: { opacity: 0, y: 50 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: i * 0.05, ease: [0.25, 0.46, 0.45, 0.94] },
+  }),
+}
+
 const HeroSection = () => {
+  const ilkomLetters = 'ILKOM'.split('')
+  const newsLetters = 'NEWS'.split('')
+
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-[90vh] w-full flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <motion.div
         className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -23,36 +35,59 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-32 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-24 sm:pt-32 pb-24 sm:pb-32 text-center">
         <div className="text-center">
-          {/* Title - Variative styling */}
+          {/* Title - RePo font with letter-by-letter animation */}
           <motion.div
             variants={fadeUp(0)}
             initial="hidden"
             animate="visible"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.05] tracking-tight">
-              <span className="text-white block mb-2">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 sm:mb-12 leading-[1.1] tracking-tight">
+              <motion.span 
+                className="text-white block mb-2 text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
                 Selamat Datang Di
-              </span>
+              </motion.span>
               <span className="block whitespace-nowrap">
-                <span
-                  className="mr-3 inline-block"
-                  style={{ fontFamily: 'CustomFont, sans-serif', color: 'rgb(160,130,210)', letterSpacing: '-0.02em' }}
-                >
-                  ILKOM
-                </span>
-                <span
-                  className="inline-block"
-                  style={{ fontFamily: 'CustomFont, sans-serif', color: 'rgb(120,90,180)', letterSpacing: '0.05em', fontSize: '0.85em', fontWeight: 500 }}
-                >
-                  NEWS
-                </span>
+               <span className="mr-3 inline-block font-heading" style={{ letterSpacing: '-0.02em' }}>
+                 {ilkomLetters.map((letter, i) => (
+                   <motion.span
+                     key={i}
+                     custom={i}
+                     variants={letterAnimation}
+                     initial="hidden"
+                     animate="visible"
+                     className="inline-block"
+                      style={{ color: '#8B5CF6' }}
+                   >
+                     {letter}
+                   </motion.span>
+                 ))}
+               </span>
+               <span className="inline-block font-heading" style={{ letterSpacing: '0.05em', fontWeight: 600 }}>
+                 {newsLetters.map((letter, i) => (
+                   <motion.span
+                     key={i}
+                     custom={i + 5}
+                     variants={letterAnimation}
+                     initial="hidden"
+                     animate="visible"
+                     className="inline-block"
+                      style={{ color: '#A78BFA' }}
+                   >
+                     {letter}
+                   </motion.span>
+                 ))}
+               </span>
               </span>
             </h1>
           </motion.div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons with hover animations */}
           <motion.div
             variants={fadeUp(0.15)}
             initial="hidden"
@@ -61,15 +96,15 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/news"
-                className="px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] transition-all duration-300"
+                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
-                Jelajahi Berita
+                <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Jelajahi Berita</span>
               </Link>
               <Link
                 to="/ilkomgallery"
-                className="px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-[rgb(122,71,166)] hover:border-[rgb(122,71,166)] transition-all duration-300"
+                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[rgb(122,71,166)] hover:border-[rgb(122,71,166)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
-                Ilkom Gallery
+                <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Ilkom Gallery</span>
               </Link>
             </div>
           </motion.div>

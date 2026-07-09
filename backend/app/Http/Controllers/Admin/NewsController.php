@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\News;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -58,12 +59,13 @@ class NewsController extends Controller
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500', // 500KB max
         ]);
 
+        $compressor = new ImageCompressionService();
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('news', 'public');
+            $validated['image'] = $compressor->compress($request->file('image'), 'news');
         }
 
         if ($request->hasFile('author_image')) {
-            $validated['author_image'] = $request->file('author_image')->store('news/authors', 'public');
+            $validated['author_image'] = $compressor->compress($request->file('author_image'), 'news/authors');
         }
 
         $validated['published'] = $request->boolean('published');
@@ -160,14 +162,14 @@ class NewsController extends Controller
             if ($news->author_image) {
                 Storage::disk('public')->delete($news->author_image);
             }
-            $validated['author_image'] = $request->file('author_image')->store('news/authors', 'public');
+            $validated['author_image'] = $compressor->compress($request->file('author_image'), 'news/authors');
         }
 
         if ($request->hasFile('image')) {
             if ($news->image && !$request->boolean('remove_image')) {
                 Storage::disk('public')->delete($news->image);
             }
-            $validated['image'] = $request->file('image')->store('news', 'public');
+            $validated['image'] = $compressor->compress($request->file('image'), 'news');
         }
 
         $validated['published'] = $request->boolean('published');
@@ -244,6 +246,24 @@ class NewsController extends Controller
         }
 
         return redirect()->route('admin.news.index')->with('success', 'Artikel berita berhasil dihapus!');
+    }
+
+    public function toggleHidden($id)
+    {
+        $news = News::findOrFail($id);
+        $news->update(['published' => !$news->published]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'toggle_news_hidden',
+            'entity_type' => 'news',
+            'entity_id' => $news->id,
+            'details' => ['title' => $news->title, 'published' => $news->published],
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        return response()->json(['data' => ['id' => $news->id, 'published' => $news->published]]);
     }
 
     public function stats()

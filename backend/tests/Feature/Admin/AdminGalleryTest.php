@@ -8,13 +8,13 @@ use App\Models\ProjectSubmission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AdminGalleryTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $admin;
-    private string $token;
 
     protected function setUp(): void
     {
@@ -23,13 +23,8 @@ class AdminGalleryTest extends TestCase
         $this->admin = User::factory()->admin()->create([
             'password' => bcrypt('password'),
         ]);
-        $this->token = $this->admin->createToken('admin-token')->plainTextToken;
     }
 
-    private function authHeaders(): array
-    {
-        return ['Authorization' => "Bearer {$this->token}"];
-    }
 
     public function test_index_requires_authentication()
     {
@@ -41,7 +36,8 @@ class AdminGalleryTest extends TestCase
     {
         ProjectSubmission::factory()->count(20)->create();
 
-        $response = $this->getJson('/api/admin/projects', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/projects');
         $response->assertOk()
             ->assertJsonStructure(['data', 'current_page', 'last_page', 'total']);
     }
@@ -51,7 +47,8 @@ class AdminGalleryTest extends TestCase
         ProjectSubmission::factory()->count(3)->pending()->create();
         ProjectSubmission::factory()->count(2)->accepted()->create();
 
-        $response = $this->getJson('/api/admin/projects?status=pending', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/projects?status=pending');
         $response->assertOk();
         $this->assertCount(3, $response->json('data'));
     }
@@ -60,10 +57,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $response = $this->postJson(
             "/api/admin/projects/{$submission->id}/accept",
-            [],
-            $this->authHeaders()
+            []
         );
 
         $response->assertOk()
@@ -78,10 +75,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $this->postJson(
             "/api/admin/projects/{$submission->id}/accept",
-            [],
-            $this->authHeaders()
+            []
         );
 
         $this->assertDatabaseHas('notifications', [
@@ -94,10 +91,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $this->postJson(
             "/api/admin/projects/{$submission->id}/accept",
-            [],
-            $this->authHeaders()
+            []
         );
 
         $this->assertDatabaseHas('audit_logs', [
@@ -112,10 +109,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $response = $this->postJson(
             "/api/admin/projects/{$submission->id}/reject",
-            [],
-            $this->authHeaders()
+            []
         );
 
         $response->assertStatus(422)
@@ -126,10 +123,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $response = $this->postJson(
             "/api/admin/projects/{$submission->id}/reject",
-            ['rejection_reason' => 'Deskripsi kurang detail'],
-            $this->authHeaders()
+            ['rejection_reason' => 'Deskripsi kurang detail']
         );
 
         $response->assertOk()
@@ -144,10 +141,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $this->postJson(
             "/api/admin/projects/{$submission->id}/reject",
-            ['rejection_reason' => 'Tidak sesuai kriteria'],
-            $this->authHeaders()
+            ['rejection_reason' => 'Tidak sesuai kriteria']
         );
 
         $this->assertDatabaseHas('notifications', [
@@ -160,10 +157,10 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->pending()->create();
 
+        Sanctum::actingAs($this->admin);
         $this->postJson(
             "/api/admin/projects/{$submission->id}/reject",
-            ['rejection_reason' => 'Kurang detail'],
-            $this->authHeaders()
+            ['rejection_reason' => 'Kurang detail']
         );
 
         $this->assertDatabaseHas('audit_logs', [
@@ -180,7 +177,8 @@ class AdminGalleryTest extends TestCase
         ProjectSubmission::factory()->count(2)->accepted()->create();
         ProjectSubmission::factory()->rejected()->create();
 
-        $response = $this->getJson('/api/admin/projects/stats', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/projects/stats');
         $response->assertOk()
             ->assertJsonPath('total', 6)
             ->assertJsonPath('pending', 3)
@@ -192,7 +190,8 @@ class AdminGalleryTest extends TestCase
     {
         $submission = ProjectSubmission::factory()->create();
 
-        $response = $this->getJson("/api/admin/projects/{$submission->id}", $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson("/api/admin/projects/{$submission->id}");
         $response->assertOk()
             ->assertJsonPath('id', $submission->id);
     }

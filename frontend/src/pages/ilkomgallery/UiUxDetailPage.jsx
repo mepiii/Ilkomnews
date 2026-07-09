@@ -1,10 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
-  X, User, Calendar, Palette, Award, Users,
-  Mail, ArrowLeft
-} from 'lucide-react'
-import { FaFigma } from 'react-icons/fa'
+import { useParams } from 'react-router-dom'
+import { Palette } from 'lucide-react'
+import ProjectDetailLayout from '../../components/ilkomgallery/ProjectDetailLayout'
 
 // Data UI/UX projects
 const uiuxData = {
@@ -35,21 +31,18 @@ Redesign aplikasi mobile banking yang berfokus pada aksesibilitas dan kemudahan 
 - Transfer antar bank
 - Pembayaran tagihan
 - Riwayat transaksi
-- Customer support chat
 
-**🛠️ Tools yang Digunakan:**
+**🛠️ Tools:**
 - Figma untuk UI design
 - Adobe XD untuk prototyping
 - Maze untuk user testing
-- Miro untuk brainstorming
 
 **📊 Hasil User Testing:**
 - Task completion rate: 92%
 - System Usability Scale (SUS): 85
 - User satisfaction: 4.7/5`,
-    figmaLink: 'https://figma.com/design/banking-redesign',
-    platform: 'Mobile App',
-    tools: ['Figma', 'Adobe XD', 'Maze', 'Miro'],
+    downloadLink: 'https://figma.com/design/banking-redesign',
+    techStack: ['Figma', 'Adobe XD', 'Maze', 'Miro'],
     collaborators: ['Andi Wijaya'],
     award: 'Best UI/UX Design 2024'
   },
@@ -80,9 +73,8 @@ Platform e-learning interaktif yang dirancang untuk meningkatkan engagement maha
 - Quiz dan assessment
 - Forum diskusi
 - Leaderboard dan badge
-- Sertifikat kelulusan
 
-**🛠️ Tools yang Digunakan:**
+**🛠️ Tools:**
 - Figma
 - Framer untuk prototype
 - Whimsical untuk wireframe
@@ -90,9 +82,8 @@ Platform e-learning interaktif yang dirancang untuk meningkatkan engagement maha
 **📊 Hasil:**
 - Engagement rate meningkat 45%
 - 3.000+ users dalam beta testing`,
-    figmaLink: 'https://figma.com/design/elearning',
-    platform: 'Web & Mobile',
-    tools: ['Figma', 'Framer', 'Whimsical'],
+    downloadLink: 'https://figma.com/design/elearning',
+    techStack: ['Figma', 'Framer', 'Whimsical'],
     collaborators: ['Dewi Sartika'],
     award: null
   },
@@ -123,15 +114,13 @@ Aplikasi konsultasi kesehatan online yang menghubungkan pasien dengan dokter mel
 - Chat dan video call
 - Riwayat konsultasi
 - Resep obat digital
-- Rating dokter
 
-**🛠️ Tools yang Digunakan:**
+**🛠️ Tools:**
 - Figma
 - Illustrator untuk icon
 - After Effects untuk animasi`,
-    figmaLink: 'https://figma.com/design/healthcare',
-    platform: 'Mobile App',
-    tools: ['Figma', 'Illustrator', 'After Effects'],
+    downloadLink: 'https://figma.com/design/healthcare',
+    techStack: ['Figma', 'Illustrator', 'After Effects'],
     collaborators: [],
     award: null
   },
@@ -162,15 +151,13 @@ Aplikasi smart parking yang membantu pengguna menemukan dan memesan slot parkir 
 - Notifikasi ketersediaan
 - Pembayaran digital
 - Riwayat parkir
-- Reminder waktu parkir
 
-**🛠️ Tools yang Digunakan:**
+**🛠️ Tools:**
 - Figma
 - Protopie
 - Miro`,
-    figmaLink: 'https://figma.com/design/smart-parking',
-    platform: 'Mobile App',
-    tools: ['Figma', 'Protopie', 'Miro'],
+    downloadLink: 'https://figma.com/design/smart-parking',
+    techStack: ['Figma', 'Protopie', 'Miro'],
     collaborators: ['Nadia Putri'],
     award: null
   },
@@ -198,242 +185,33 @@ Dashboard portal mahasiswa yang menyajikan informasi akademik secara ringkas dan
 **📱 Fitur yang Didesain:**
 - Ringkasan akademik
 - Kalender jadwal
-- Pengumuman terbaru
-- Task reminder
-- Direct access ke layanan
-- Dark/light mode
+- Notifikasi pengumuman
+- Akses nilai
+- Kartu mahasiswa digital
 
-**🛠️ Tools yang Digunakan:**
+**🛠️ Tools:**
 - Figma
 - Adobe XD
-- Maze untuk testing
-
-**📊 Hasil:**
-- 92% pengguna merasa terbantu
-- Rata-rata session duration 5 menit`,
-    figmaLink: 'https://figma.com/design/campus-portal',
-    platform: 'Web',
-    tools: ['Figma', 'Adobe XD', 'Maze'],
-    collaborators: ['Rizki Ramadhan'],
-    award: 'Best Dashboard Design 2024'
+- Principle untuk animasi`,
+    downloadLink: 'https://figma.com/design/campus-portal',
+    techStack: ['Figma', 'Adobe XD', 'Principle'],
+    collaborators: [],
+    award: null
   }
-}
-
-// Fungsi untuk format teks
-const formatText = (text) => {
-  return text.split('\n').map((line, idx) => {
-    if (line.startsWith('**') && line.endsWith('**')) {
-      return <h3 key={idx} className="text-lg font-bold text-theme-primary mt-4 mb-2">{line.slice(2, -2)}</h3>
-    }
-    if (line.startsWith('- ')) {
-      return <li key={idx} className="text-theme-secondary ml-4 mb-1">{line.slice(2)}</li>
-    }
-    if (line.trim() === '') return <br key={idx} />
-    return <p key={idx} className="text-theme-secondary mb-2">{line}</p>
-  })
 }
 
 const UiUxDetailPage = () => {
   const { slug } = useParams()
-  const navigate = useNavigate()
-  const [design, setDesign] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const found = uiuxData[slug]
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDesign(found ?? null)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(false)
-  }, [slug])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-theme-primary">Loading desain...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!design) {
-    return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-theme-primary text-xl mb-4">Desain tidak ditemukan</p>
-          <Link to="/ilkomgallery" className="text-pink-500 hover:text-pink-400">
-            Kembali ke Gallery
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  const project = uiuxData[slug]
 
   return (
-    <div className="min-h-screen bg-transparent pb-16">
-      {/* Hero Section */}
-      <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden pt-16 md:pt-0">
-        <img 
-          src={design.banner || design.thumbnail} 
-          alt={design.title} 
-          className="w-full h-full object-cover"
-          loading="eager"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
-        
-        {/* Tombol Kembali */}
-        <button 
-          onClick={() => navigate('/ilkomgallery')}
-          className="absolute top-24 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg text-white hover:bg-black/70 transition-all duration-300 group"
-        >
-          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Kembali ke Gallery</span>
-        </button>
-        
-        {/* Tombol Close */}
-        <button 
-          onClick={() => navigate('/ilkomgallery')}
-          className="absolute top-24 right-6 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition"
-        >
-          <X size={20} className="text-white" />
-        </button>
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-600 text-white text-xs font-medium rounded-full">
-                <Palette size={12} />
-                <span>UI/UX DESIGN</span>
-              </span>
-              {design.award && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500 text-black text-xs font-medium rounded-full">
-                  <Award size={12} />
-                  <span>{design.award}</span>
-                </span>
-              )}
-            </div>
-            
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-4 max-w-4xl font-header">
-              {design.title}
-            </h1>
-            
-            <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
-              <div className="text-white/70">Oleh {design.creator}</div>
-              <div className="text-white/70">•</div>
-              <div className="text-white/70">Angkatan {design.angkatan}</div>
-              <div className="text-white/70">•</div>
-              <div className="flex items-center gap-1 text-white/70">
-                <Palette size={12} />
-                <span>{design.platform}</span>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <a 
-                href={design.figmaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-md font-semibold hover:bg-white/90 transition"
-              >
-                <FaFigma size={18} />
-                <span>Lihat di Figma</span>
-              </a>
-            </div>
-            
-            <p className="text-white/80 text-base md:text-lg max-w-3xl">
-              {design.description}
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Detail Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            <section>
-              <h2 className="text-theme-primary text-2xl font-bold mb-4">About This Design</h2>
-              <div className="text-theme-secondary leading-relaxed">
-                {formatText(design.fullDescription)}
-              </div>
-            </section>
-            
-            <section>
-              <h2 className="text-theme-primary text-2xl font-bold mb-4 flex items-center gap-2">
-                <Palette size={24} />
-                <span>Tools Used</span>
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {design.tools.map((tool, idx) => (
-                  <span key={idx} className="px-4 py-2 bg-theme-secondary text-theme-primary rounded-lg text-sm font-medium">
-                    {tool}
-                  </span>
-                ))}
-              </div>
-            </section>
-          </div>
-          
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-theme-secondary rounded-xl p-6 border border-theme">
-              <h3 className="text-theme-primary font-bold text-lg mb-4 flex items-center gap-2">
-                <User size={18} />
-                <span>Designer</span>
-              </h3>
-              
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white text-2xl font-bold">
-                  {design.creator.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="text-theme-primary font-semibold text-lg">{design.creator}</h4>
-                  <p className="text-theme-muted text-sm">{design.jurusan}</p>
-                  <p className="text-theme-muted text-xs">NIM: {design.nim}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-theme-muted">
-                  <Calendar size={14} />
-                  <span>Angkatan {design.angkatan}</span>
-                </div>
-                <div className="flex items-center gap-2 text-theme-muted">
-                  <Mail size={14} />
-                  <a href={`mailto:${design.email}`} className="hover:text-pink-400 transition">
-                    {design.email}
-                  </a>
-                </div>
-              </div>
-            </div>
-            
-            {design.collaborators && design.collaborators.length > 0 && (
-              <div className="bg-theme-secondary rounded-xl p-6 border border-theme">
-                <h3 className="text-theme-primary font-bold text-lg mb-3 flex items-center gap-2">
-                  <Users size={18} />
-                  <span>Collaborators</span>
-                </h3>
-                <div className="space-y-2">
-                  {design.collaborators.map((collab, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-2 hover:bg-theme rounded-lg transition">
-                      <div className="w-8 h-8 rounded-full bg-theme-secondary flex items-center justify-center text-xs font-bold">
-                        {collab.charAt(0)}
-                      </div>
-                      <span className="text-theme-primary">{collab}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <ProjectDetailLayout
+      project={project}
+      categoryLabel="UI/UX Design"
+      categoryIcon={Palette}
+      backPath="/ilkom-gallery"
+      accentColor="purple"
+    />
   )
 }
 

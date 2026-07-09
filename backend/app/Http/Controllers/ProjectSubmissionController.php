@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProjectSubmission;
+use App\Services\ImageCompressionService;
+use App\Services\UploadQuotaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectSubmissionController extends Controller
 {
@@ -27,11 +30,33 @@ class ProjectSubmissionController extends Controller
             'screenshots' => 'nullable|array|max:10',
             'screenshots.*' => 'image|mimes:jpeg,jpg,png,webp|max:5120',
             'creator_name' => 'required|string|max:255',
-            'creator_nim' => 'required|string|max:50',
-            'creator_major' => 'required|string|max:255',
-            'creator_year' => 'required|integer|min:2000|max:2030',
+            'creator_nim' => 'nullable|string|max:50',
+            'creator_major' => 'nullable|string|max:255',
+            'creator_year' => 'nullable|integer|min:2000|max:2030',
             'collaborators' => 'nullable|array|max:20',
+            'creator_type' => 'nullable|string|in:mahasiswa,dosen,staf,alumni,lainnya',
         ]);
+        $validated['creator_type'] = $request->input('creator_type', 'mahasiswa');
+
+        // Check upload quota (5MB/day per IP)
+        $quotaService = new UploadQuotaService();
+        $totalBytes = 0;
+        if ($request->hasFile('thumbnail')) $totalBytes += $request->file('thumbnail')->getSize();
+        if ($request->hasFile('creator_avatar')) $totalBytes += $request->file('creator_avatar')->getSize();
+        if ($request->hasFile('screenshots')) {
+            foreach ($request->file('screenshots') as $screenshot) {
+                $totalBytes += $screenshot->getSize();
+            }
+        }
+        if ($totalBytes > 0) {
+            $quota = $quotaService->check($request, $totalBytes);
+            if (!$quota['allowed']) {
+                return response()->json([
+                    'message' => 'Batas upload harian tercapai (5MB/hari). Coba lagi besok.',
+                    'quota' => $quota,
+                ], 429);
+            }
+        }
 
         // Normalize thumbnail_url: add https:// if missing
         if (!empty($validated['thumbnail_url'])) {
@@ -42,15 +67,16 @@ class ProjectSubmissionController extends Controller
         }
 
         // Handle thumbnail - file upload takes precedence over URL
+        $compressor = new ImageCompressionService();
         if ($request->hasFile('thumbnail')) {
-            $validated['thumbnail'] = $request->file('thumbnail')->store('projects/thumbnails', 'public');
+            $validated['thumbnail'] = $compressor->compress($request->file('thumbnail'), 'projects/thumbnails');
         } elseif ($request->has('thumbnail_url') && !empty($request->thumbnail_url)) {
             $validated['thumbnail'] = $validated['thumbnail_url'];
         }
 
         // Handle creator_avatar - file upload takes precedence over URL
         if ($request->hasFile('creator_avatar')) {
-            $validated['creator_avatar'] = $request->file('creator_avatar')->store('projects/avatars', 'public');
+            $validated['creator_avatar'] = $compressor->compress($request->file('creator_avatar'), 'projects/avatars');
         } elseif ($request->has('creator_avatar_url') && !empty($request->creator_avatar_url)) {
             $validated['creator_avatar'] = $validated['creator_avatar_url'];
         }
@@ -60,7 +86,7 @@ class ProjectSubmissionController extends Controller
         if ($request->hasFile('screenshots')) {
             $screenshotPaths = [];
             foreach ($request->file('screenshots') as $screenshot) {
-                $screenshotPaths[] = $screenshot->store('projects/screenshots', 'public');
+                $screenshotPaths[] = $compressor->compress($screenshot, 'projects/screenshots');
             }
             $validated['screenshots'] = $screenshotPaths;
         }
@@ -81,13 +107,29 @@ class ProjectSubmissionController extends Controller
             $collaborators = $request->input('collaborators');
             if (is_array($collaborators)) {
                 $validated['collaborators'] = array_values(array_filter(array_map(function($item) {
-                    return is_string($item) ? trim($item) : strval($item);
+                    if (is_string($item)) return trim($item);
+                    if (is_array($item) && !empty($item['name'])) {
+                        return [
+                            'name' => trim($item['name']),
+                            'type' => $item['type'] ?? 'mahasiswa',
+                            'nim' => $item['nim'] ?? null,
+                            'major' => $item['major'] ?? null,
+                            'year' => $item['year'] ?? null,
+                            'avatar' => $item['avatar'] ?? null,
+                        ];
+                    }
+                    return null;
                 }, $collaborators)));
                 $validated['collaborators'] = array_slice($validated['collaborators'], 0, 20);
             }
         }
 
         $submission = ProjectSubmission::create($validated);
+
+        // Record upload quota usage
+        if ($totalBytes > 0) {
+            $quotaService->recordUsage($request, $totalBytes);
+        }
 
         return response()->json([
             'message' => 'Proyek berhasil diajukan!',
@@ -115,30 +157,54 @@ class ProjectSubmissionController extends Controller
     // Public: list accepted projects
     public function publicIndex(Request $request)
     {
-        $query = ProjectSubmission::where('status', 'accepted');
+        $cacheKey = 'public-projects:index:' . md5(json_encode([
+            'category' => $request->category,
+            'search' => $request->search,
+            'page' => $request->get('page', 1),
+        ]));
 
-        if ($request->has('category') && $request->category !== 'all') {
-            $query->where('category', $request->category);
-        }
+        $payload = Cache::remember($cacheKey, 60, function () use ($request) {
+            $query = ProjectSubmission::where('status', 'accepted');
 
-        if ($request->has('search')) {
-            $search = addcslashes($request->search, '%_');
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('creator_name', 'like', "%{$search}%");
-            });
-        }
+            if ($request->has('category') && $request->category !== 'all') {
+                $query->where('category', $request->category);
+            }
 
-        return response()->json($query->latest()->paginate(12));
+            if ($request->has('search')) {
+                $search = addcslashes($request->search, '%_');
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('creator_name', 'like', "%{$search}%");
+                });
+            }
+
+            return $query->latest()->paginate(12);
+        });
+
+        return response()->json($payload);
     }
 
     // Public: single accepted project
     public function publicShow(string $id)
     {
-        $submission = ProjectSubmission::where('id', $id)
-            ->where('status', 'accepted')
-            ->firstOrFail();
+        $payload = Cache::remember("public-projects:show:{$id}", 120, function () use ($id) {
+            return ProjectSubmission::where('id', $id)
+                ->where('status', 'accepted')
+                ->firstOrFail();
+        });
 
-        return response()->json($submission);
+        return response()->json($payload);
+    }
+
+    /**
+     * Bust the public project caches. Called from admin state changes.
+     */
+    public function flushPublicCache(): void
+    {
+        try {
+            Cache::tags('public-projects')->flush();
+        } catch (\Throwable $e) {
+            // cache store doesn't support tags — short TTL covers it
+        }
     }
 }

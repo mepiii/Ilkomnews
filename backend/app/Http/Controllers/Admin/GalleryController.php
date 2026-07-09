@@ -4,14 +4,32 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\ProjectSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class GalleryController extends Controller
 {
     private const STATS_CACHE_KEY = 'admin:gallery:stats';
     private const STATS_CACHE_TTL = 60;
+
+    /**
+     * Bust the public /projects and /projects/{id} caches when the
+     * admin changes project status. Short TTL (60s) covers it if the
+     * cache store doesn't support tags.
+     */
+    private function flushPublicProjectsCache(): void
+    {
+        try {
+            Cache::tags('public-projects')->flush();
+        } catch (\Throwable $e) {
+            // cache store doesn't support tags
+        }
+    }
+
     public function index(Request $request)
     {
         $query = ProjectSubmission::query();
@@ -40,7 +58,7 @@ class GalleryController extends Controller
             return response()->json($projects);
         }
 
-        // Stats for the view
+        // Stats for the view (only computed for Blade, not JSON)
         $total_projects = ProjectSubmission::count();
         $pending_count = ProjectSubmission::where('status', 'pending')->count();
         $accepted_count = ProjectSubmission::where('status', 'accepted')->count();
@@ -72,6 +90,7 @@ class GalleryController extends Controller
 
         \App\Models\Notification::create([
             'tracking_id' => $submission->tracking_id,
+            'project_id' => $submission->id,
             'type' => 'accepted',
             'title' => 'Proyek Diterima!',
             'message' => "Proyek '{$submission->title}' telah diterima dan akan ditampilkan di galeri.",
@@ -88,6 +107,7 @@ class GalleryController extends Controller
         ]);
 
         Cache::forget(self::STATS_CACHE_KEY);
+        $this->flushPublicProjectsCache();
 
         if (request()->expectsJson()) {
             return response()->json(['data' => $submission->fresh()]);
@@ -115,6 +135,7 @@ class GalleryController extends Controller
 
         \App\Models\Notification::create([
             'tracking_id' => $submission->tracking_id,
+            'project_id' => $submission->id,
             'type' => 'rejected',
             'title' => 'Proyek Ditolak',
             'message' => "Proyek '{$submission->title}' tidak dapat diterima. Alasan: {$rejectionReason}",
@@ -128,6 +149,7 @@ class GalleryController extends Controller
             'details' => [
                 'title' => $submission->title,
                 'tracking_id' => $submission->tracking_id,
+            'project_id' => $submission->id,
                 'rejection_reason' => $rejectionReason,
             ],
             'ip_address' => request()->ip(),
@@ -135,6 +157,7 @@ class GalleryController extends Controller
         ]);
 
         Cache::forget(self::STATS_CACHE_KEY);
+        $this->flushPublicProjectsCache();
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $submission->fresh()]);
@@ -147,6 +170,17 @@ class GalleryController extends Controller
     {
         $submission = ProjectSubmission::findOrFail($id);
 
+        // Log before deletion for audit trail
+        Log::warning('Project deletion initiated', [
+            'project_id' => $submission->id,
+            'title' => $submission->title,
+            'tracking_id' => $submission->tracking_id,
+            'status' => $submission->status,
+            'notifications_count' => Notification::where('project_id', $submission->id)->count(),
+            'admin_user_id' => auth()->id(),
+            'ip_address' => request()->ip(),
+        ]);
+
         AuditLog::create([
             'user_id' => auth()->id(),
             'action' => 'delete_project',
@@ -155,19 +189,35 @@ class GalleryController extends Controller
             'details' => [
                 'title' => $submission->title,
                 'tracking_id' => $submission->tracking_id,
+                'project_id' => $submission->id,
                 'status' => $submission->status,
             ],
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
 
-        // Delete associated files if they exist
-        // Note: Currently thumbnail and screenshots are stored as strings/paths
-        // If they were file uploads, we would need to delete them from storage here
+        // Delete associated files from storage
+        if ($submission->thumbnail && !filter_var($submission->thumbnail, FILTER_VALIDATE_URL)) {
+            Storage::disk('public')->delete($submission->thumbnail);
+        }
+        if ($submission->creator_avatar && !filter_var($submission->creator_avatar, FILTER_VALIDATE_URL)) {
+            Storage::disk('public')->delete($submission->creator_avatar);
+        }
+        if ($submission->screenshots && is_array($submission->screenshots)) {
+            foreach ($submission->screenshots as $screenshot) {
+                if (!filter_var($screenshot, FILTER_VALIDATE_URL)) {
+                    Storage::disk('public')->delete($screenshot);
+                }
+            }
+        }
+
+        // Delete associated notifications (FK will null them out, but clean up explicitly)
+        Notification::where('project_id', $submission->id)->delete();
 
         $submission->delete();
 
         Cache::forget(self::STATS_CACHE_KEY);
+        $this->flushPublicProjectsCache();
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Proyek berhasil dihapus!']);

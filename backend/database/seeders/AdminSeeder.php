@@ -11,15 +11,15 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $admins = [
-            ['name' => 'Super Admin', 'email' => 'superadmin@fasilkom.unsri.ac.id', 'password' => env('ADMIN_1_PASS', 'SuperAdmin@123!')],
-            ['name' => 'Admin Berita', 'email' => 'berita@fasilkom.unsri.ac.id', 'password' => env('ADMIN_2_PASS', 'Berita@123!')],
-            ['name' => 'Admin Galeri', 'email' => 'galeri@fasilkom.unsri.ac.id', 'password' => env('ADMIN_3_PASS', 'Galeri@123!')],
-            ['name' => 'Admin Artikel', 'email' => 'artikel@fasilkom.unsri.ac.id', 'password' => env('ADMIN_4_PASS', 'Artikel@123!')],
-            ['name' => 'Admin Event', 'email' => 'event@fasilkom.unsri.ac.id', 'password' => env('ADMIN_5_PASS', 'Event@123!')],
-            ['name' => 'Admin Teknis', 'email' => 'teknis@fasilkom.unsri.ac.id', 'password' => env('ADMIN_6_PASS', 'Teknis@123!')],
-            ['name' => 'Admin Keamanan', 'email' => 'keamanan@fasilkom.unsri.ac.id', 'password' => env('ADMIN_7_PASS', 'Aman@123!')],
-            ['name' => 'Admin Utama', 'email' => 'utama@fasilkom.unsri.ac.id', 'password' => env('ADMIN_8_PASS', 'Utama@123!')],
-            ['name' => 'Admin Proyek', 'email' => 'proyek@fasilkom.unsri.ac.id', 'password' => env('ADMIN_9_PASS', 'Proyek@123!')],
+            ['name' => 'Admin 1', 'email' => 'admin1@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_1_PASS', 'AdminSapa01!')],
+            ['name' => 'Admin 2', 'email' => 'admin2@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_2_PASS', 'AdminSapa02!')],
+            ['name' => 'Admin 3', 'email' => 'admin3@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_3_PASS', 'AdminSapa03!')],
+            ['name' => 'Admin 4', 'email' => 'admin4@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_4_PASS', 'AdminSapa04!')],
+            ['name' => 'Admin 5', 'email' => 'admin5@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_5_PASS', 'AdminSapa05!')],
+            ['name' => 'Admin 6', 'email' => 'admin6@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_6_PASS', 'AdminSapa06!')],
+            ['name' => 'Admin 7', 'email' => 'admin7@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_7_PASS', 'AdminSapa07!')],
+            ['name' => 'Admin 8', 'email' => 'admin8@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_8_PASS', 'AdminSapa08!')],
+            ['name' => 'Admin 9', 'email' => 'admin9@sapa.fasilkom.unsri.ac.id', 'password' => env('ADMIN_9_PASS', 'AdminSapa09!')],
         ];
 
         foreach ($admins as $admin) {

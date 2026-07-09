@@ -29,6 +29,7 @@ import { container, itemVariant } from '../lib/animations'
 const NewsPage = () => {
   const [allNews, setAllNews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
@@ -36,10 +37,19 @@ const NewsPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    api.news.getAll()
+    const controller = new AbortController()
+    setLoading(true)
+    setError('')
+    api.news.getAll({ signal: controller.signal })
       .then(res => setAllNews(Array.isArray(res) ? res : (res.data || [])))
-      .catch(() => setAllNews([]))
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'Gagal memuat berita')
+          setAllNews([])
+        }
+      })
       .finally(() => setLoading(false))
+    return () => controller.abort()
   }, [])
 
   const uniqueTags = useMemo(() => [...new Set(allNews.flatMap(item => parseTags(item.tags)))], [allNews])
@@ -69,7 +79,7 @@ const NewsPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-24 pb-12">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Breadcrumb />
 
@@ -89,7 +99,7 @@ const NewsPage = () => {
           />
 
           {/* Tabs */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
             <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
@@ -117,7 +127,7 @@ const NewsPage = () => {
               initial="hidden"
               animate="show"
               exit={{ opacity: 0, y: -12 }}
-              className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4"
+              className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch"
             >
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
@@ -125,6 +135,11 @@ const NewsPage = () => {
                     <div className="h-64 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                   </motion.div>
                 ))
+              ) : error ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-sm text-red-500 mb-3">{error}</p>
+                  <button onClick={() => window.location.reload()} className="text-sm text-[var(--accent)] hover:underline">Muat ulang</button>
+                </div>
               ) : paginatedItems.length === 0 ? (
                 <EmptyResults
                   icon={<Newspaper size={40} className="text-[var(--accent)]" />}
@@ -135,7 +150,7 @@ const NewsPage = () => {
               ) : (
                 paginatedItems.map((article, i) => (
                   <motion.div key={article.id || i} variants={itemVariant}>
-                    <GlowCard glowColor="purple" className="rounded-2xl">
+                    <GlowCard glowColor="purple" className="rounded-2xl h-full">
                       <NewsExpandableCard article={article} />
                     </GlowCard>
                   </motion.div>
@@ -150,7 +165,7 @@ const NewsPage = () => {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
               >
                 <ChevronLeft size={18} className="text-[var(--accent)]" />
               </button>
@@ -161,7 +176,7 @@ const NewsPage = () => {
                   className={`w-10 h-10 rounded-full text-sm font-medium transition-all ${
                     currentPage === page
                       ? 'bg-[var(--accent)] text-white shadow-md'
-                      : 'border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
+                      : 'border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
                   }`}
                 >
                   {page}
@@ -170,7 +185,7 @@ const NewsPage = () => {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
               >
                 <ChevronRight size={18} className="text-[var(--accent)]" />
               </button>

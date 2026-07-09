@@ -21,12 +21,12 @@ export default function ChatStatsPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
             <MessageSquare size={24} className="text-blue-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Statistik Chat</h1>
-            <p className="text-sm text-[var(--text-secondary)]">Statistik penggunaan chatbot Wolfy</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistik Chat</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Statistik penggunaan chatbot Wolfy</p>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,12 +53,12 @@ export default function ChatStatsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
           <MessageSquare size={24} className="text-blue-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Statistik Chat</h1>
-          <p className="text-sm text-[var(--text-secondary)]">Statistik penggunaan chatbot Wolfy</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistik Chat</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Statistik penggunaan chatbot Wolfy</p>
         </div>
       </div>
 
@@ -67,15 +67,15 @@ export default function ChatStatsPage() {
         <StatCard icon={CheckCircle} label="Berhasil" value={data?.successful} color="bg-emerald-500/10" iconColor="text-emerald-500" />
         <StatCard icon={XCircle} label="Ditolak (Topik)" value={data?.rejected} color="bg-red-500/10" iconColor="text-red-500" />
         <StatCard icon={AlertCircle} label="Tanpa Konteks" value={data?.no_context} color="bg-amber-500/10" iconColor="text-amber-500" />
-        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-[var(--accent)]/10" iconColor="text-[var(--accent)]" />
+        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-gray-900 dark:bg-white/10" iconColor="text-gray-900 dark:text-gray-100" />
         <StatCard icon={Clock} label="Hari Ini" value={data?.today} color="bg-pink-500/10" iconColor="text-pink-500" />
       </div>
 
       {dailyBreakdown.length > 0 && (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
-          <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
+        <div className="rounded-xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-[#262626] px-5 py-4">
             <MessageSquare size={16} className="text-blue-400" />
-            <h2 className="font-semibold text-[var(--text-primary)]">Aktivitas Harian</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Aktivitas Harian</h2>
           </div>
           <div className="p-5 space-y-3">
             {dailyBreakdown.map((day) => {
@@ -89,15 +89,15 @@ export default function ChatStatsPage() {
               return (
                 <div key={day.date} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-[var(--text-secondary)] w-24">
+                    <span className="text-gray-500 dark:text-gray-400 w-24">
                       {new Date(day.date).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'short',
                       })}
                     </span>
-                    <span className="text-[var(--text-secondary)] font-medium">{total}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-medium">{total}</span>
                   </div>
-                  <div className="h-6 w-full rounded-md bg-[var(--bg-secondary)] overflow-hidden">
+                  <div className="h-6 w-full rounded-md bg-gray-50 dark:bg-[#141414] overflow-hidden">
                     <div
                       className="h-full flex rounded-md overflow-hidden"
                       style={{ width: `${widthPct}%` }}
@@ -116,7 +116,7 @@ export default function ChatStatsPage() {
                 </div>
               )
             })}
-            <div className="flex items-center gap-4 pt-2 text-xs text-[var(--text-secondary)]">
+            <div className="flex items-center gap-4 pt-2 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-sm bg-emerald-500/70" />
                 <span>Berhasil</span>
@@ -135,23 +135,23 @@ export default function ChatStatsPage() {
       )}
 
       {topIPs.length > 0 && (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
-          <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-4">
-            <Zap size={16} style={{ color: 'var(--accent)' }} />
-            <h2 className="font-semibold text-[var(--text-primary)]">IP Address Teratas</h2>
+        <div className="rounded-xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-[#262626] px-5 py-4">
+            <Zap size={16} style={{ color: 'currentColor' }} />
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">IP Address Teratas</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
+                <tr className="border-b border-gray-200 dark:border-[#262626] text-left text-gray-500 dark:text-gray-400">
                   <th className="px-5 py-3 font-medium">IP Address</th>
                   <th className="px-5 py-3 font-medium text-right">Total Query</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-color)]">
+              <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
                 {topIPs.map((ip, idx) => (
-                  <tr key={idx} className="transition-colors hover:bg-[var(--bg-secondary)]">
-                    <td className="px-5 py-3 font-mono text-[var(--text-primary)]">{ip.ip_address}</td>
+                  <tr key={idx} className="transition-colors hover:bg-gray-50 dark:bg-[#141414]">
+                    <td className="px-5 py-3 font-mono text-gray-900 dark:text-gray-100">{ip.ip_address}</td>
                     <td className="px-5 py-3 text-right">
                       <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
                         {ip.count}

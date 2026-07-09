@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, Bell, BellRing, Users } from 'lucide-react'
 import { GlowCard } from '../components/ui/GlowCard'
@@ -61,7 +61,7 @@ const TrackPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-24 pb-12">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <div className="max-w-lg mx-auto">
             <div className="mb-8">
@@ -75,7 +75,7 @@ const TrackPage = () => {
                     <p className="pr-3 text-xs text-theme-muted">Track</p>
                   </div>
                 }
-                title="Lacak Pengajuan"
+                title="Lacak\nPengajuan"
                 subtitle="Masukkan ID pelacakan untuk memeriksa status pengajuan"
               />
             </div>

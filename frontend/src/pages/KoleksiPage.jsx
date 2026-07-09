@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Bookmark, Heart, Eye, Trash2, FolderOpen } from 'lucide-react'
+import { Bookmark, Heart, Eye, FolderOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import NewsExpandableCard from '../components/cards/NewsExpandableCard'
@@ -25,24 +25,41 @@ const TYPE_TABS = [
 
 const KoleksiPage = () => {
   const [items, setItems] = useState([])
-  const [activeTab, setActiveTab] = useState('viewed')
+  const [activeTab, setActiveTab] = useState('saved')
   const [activeType, setActiveType] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Load items from localStorage on mount
   useEffect(() => {
-    const allItems = getAllItems()
-    setItems(allItems)
+    const loadItems = () => {
+      const allItems = getAllItems()
+      setItems(allItems)
+    }
+    
+    loadItems()
+    
+    // Listen for storage changes (from other tabs)
+    const handleStorageChange = () => loadItems()
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
+  // Filter items based on active tab and type
   const filteredItems = items.filter(item => {
-    // Filter by status
+    // Filter by status - only show items that match the criteria
     if (activeTab === 'viewed' && !item.viewed) return false
     if (activeTab === 'liked' && !item.liked) return false
     if (activeTab === 'saved' && !item.saved) return false
+    if (activeTab === 'all') {
+      // Show items that have been viewed, liked, or saved
+      if (!item.viewed && !item.liked && !item.saved) return false
+    }
 
     // Filter by type
-    if (activeType !== 'project' && activeType !== 'news') return true
-    return item.type === activeType
+    if (activeType !== 'all' && item.type !== activeType) return false
+
+    return true
   })
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE)
@@ -52,15 +69,20 @@ const KoleksiPage = () => {
   )
 
   const counts = {
-    all: items.length,
+    all: items.filter(i => i.viewed || i.liked || i.saved).length,
     viewed: items.filter(i => i.viewed).length,
     liked: items.filter(i => i.liked).length,
     saved: items.filter(i => i.saved).length,
   }
 
+  // Check if item has required data to render a card
+  const hasRequiredData = (item) => {
+    return item && (item.title || item.id)
+  }
+
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-24 pb-12">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <motion.div
             className="text-center mb-12"
@@ -78,17 +100,17 @@ const KoleksiPage = () => {
           </motion.div>
 
           {/* Status tabs */}
-          <div className="flex justify-center gap-2 mb-4">
+          <div className="flex justify-start sm:justify-center gap-2 mb-4 overflow-x-auto tabs-scroll pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
             {TABS.map(tab => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setCurrentPage(1) }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
                     activeTab === tab.id
                       ? 'bg-[var(--accent)] text-white shadow-md'
-                      : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                      : 'bg-theme-secondary text-theme-muted hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
                   }`}
                 >
                   <Icon size={14} />
@@ -106,15 +128,15 @@ const KoleksiPage = () => {
           </div>
 
           {/* Type filter */}
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex justify-start sm:justify-center gap-2 mb-8 overflow-x-auto tabs-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
             {TYPE_TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => { setActiveType(tab.id); setCurrentPage(1) }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${
                   activeType === tab.id
                     ? 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20'
-                    : 'text-theme-muted hover:text-theme-primary'
+                    : 'text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/5'
                 }`}
               >
                 {tab.label}
@@ -129,16 +151,17 @@ const KoleksiPage = () => {
               <p className="text-theme-muted text-sm mt-2">
                 {activeTab === 'viewed' ? 'Klik kartu untuk melihat konten' :
                  activeTab === 'liked' ? 'Suka konten untuk mengumpulkannya di sini' :
-                 'Simpan konten untuk mengumpulkannya di sini'}
+                 activeTab === 'saved' ? 'Simpan konten untuk mengumpulkannya di sini' :
+                 'Jelajahi konten untuk mengumpulkannya di sini'}
               </p>
-              <Link to="/news" className="mt-4 inline-block hover:opacity-80" style={{ color: 'var(--accent)' }}>
+              <Link to="/news" className="mt-4 inline-block hover:opacity-80 transition-opacity" style={{ color: 'var(--accent)' }}>
                 Jelajahi Berita
               </Link>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {paginatedItems.map(item => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {paginatedItems.filter(hasRequiredData).map(item => (
                   <div key={`${item.type}-${item.id}`} className="relative">
                     {item.type === 'project' ? (
                       <ProjectExpandableCard project={item} />
@@ -156,10 +179,10 @@ const KoleksiPage = () => {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${
+                      className={`w-10 h-10 rounded-full text-sm font-medium transition-colors duration-150 ${
                         currentPage === page
                           ? 'bg-[var(--accent)] text-white'
-                          : 'bg-theme-secondary text-theme-muted hover:text-theme-primary'
+                          : 'bg-theme-secondary text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/10'
                       }`}
                     >
                       {page}

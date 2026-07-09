@@ -41,6 +41,29 @@ class HealthController extends Controller
 
         $health['checks']['memory'] = ['status' => 'ok', 'message' => round(memory_get_usage(true) / 1048576, 1) . ' MB used'];
 
+        // Storage stats
+        try {
+            $storagePath = storage_path('app/public');
+            $dirs = ['news', 'news/authors', 'projects/thumbnails', 'projects/avatars', 'projects/screenshots'];
+            $storage = ['total_bytes' => 0, 'total_files' => 0, 'breakdown' => []];
+            foreach ($dirs as $dir) {
+                $fullPath = $storagePath . '/' . $dir;
+                $files = is_dir($fullPath) ? glob($fullPath . '/*') : [];
+                $bytes = array_sum(array_map('filesize', array_filter($files, 'is_file')));
+                $count = count(array_filter($files, 'is_file'));
+                $storage['breakdown'][$dir] = ['bytes' => $bytes, 'files' => $count];
+                $storage['total_bytes'] += $bytes;
+                $storage['total_files'] += $count;
+            }
+            $health['checks']['storage'] = [
+                'status' => 'ok',
+                'message' => round($storage['total_bytes'] / 1048576, 1) . ' MB (' . $storage['total_files'] . ' files)',
+                'details' => $storage,
+            ];
+        } catch (\Exception $e) {
+            $health['checks']['storage'] = ['status' => 'error', 'message' => 'Cannot read'];
+        }
+
         return response()->json($health);
     }
 }

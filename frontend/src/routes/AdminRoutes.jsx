@@ -14,6 +14,8 @@ const ChatbotApiPage = lazy(() => import('../pages/admin/ChatbotApiPage'))
 const SecurityCenterPage = lazy(() => import('../pages/admin/SecurityCenterPage'))
 const ChatStatsPage = lazy(() => import('../pages/admin/ChatStatsPage'))
 const AuditLogsPage = lazy(() => import('../pages/admin/AuditLogsPage'))
+const AdminManagementPage = lazy(() => import('../pages/admin/AdminManagementPage'))
+const SettingsPage = lazy(() => import('../pages/admin/SettingsPage'))
 
 const AdminLoader = () => (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -47,7 +49,8 @@ export default function AdminRoutes() {
             <Route path="projects" element={<ProjectsListPage />} />
             <Route path="projects/:id" element={<ProjectDetailPage />} />
             <Route path="chatbot-api" element={<ChatbotApiPage />} />
-            <Route path="settings" element={<ChatbotApiPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="admins" element={<AdminManagementPage />} />
             <Route path="security" element={<SecurityCenterPage />} />
             <Route path="chat-stats" element={<ChatStatsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />

@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\News;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AdminNewsCrudTest extends TestCase
@@ -13,7 +14,6 @@ class AdminNewsCrudTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private string $token;
 
     protected function setUp(): void
     {
@@ -22,12 +22,6 @@ class AdminNewsCrudTest extends TestCase
         $this->admin = User::factory()->admin()->create([
             'password' => bcrypt('password'),
         ]);
-        $this->token = $this->admin->createToken('admin-token')->plainTextToken;
-    }
-
-    private function authHeaders(): array
-    {
-        return ['Authorization' => "Bearer {$this->token}"];
     }
 
     public function test_index_requires_authentication()
@@ -39,11 +33,9 @@ class AdminNewsCrudTest extends TestCase
     public function test_index_requires_admin_role()
     {
         $user = User::factory()->create(['is_admin' => false]);
-        $token = $user->createToken('user-token')->plainTextToken;
 
-        $response = $this->getJson('/api/admin/news', [
-            'Authorization' => "Bearer {$token}",
-        ]);
+        Sanctum::actingAs($user);
+        $response = $this->getJson('/api/admin/news');
         $response->assertStatus(403);
     }
 
@@ -51,7 +43,8 @@ class AdminNewsCrudTest extends TestCase
     {
         News::factory()->count(20)->create();
 
-        $response = $this->getJson('/api/admin/news', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/news');
         $response->assertOk()
             ->assertJsonStructure(['data', 'current_page', 'last_page', 'total']);
     }
@@ -68,7 +61,8 @@ class AdminNewsCrudTest extends TestCase
             'published' => true,
         ];
 
-        $response = $this->postJson('/api/admin/news', $payload, $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->postJson('/api/admin/news', $payload);
         $response->assertCreated()
             ->assertJsonPath('data.title', 'Berita Baru dari Admin');
 
@@ -85,7 +79,8 @@ class AdminNewsCrudTest extends TestCase
             'published' => true,
         ];
 
-        $this->postJson('/api/admin/news', $payload, $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $this->postJson('/api/admin/news', $payload);
 
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $this->admin->id,
@@ -96,7 +91,8 @@ class AdminNewsCrudTest extends TestCase
 
     public function test_store_validates_required_fields()
     {
-        $response = $this->postJson('/api/admin/news', [], $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->postJson('/api/admin/news', []);
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['title', 'content', 'category', 'date']);
     }
@@ -113,7 +109,8 @@ class AdminNewsCrudTest extends TestCase
             'published' => false,
         ];
 
-        $response = $this->putJson("/api/admin/news/{$news->id}", $payload, $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->putJson("/api/admin/news/{$news->id}", $payload);
         $response->assertOk();
 
         $this->assertDatabaseHas('news', [
@@ -127,12 +124,13 @@ class AdminNewsCrudTest extends TestCase
     {
         $news = News::factory()->create();
 
+        Sanctum::actingAs($this->admin);
         $this->putJson("/api/admin/news/{$news->id}", [
             'title' => 'Updated',
             'content' => 'Content',
             'category' => 'Workshop',
             'date' => now()->toDateString(),
-        ], $this->authHeaders());
+        ]);
 
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $this->admin->id,
@@ -146,7 +144,8 @@ class AdminNewsCrudTest extends TestCase
     {
         $news = News::factory()->create();
 
-        $response = $this->deleteJson("/api/admin/news/{$news->id}", [], $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->deleteJson("/api/admin/news/{$news->id}");
         $response->assertOk();
 
         $this->assertDatabaseMissing('news', ['id' => $news->id]);
@@ -156,7 +155,8 @@ class AdminNewsCrudTest extends TestCase
     {
         $news = News::factory()->create();
 
-        $this->deleteJson("/api/admin/news/{$news->id}", [], $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $this->deleteJson("/api/admin/news/{$news->id}");
 
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $this->admin->id,
@@ -170,7 +170,8 @@ class AdminNewsCrudTest extends TestCase
     {
         $news = News::factory()->create();
 
-        $response = $this->getJson("/api/admin/news/{$news->id}", $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson("/api/admin/news/{$news->id}");
         $response->assertOk()
             ->assertJsonPath('id', $news->id);
     }
@@ -180,7 +181,8 @@ class AdminNewsCrudTest extends TestCase
         News::factory()->count(3)->create(['published' => true]);
         News::factory()->count(2)->create(['published' => false]);
 
-        $response = $this->getJson('/api/admin/news/stats', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/news/stats');
         $response->assertOk()
             ->assertJsonPath('total', 5)
             ->assertJsonPath('published', 3)

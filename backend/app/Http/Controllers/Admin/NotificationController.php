@@ -4,21 +4,39 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\ProjectSubmission;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class NotificationController extends Controller
 {
-    public function index(): JsonResponse
+    /**
+     * Get all notifications for admin
+     */
+    public function index(Request $request): JsonResponse
     {
-        $notifications = Notification::latest()->get();
+        $notifications = Notification::with('project:id,title,category,thumbnail,status,rejection_reason')
+            ->latest()
+            ->paginate($request->input('per_page', 20));
+
         $unreadCount = Notification::where('read', false)->count();
 
         return response()->json([
-            'data' => $notifications,
+            'data' => $notifications->items(),
             'unread_count' => $unreadCount,
+            'pagination' => [
+                'total' => $notifications->total(),
+                'per_page' => $notifications->perPage(),
+                'current_page' => $notifications->currentPage(),
+                'last_page' => $notifications->lastPage(),
+            ],
         ]);
     }
 
+    /**
+     * Get unread notification count
+     */
     public function unreadCount(): JsonResponse
     {
         return response()->json([
@@ -26,6 +44,9 @@ class NotificationController extends Controller
         ]);
     }
 
+    /**
+     * Mark a notification as read
+     */
     public function markRead(int $id): JsonResponse
     {
         $notification = Notification::findOrFail($id);
@@ -34,6 +55,9 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Notification marked as read']);
     }
 
+    /**
+     * Mark all notifications as read
+     */
     public function markAllRead(): JsonResponse
     {
         Notification::where('read', false)->update(['read' => true]);
@@ -41,12 +65,41 @@ class NotificationController extends Controller
         return response()->json(['message' => 'All notifications marked as read']);
     }
 
+    /**
+     * Get public notifications by tracking ID (for non-authenticated users)
+     */
     public function publicByTracking(string $trackingId): JsonResponse
     {
-        $notifications = Notification::where('tracking_id', $trackingId)
-            ->latest()
-            ->get();
+        $payload = Cache::remember("public-notifications:{$trackingId}", 15, function () use ($trackingId) {
+            $notifications = Notification::where('tracking_id', $trackingId)
+                ->with('project:id,title,category,thumbnail,status,rejection_reason')
+                ->latest()
+                ->get()
+                ->map(function ($notif) {
+                    // Include rejection reason directly in the notification
+                    if ($notif->type === 'rejected' && $notif->project) {
+                        $notif->rejection_reason = $notif->project->rejection_reason;
+                    }
+                    return $notif;
+                });
 
-        return response()->json(['data' => $notifications]);
+            return ['data' => $notifications];
+        });
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Mark a public notification as read (by tracking ID)
+     */
+    public function publicMarkRead(Request $request, string $trackingId, int $id): JsonResponse
+    {
+        $notification = Notification::where('tracking_id', $trackingId)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $notification->update(['read' => true]);
+
+        return response()->json(['message' => 'Notification marked as read']);
     }
 }

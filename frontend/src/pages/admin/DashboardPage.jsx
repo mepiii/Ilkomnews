@@ -5,52 +5,51 @@ import {
   Eye,
   FolderOpen,
   Clock,
-  ArrowRight,
   Plus,
   BarChart3,
   Settings,
   Image as ImageIcon,
-  Activity,
+  Shield,
 } from 'lucide-react'
 import { adminDashboard } from '../../services/adminApi'
-import { formatDate as formatDateShort } from '../../utils/formatters'
+import StatusBadge from '../../components/admin/ui/StatusBadge'
+import ErrorState from '../../components/admin/ui/ErrorState'
 import logo from '../../assets/BEM.png'
 import StatCard from '../../components/admin/ui/StatCard'
 
 const SkeletonCard = () => (
-  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 animate-pulse">
+  <div className="rounded-lg border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414] p-4 animate-pulse">
     <div className="flex items-center justify-between">
       <div className="space-y-2">
-        <div className="h-4 w-20 rounded bg-[var(--bg-secondary)]" />
-        <div className="h-7 w-12 rounded bg-[var(--bg-secondary)]" />
+        <div className="h-3 w-16 rounded bg-gray-200 dark:bg-[#262626]" />
+        <div className="h-6 w-10 rounded bg-gray-200 dark:bg-[#262626]" />
       </div>
-      <div className="h-12 w-12 rounded-xl bg-[var(--bg-secondary)]" />
+      <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-[#262626]" />
     </div>
   </div>
 )
 
 const TableSkeleton = () => (
-  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 animate-pulse">
-    <div className="mb-4 h-5 w-40 rounded bg-[var(--bg-secondary)]" />
+  <div className="rounded-lg border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414] p-4 animate-pulse">
+    <div className="mb-4 h-4 w-32 rounded bg-gray-200 dark:bg-[#262626]" />
     {[1, 2, 3].map((i) => (
-      <div key={i} className="flex items-center gap-4 border-b border-[var(--border-color)] py-3 last:border-0">
-        <div className="h-4 flex-1 rounded bg-[var(--bg-secondary)]" />
-        <div className="h-4 w-16 rounded bg-[var(--bg-secondary)]" />
-        <div className="h-4 w-20 rounded bg-[var(--bg-secondary)]" />
+      <div key={i} className="flex items-center gap-4 border-b border-gray-100 dark:border-[#1a1a1a] py-3 last:border-0">
+        <div className="h-3 flex-1 rounded bg-gray-200 dark:bg-[#262626]" />
+        <div className="h-3 w-16 rounded bg-gray-200 dark:bg-[#262626]" />
       </div>
     ))}
   </div>
 )
 
-const QuickAction = ({ icon: Icon, label, to, color }) => (
+const QuickAction = ({ icon: Icon, label, to }) => (
   <Link
     to={to}
-    className="flex flex-col items-center gap-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 transition-colors hover:bg-[var(--bg-secondary)]"
+    className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414] p-3 transition-colors hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
   >
-    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
-      <Icon size={18} className="text-white" />
+    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900 dark:bg-white">
+      <Icon size={16} className="text-white dark:text-gray-900" />
     </div>
-    <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
+    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 text-center">{label}</span>
   </Link>
 )
 
@@ -58,6 +57,7 @@ export default function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
   useEffect(() => {
     adminDashboard.getStats()
       .then(setData)
@@ -67,11 +67,11 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
         </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <TableSkeleton />
           <TableSkeleton />
         </div>
@@ -80,11 +80,7 @@ export default function DashboardPage() {
   }
 
   if (error) {
-    return (
-      <div className="rounded-xl border border-red-900/50 bg-red-950/50 p-4 text-sm text-red-400">
-        Gagal memuat dashboard: {error}
-      </div>
-    )
+    return <ErrorState message={`Gagal memuat dashboard: ${error}`} onRetry={() => { setError(''); setLoading(true); adminDashboard.getStats().then(setData).catch((err) => setError(err.message)).finally(() => setLoading(false)) }} />
   }
 
   const stats = data?.stats || {}
@@ -111,24 +107,20 @@ export default function DashboardPage() {
     .slice(0, 6)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Welcome header */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--border-color)] bg-[var(--bg-secondary)]">
-            <img
-              src={logo}
-              alt="BEM ILKOM"
-              className="h-full w-full object-contain"
-            />
+      <div className="rounded-lg border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414] p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 dark:border-[#262626] bg-white dark:bg-[#0a0a0a] shrink-0">
+            <img src={logo} alt="BEM ILKOM" className="h-full w-full object-contain" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-            <p className="mt-0.5 text-sm text-[var(--text-secondary)]">Selamat datang kembali di panel admin ILKOM NEWS</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Selamat datang kembali di panel admin ILKOM NEWS</p>
           </div>
-          <div className="hidden text-right sm:block">
-            <p className="text-xs text-[var(--text-muted)]">Hari ini</p>
-            <p className="mt-0.5 text-sm font-medium text-[var(--text-primary)]">
+          <div className="hidden text-right sm:block shrink-0">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">Hari ini</p>
+            <p className="mt-0.5 text-xs font-medium text-gray-900 dark:text-gray-100">
               {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
@@ -136,146 +128,47 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Newspaper} label="Total Berita" value={stats.total_news} color="bg-[var(--accent)]/10" iconColor="text-[var(--accent)]" />
-        <StatCard icon={Eye} label="Tayang" value={stats.published_news} color="bg-emerald-500/10" iconColor="text-emerald-500" />
-        <StatCard icon={FolderOpen} label="Total Proyek" value={stats.total_projects} color="bg-blue-500/10" iconColor="text-blue-500" />
-        <StatCard icon={Clock} label="Menunggu Review" value={stats.pending_projects} color="bg-amber-500/10" iconColor="text-amber-500" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard icon={Newspaper} label="Total Berita" value={stats.total_news} color="bg-gray-100 dark:bg-white/5" iconColor="text-gray-700 dark:text-gray-300" />
+        <StatCard icon={Eye} label="Tayang" value={stats.published_news} color="bg-gray-100 dark:bg-white/5" iconColor="text-gray-700 dark:text-gray-300" />
+        <StatCard icon={FolderOpen} label="Total Proyek" value={stats.total_projects} color="bg-gray-100 dark:bg-white/5" iconColor="text-gray-700 dark:text-gray-300" />
+        <StatCard icon={Clock} label="Menunggu Review" value={stats.pending_projects} color="bg-gray-100 dark:bg-white/5" iconColor="text-gray-700 dark:text-gray-300" />
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-        <QuickAction icon={Plus} label="Buat Berita" to="/admin/news/create" color="bg-[var(--accent)]" />
-        <QuickAction icon={FolderOpen} label="Lihat Proyek" to="/admin/projects" color="bg-blue-600" />
-        <QuickAction icon={ImageIcon} label="Galeri" to="/admin/projects" color="bg-emerald-600" />
-        <QuickAction icon={BarChart3} label="Statistik" to="/admin/chat-stats" color="bg-amber-600" />
-        <QuickAction icon={Newspaper} label="Semua Berita" to="/admin/news" color="bg-pink-600" />
-        <QuickAction icon={Settings} label="Pengaturan" to="/admin/settings" color="bg-neutral-600" />
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+        <QuickAction icon={Plus} label="Buat Berita" to="/admin/news/create" />
+        <QuickAction icon={FolderOpen} label="Lihat Proyek" to="/admin/projects" />
+        <QuickAction icon={ImageIcon} label="Galeri" to="/admin/projects" />
+        <QuickAction icon={BarChart3} label="Statistik" to="/admin/chat-stats" />
+        <QuickAction icon={Shield} label="Keamanan" to="/admin/security" />
+        <QuickAction icon={Settings} label="Pengaturan" to="/admin/settings" />
       </div>
 
       {/* Recent Activity */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
-        <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-5 py-3.5">
-          <Activity size={16} className="text-[var(--accent)]" />
-          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Aktivitas Terbaru</h2>
-        </div>
-        <div className="divide-y divide-[var(--border-color)]">
-          {recentActivity.length === 0 ? (
-            <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada aktivitas</p>
-          ) : (
-            recentActivity.map((item) => (
-              <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
-                      item.type === 'news' ? 'bg-[var(--accent)]/20' : 'bg-blue-500/20'
-                    }`}>
-                      {item.type === 'news' ? (
-                        <Newspaper size={10} className="text-[var(--accent)]" />
-                      ) : (
-                        <FolderOpen size={10} className="text-blue-500" />
-                      )}
-                    </span>
-                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
-                  </div>
-                  <p className="mt-0.5 pl-7 text-xs text-[var(--text-muted)]">{formatDateShort(item.date)}</p>
+      {recentActivity.length > 0 && (
+        <div className="rounded-lg border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414] overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-[#262626]">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Aktivitas Terbaru</h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
+            {recentActivity.map((item) => (
+              <div key={item.id} className="px-4 py-3 flex items-center gap-3">
+                <div className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
+                  {item.type === 'news' ? <Newspaper size={14} /> : <FolderOpen size={14} />}
                 </div>
-                <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                  item.status === 'published' || item.status === 'accepted'
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    : item.status === 'pending'
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                      : item.status === 'rejected'
-                        ? 'bg-red-500/15 text-red-600 dark:text-red-400'
-                        : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                }`}>
-                  {item.status === 'published' ? 'Tayang' :
-                   item.status === 'accepted' ? 'Diterima' :
-                   item.status === 'pending' ? 'Menunggu' :
-                   item.status === 'rejected' ? 'Ditolak' : 'Draft'}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.title}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                    {item.date ? new Date(item.date).toLocaleDateString('id-ID') : '-'}
+                  </p>
+                </div>
+                <StatusBadge status={item.status} />
               </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Recent News & Projects side by side */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-3.5">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Berita Terbaru</h2>
-            <Link to="/admin/news" className="flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:opacity-80 transition-opacity">
-              Lihat semua <ArrowRight size={12} />
-            </Link>
-          </div>
-          <div className="divide-y divide-[var(--border-color)]">
-            {recentNews.length === 0 ? (
-              <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada berita</p>
-            ) : (
-              recentNews.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{formatDateShort(item.date)}</p>
-                  </div>
-                  <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    item.status === 'published'
-                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                  }`}>
-                    {item.status === 'published' ? 'Tayang' : 'Draft'}
-                  </span>
-                </div>
-              ))
-            )}
+            ))}
           </div>
         </div>
-
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
-          <div className="flex items-center justify-between border-b border-[var(--border-color)] px-5 py-3.5">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Proyek Terbaru</h2>
-            <Link to="/admin/projects" className="flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:opacity-80 transition-opacity">
-              Lihat semua <ArrowRight size={12} />
-            </Link>
-          </div>
-          <div className="divide-y divide-[var(--border-color)]">
-            {recentProjects.length === 0 ? (
-              <p className="p-5 text-center text-sm text-[var(--text-muted)]">Belum ada proyek</p>
-            ) : (
-              recentProjects.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-[var(--bg-secondary)] transition-colors">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.creator_name || item.creator}</p>
-                  </div>
-                  <StatusBadge status={item.status} />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
-  )
-}
-
-function StatusBadge({ status }) {
-  const styles = {
-    pending: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-    accepted: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-    rejected: 'bg-red-500/15 text-red-600 dark:text-red-400',
-  }
-
-  const labels = {
-    pending: 'Menunggu',
-    accepted: 'Diterima',
-    rejected: 'Ditolak',
-  }
-
-  return (
-    <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
-      {labels[status] || status}
-    </span>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { MessageCircle, GraduationCap, Trophy, Bot, Sparkles, BookOpen, Code2, Lightbulb, Zap, Star, Brain } from 'lucide-react'
+import { MessageCircle, GraduationCap, Trophy, Bot, Sparkles, BookOpen, Code2, Lightbulb, Zap, Star, Brain, Pointer, Volume2 } from 'lucide-react'
 import { Text_03 } from '../ui/Text03'
 import mascotIdle from '../../assets/mascot/mascot-idle.png'
 import mascotTalking from '../../assets/mascot/mascot-talking.png'
@@ -91,8 +91,22 @@ const TalkingMascot = () => {
           <button onClick={handleClick} className="group relative focus:outline-none rounded-full transition-all">
             <div className="absolute inset-0 rounded-full bg-accent/10 blur-xl scale-110 opacity-0 group-hover:opacity-100 transition-all duration-700" />
             <div className="relative w-40 h-40 md:w-52 md:h-52 lg:w-64 lg:h-64"><img src={currentMascot} alt="Fasilkom Unsri Mascot - Wolfy" className="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 group-active:scale-95 cursor-pointer drop-shadow-2xl" /></div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all shadow-md ${isTalking ? 'bg-purple-600 dark:bg-purple-500 text-white' : 'glass-card text-accent group-hover:shadow-lg'}`}>{isTalking ? '🗣️ Berbicara...' : '👆 Klik Aku!'}</span>
+            <div className="absolute -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <motion.span 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all shadow-md ${isTalking ? 'bg-purple-600 dark:bg-purple-500 text-white' : 'glass-card text-accent group-hover:shadow-lg'}`}
+              >
+                {isTalking ? (
+                  <>
+                    <Volume2 size={12} /> Berbicara...
+                  </>
+                ) : (
+                  <>
+                    <Pointer size={12} /> Klik Aku!
+                  </>
+                )}
+              </motion.span>
             </div>
           </button>
         </div>

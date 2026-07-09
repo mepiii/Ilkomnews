@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExpandableCard } from '../ui/ExpandableCard'
 import { generateSlug, formatDate } from '../../utils/formatters'
 import { parseTags } from '../../utils/parsers'
+import { ArrowRight } from 'lucide-react'
 
 const categoryThemes = {
   Workshop: '220 60% 35%',
@@ -24,34 +25,34 @@ const NewsExpandableCard = ({ article }) => {
       themeColor={themeColor}
       badge={
         article.category ? (
-          <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-black/40 text-white backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-[var(--accent)] text-white backdrop-blur-sm truncate max-w-full">
             {article.category}
           </span>
         ) : null
       }
       meta={
-        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex items-center gap-1.5 text-xs overflow-hidden" style={{ color: 'var(--text-muted)' }}>
           {(article.author || article.author_image) && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 min-w-0">
               {article.author_image ? (
-                <img src={article.author_image_url || article.author_image} alt={article.author} className="w-4 h-4 rounded-full object-cover" />
+                <img src={article.author_image_url || article.author_image} alt={article.author} className="w-4 h-4 rounded-full object-cover shrink-0" />
               ) : (
-                <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold bg-purple-600">
+                <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold bg-purple-600 shrink-0">
                   {(article.author || 'A').charAt(0)}
                 </div>
               )}
-              <span>{article.author || 'Penulis'}</span>
+              <span className="truncate max-w-[80px]">{article.author || 'Penulis'}</span>
             </div>
           )}
-          {article.date && <><span>·</span><span>{formatDate(article.date)}</span></>}
+          {article.date && <><span className="shrink-0">·</span><span className="truncate">{formatDate(article.date)}</span></>}
         </div>
       }
     >
-      <div className="w-full space-y-3">
+      <div className="w-full space-y-3 overflow-hidden">
         {article.content && (
-          <div>
-            <h4 className="text-[var(--text-muted)] text-[10px] font-semibold uppercase tracking-wider mb-1.5">Konten</h4>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          <div className="overflow-hidden">
+            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-1.5">Konten</h4>
+            <p className="text-sm leading-relaxed break-words overflow-hidden" style={{ color: 'var(--text-secondary)' }}>
               {(article.content || '').substring(0, 400)}{article.content?.length > 400 ? '...' : ''}
             </p>
           </div>
@@ -59,11 +60,11 @@ const NewsExpandableCard = ({ article }) => {
 
         <Link
           to={`/news/${slug}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-[11px] font-medium hover:bg-[var(--accent)]/20 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--accent)] text-white text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5 transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           Baca Selengkapnya
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <ArrowRight size={12} />
         </Link>
       </div>
     </ExpandableCard>

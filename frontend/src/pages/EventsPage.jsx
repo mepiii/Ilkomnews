@@ -53,7 +53,7 @@ const EventsPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-24 pb-12">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <Breadcrumb />
 
@@ -89,7 +89,7 @@ const EventsPage = () => {
 
           {/* Events Grid — same layout as IlkomGallery */}
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab + sortBy} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <motion.div key={activeTab + sortBy} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }}            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <motion.div key={i} variants={itemVariant}>

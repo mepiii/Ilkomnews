@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useMemo, useRef, useState, useEffect } from 'react'
+import React, { forwardRef, useMemo, useRef, useState, useEffect, useImperativeHandle } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { Check, Loader2, SendHorizontal, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -35,78 +35,139 @@ const StatusIcon = ({ status }) => {
   )
 }
 
-const useButtonStatus = (resolveTo) => {
-  const [status, setStatus] = useState('idle')
-
-  const handleSubmit = useCallback(() => {
-    setStatus('loading')
-    setTimeout(() => {
-      setStatus(resolveTo)
-    }, 2000)
-  }, [resolveTo])
-
-  return { status, handleSubmit, setStatus }
-}
-
 /**
  * SlideButton - Drag-to-submit button with status animation
  * Users drag the handle to the right to trigger submission
  * Shows loading spinner, success checkmark, or error X
+ *
+ * Props:
+ * - onSubmit: called when drag completes past threshold
+ * - completed: if true, shows status area instead of slider (controlled)
+ * - status: 'idle' | 'loading' | 'success' | 'error' — icon to show when completed
+ * - disabled: disable dragging
+ * - ref: exposes .reset() to reset button state
  */
-const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref) => {
+const SlideButton = forwardRef(({ className, onSubmit, children, disabled, completed: controlledCompleted, status: controlledStatus, ...props }, ref) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [completed, setCompleted] = useState(false)
-  const [dragRight, setDragRight] = useState(200)
+  const [internalStatus, setInternalStatus] = useState('idle')
+  const [internalCompleted, setInternalCompleted] = useState(false)
   const containerRef = useRef(null)
   const dragHandleRef = useRef(null)
-  const { handleSubmit } = useButtonStatus('success')
+  const dragRightRef = useRef(200)
+
+  const isControlled = controlledCompleted !== undefined
+  const completed = isControlled ? controlledCompleted : internalCompleted
+  const status = isControlled ? (controlledStatus || 'loading') : internalStatus
 
   const dragX = useMotionValue(0)
   const springX = useSpring(dragX, ANIMATION_CONFIG.spring)
-  const dragProgress = useTransform(springX, [0, dragRight], [0, 1])
+  const [dragRight, setDragRight] = useState(200)
+  const dragProgress = useTransform(springX, [0, dragRight || 200], [0, 1])
 
-  // Measure container width to set drag constraints dynamically
+  // Measure container width dynamically — ResizeObserver for mobile
   useEffect(() => {
-    if (containerRef.current) {
-      const width = containerRef.current.offsetWidth
-      // Handle is 40px (w-10), offset -16px left, so usable = width - 40 + 16
+    const el = containerRef.current
+    if (!el) return
+    const updateWidth = () => {
+      const rect = el.getBoundingClientRect()
+      const width = rect.width
+      dragRightRef.current = Math.max(0, width - 32)
       setDragRight(Math.max(0, width - 32))
     }
+    updateWidth()
   }, [])
 
-  const handleDragStart = useCallback(() => {
-    if (completed) return
-    setIsDragging(true)
+  // Re-observe on resize for mobile orientation changes
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      const width = el.getBoundingClientRect().width
+      const newRight = Math.max(0, width - 32)
+      dragRightRef.current = newRight
+      setDragRight(newRight)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Reset dragX when completed transitions to false
+  useEffect(() => {
+    if (!completed) {
+      dragX.set(0)
+      springX.set(0)
+      if (!isControlled) setInternalStatus('idle')
+    }
   }, [completed])
+  
+  // Also reset when status changes back to idle (for controlled mode)
+  useEffect(() => {
+    if (status === 'idle' && !completed) {
+      dragX.set(0)
+      springX.set(0)
+    }
+  }, [status, completed])
+
+  const handleDragStart = () => {
+    if (completed || disabled) return
+    setIsDragging(true)
+  }
 
   const handleDragEnd = () => {
-    if (completed) return
+    if (completed || disabled) return
     setIsDragging(false)
 
     const progress = dragProgress.get()
     if (progress >= DRAG_THRESHOLD) {
-      setCompleted(true)
-      handleSubmit()
-      onSubmit?.()
+      if (isControlled) {
+        // Parent controls state; just fire onSubmit
+        onSubmit?.()
+      } else {
+        setInternalCompleted(true)
+        setInternalStatus('loading')
+        onSubmit?.()
+      }
     } else {
+      // Reset position when not reaching threshold
       dragX.set(0)
+      springX.set(0)
     }
+  }
+  
+  // Handle drag cancel (when user releases without completing)
+  const handleDragCancel = () => {
+    if (completed || disabled) return
+    setIsDragging(false)
+    dragX.set(0)
+    springX.set(0)
   }
 
   const handleDrag = (_event, info) => {
-    if (completed) return
-    const newX = Math.max(0, Math.min(info.offset.x, dragRight))
+    if (completed || disabled) return
+    const maxX = dragRightRef.current
+    const newX = Math.max(0, Math.min(info.offset.x, maxX))
     dragX.set(newX)
   }
+
+  // Allow parent to reset the button state via imperative handle
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      setInternalCompleted(false)
+      setInternalStatus('idle')
+      dragX.set(0)
+      setIsDragging(false)
+    },
+  }))
 
   const adjustedWidth = useTransform(springX, (x) => x + 10)
 
   return (
     <motion.div
       ref={containerRef}
+      style={{ touchAction: 'none' }}
       animate={completed ? { width: '10rem' } : { width: '100%' }}
       transition={ANIMATION_CONFIG.spring}
-      className="relative flex h-14 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 mx-auto"
+      className="relative flex h-14 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 mx-auto select-none"
     >
       {!completed && (
         <motion.div
@@ -115,7 +176,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref
         />
       )}
 
-      <AnimatePresence key={crypto.randomUUID()}>
+      <AnimatePresence>
         {!completed && (
           <motion.div
             ref={dragHandleRef}
@@ -125,8 +186,9 @@ const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
             onDrag={handleDrag}
-            style={{ x: springX }}
+            style={{ x: springX, touchAction: 'none' }}
             className="absolute -left-4 z-10 flex cursor-grab items-center justify-start active:cursor-grabbing"
           >
             <div
@@ -144,7 +206,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref
         )}
       </AnimatePresence>
 
-      <AnimatePresence key={crypto.randomUUID()}>
+      <AnimatePresence>
         {completed && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
@@ -158,7 +220,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref
                 className
               )}
             >
-              <AnimatePresence key={crypto.randomUUID()} mode="wait">
+              <AnimatePresence mode="wait">
                 <StatusIcon status={status} />
               </AnimatePresence>
             </div>
@@ -168,7 +230,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, ...props }, ref
 
       {/* Label */}
       {!completed && (
-        <span className="ml-8 text-sm font-medium text-[var(--text-secondary)]">
+        <span className="ml-8 text-sm font-medium text-[var(--text-secondary)] select-none">
           {children || 'Geser untuk kirim'}
         </span>
       )}

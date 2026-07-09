@@ -26,6 +26,7 @@ class ProjectSubmissionFactory extends Factory
             'live_demo' => 'https://' . fake()->domainName(),
             'github_link' => 'https://github.com/' . fake()->userName() . '/' . fake()->slug(2),
             'creator_name' => fake()->name(),
+            'creator_type' => fake()->randomElement(['mahasiswa', 'dosen']),
             'creator_nim' => '0903128' . fake()->numerify('#######'),
             'creator_major' => fake()->randomElement(['S1 Teknik Informatika', 'S1 Sistem Informasi']),
             'creator_year' => fake()->numberBetween(2020, 2024),

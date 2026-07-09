@@ -1,12 +1,11 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { Heart, Bookmark, Share2, ArrowRight } from "lucide-react"
+import { Heart, Bookmark, Share2, X } from "lucide-react"
 import { cn } from "../../lib/utils"
-import { toggleLike, toggleSave, recordShare, recordView, getInteractionCounts } from "../../services/interactions"
-import { lockScroll, unlockScroll } from "../../lib/scrollLock"
+import { toggleLike, toggleSave, recordShare, recordView, getInteractionCounts, toggleGlobalLike, toggleGlobalSave } from "../../services/interactions"
+import { lockScroll, unlockScroll, resetScrollLock } from "../../lib/scrollLock"
 
-/* Tiny icon-only interaction bar */
 const InteractionBar = React.memo(function InteractionBar({
   compact = false,
   liked,
@@ -17,25 +16,47 @@ const InteractionBar = React.memo(function InteractionBar({
   onShare,
 }) {
   return (
-    <div className={cn("flex items-center", compact ? "gap-0.5" : "gap-1")}>
-      <button onClick={onLike} aria-label={liked ? 'Unlike' : 'Like'}
-        className={cn("p-1 rounded transition-colors duration-150",
+    <div className={cn("flex items-center", compact ? "gap-1" : "gap-2")}>
+      <motion.button 
+        onClick={onLike} 
+        aria-label={liked ? 'Unlike' : 'Like'}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={cn("p-2 rounded-lg transition-colors duration-150",
           liked ? "text-red-500" : "text-[var(--text-muted)] hover:text-red-400"
-        )}>
-        <Heart size={compact ? 11 : 13} fill={liked ? "currentColor" : "none"} />
-      </button>
-      <button onClick={onSave} aria-label={saved ? 'Unsave' : 'Save'}
-        className={cn("p-1 rounded transition-colors duration-150",
+        )}
+      >
+        <Heart size={compact ? 14 : 18} fill={liked ? "currentColor" : "none"} />
+      </motion.button>
+      <motion.button 
+        onClick={onSave} 
+        aria-label={saved ? 'Unsave' : 'Save'}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={cn("p-2 rounded-lg transition-colors duration-150",
           saved ? "text-blue-500" : "text-[var(--text-muted)] hover:text-blue-400"
-        )}>
-        <Bookmark size={compact ? 11 : 13} fill={saved ? "currentColor" : "none"} />
-      </button>
-      <button onClick={onShare} aria-label="Share"
-        className="p-1 rounded text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150">
-        <Share2 size={compact ? 11 : 13} />
-      </button>
+        )}
+      >
+        <Bookmark size={compact ? 14 : 18} fill={saved ? "currentColor" : "none"} />
+      </motion.button>
+      <motion.button 
+        onClick={onShare} 
+        aria-label="Share"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="p-2 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
+      >
+        <Share2 size={compact ? 14 : 18} />
+      </motion.button>
       {!compact && counts.likes > 0 && (
-        <span className="text-[10px] ml-0.5" style={{ color: 'var(--text-muted)' }}>{counts.likes}</span>
+        <motion.span 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-xs ml-1 font-medium" 
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {counts.likes}
+        </motion.span>
       )}
     </div>
   )
@@ -56,7 +77,6 @@ function ExpandableCard({
   ...props
 }) {
   const [active, setActive] = React.useState(false)
-  const cardRef = React.useRef(null)
   const collapsedCardRef = React.useRef(null)
   const expandedCloseRef = React.useRef(null)
   const id = React.useId()
@@ -74,21 +94,35 @@ function ExpandableCard({
     }
   }, [itemId, itemType, active])
 
+  // Item data to persist for Koleksi
+  const getItemData = React.useCallback(() => ({
+    title,
+    src,
+    description,
+    category: props.category,
+    creator_name: props.creator_name,
+    creator_avatar_url: props.creator_avatar_url,
+    thumbnail_url: src,
+    tech_stack: props.tech_stack,
+  }), [title, src, description, props])
+
   const handleLike = React.useCallback((e) => {
     e.stopPropagation()
     if (!itemId) return
-    const isNowLiked = toggleLike(itemType, itemId)
+    const isNowLiked = toggleLike(itemType, itemId, getItemData())
     setLiked(isNowLiked)
     setCounts(prev => ({ ...prev, likes: prev.likes + (isNowLiked ? 1 : -1) }))
-  }, [itemId, itemType])
+    toggleGlobalLike(itemType, itemId).catch(() => {})
+  }, [itemId, itemType, getItemData])
 
   const handleSave = React.useCallback((e) => {
     e.stopPropagation()
     if (!itemId) return
-    const isNowSaved = toggleSave(itemType, itemId, { title, src, description })
+    const isNowSaved = toggleSave(itemType, itemId, getItemData())
     setSaved(isNowSaved)
     setCounts(prev => ({ ...prev, saves: prev.saves + (isNowSaved ? 1 : -1) }))
-  }, [itemId, itemType, title, src, description])
+    toggleGlobalSave(itemType, itemId).catch(() => {})
+  }, [itemId, itemType, getItemData])
 
   const handleShare = React.useCallback((e) => {
     e.stopPropagation()
@@ -104,227 +138,236 @@ function ExpandableCard({
   }, [itemId, itemType, title])
 
   const scrollPositionRef = React.useRef(0)
+  const isExpandedRef = React.useRef(false)
 
   const handleExpand = React.useCallback(() => {
     scrollPositionRef.current = window.scrollY
+    isExpandedRef.current = true
     lockScroll()
+    document.body.classList.add("scroll-locked")
     setActive(true)
     if (itemId) {
-      recordView(itemType, itemId, { title, src, description })
+      recordView(itemType, itemId, getItemData())
     }
-  }, [itemId, itemType, title, src, description])
+    setTimeout(() => expandedCloseRef.current?.focus(), 100)
+  }, [itemId, itemType, getItemData])
 
   const handleCollapse = React.useCallback(() => {
+    isExpandedRef.current = false
     unlockScroll()
+    window.scrollTo(0, scrollPositionRef.current)
     setActive(false)
-    setTimeout(() => {
-      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' })
-    }, 0)
+    setTimeout(() => collapsedCardRef.current?.focus(), 100)
   }, [])
 
+  // Escape key handler
   React.useEffect(() => {
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") setActive(false)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [])
-
-  React.useLayoutEffect(() => {
     if (!active) return
-    return () => { unlockScroll() }
-  }, [active])
-
-  React.useEffect(() => {
-    if (active && expandedCloseRef.current) {
-      expandedCloseRef.current.focus()
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') handleCollapse()
     }
-  }, [active])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [active, handleCollapse])
 
-  const interactionProps = React.useMemo(
-    () => ({
-      liked, saved, counts,
-      onLike: handleLike, onSave: handleSave, onShare: handleShare,
-    }),
-    [liked, saved, counts, handleLike, handleSave, handleShare]
-  )
+  // Safety: if component unmounts while expanded, guarantee scroll is restored
+  React.useEffect(() => {
+    return () => {
+      if (isExpandedRef.current) resetScrollLock()
+    }
+  }, [])
+
+  const interactionProps = React.useMemo(() => ({
+    liked, saved, counts, onLike: handleLike, onSave: handleSave, onShare: handleShare
+  }), [liked, saved, counts, handleLike, handleSave, handleShare])
 
   return (
     <>
-      {/* ── Collapsed Card — Tall & Simple ─────────────────────────────── */}
-      <div className="w-full self-stretch">
-        <motion.div
-          ref={collapsedCardRef}
-          layoutId={`card-${title}-${id}`}
-          onClick={handleExpand}
-          className={cn(
-            "group w-full rounded-xl cursor-pointer relative overflow-hidden",
-            "bg-white dark:bg-[#0a0a0a]",
-            "transition-all duration-200 ease-out",
-            "hover:shadow-lg dark:hover:shadow-black/30",
-            "hover:-translate-y-px",
-            className
-          )}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        >
-          {/* Image — tall portrait aspect */}
-          <div className="relative w-full aspect-[3/4] overflow-hidden">
-            <img
-              src={src}
-              alt={title}
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-              onError={(e) => {
-                e.target.src = 'https://placehold.co/600x800/8B5CF6/white?text=No+Image'
-              }}
-            />
-            {badge && (
-              <div className="absolute top-2.5 left-2.5 z-10">
-                {badge}
-              </div>
-            )}
-          </div>
-
-          {/* Content — minimal */}
-          <div className="p-3">
-            <motion.h3
-              layoutId={`title-${title}-${id}`}
-              className="text-[13px] font-semibold leading-snug line-clamp-2 mb-1"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {title}
-            </motion.h3>
-
-            {description && (
-              <motion.p
-                layoutId={`description-${description}-${id}`}
-                className="text-[11px] leading-relaxed line-clamp-2 mb-1.5"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                {description}
-              </motion.p>
-            )}
-
-            {meta && (
-              <motion.div layoutId={`meta-${title}-${id}`}>
-                {meta}
-              </motion.div>
-            )}
-
-            {/* Bottom row — tiny read more + tiny interactions */}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'var(--border-color)' }}>
-              <div className="flex items-center gap-0.5 text-[10px] font-medium transition-colors duration-150 group-hover:text-[var(--accent)]"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <span>Buka</span>
-                <ArrowRight className="h-2.5 w-2.5 transform transition-transform duration-150 group-hover:translate-x-0.5" />
-              </div>
-              <InteractionBar compact {...interactionProps} />
+      {/* Collapsed Card - Consistent sizing */}
+      <motion.article
+        ref={collapsedCardRef}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -4 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleExpand}
+        className={cn(
+          "group cursor-pointer overflow-hidden rounded-xl transition-all duration-300",
+          "bg-white dark:bg-neutral-900",
+          "border border-neutral-200 dark:border-[var(--border-color)]",
+          "hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-black/50",
+          "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50",
+          className
+        )}
+        style={{ width: '100%', minHeight: '420px', height: '100%' }}
+        tabIndex={0}
+        role="button"
+        aria-expanded={active}
+        {...props}
+      >
+        {/* Image - Compact aspect ratio */}
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <img
+            src={src}
+            alt={title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300/8B5CF6/white?text=No+Image' }}
+          />
+          
+          {/* Gradient overlay */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
+            style={{ '--theme-color': `hsl(${themeColor})` }}
+          />
+          
+          {/* Badge - constrained width */}
+          {badge && (
+            <div className="absolute top-2 left-2 max-w-[calc(100%-1rem)] overflow-hidden">
+              <div className="truncate">{badge}</div>
             </div>
-          </div>
-        </motion.div>
-      </div>
+          )}
+        </div>
 
-      {/* ── Expanded Modal ──────────────────────────────────────────────── */}
+        {/* Content - Longer description area */}
+        <div className="p-5 min-h-[220px] flex flex-col flex-grow gap-3">
+          <h3 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2 mb-2 break-words overflow-hidden leading-snug pr-1">
+            {title}
+          </h3>
+          {description && (
+            <p className="text-xs text-[var(--text-muted)] line-clamp-5 break-words overflow-hidden leading-relaxed">
+              {description}
+            </p>
+          )}
+          {meta && (
+            <div className="mt-auto pt-4 border-t border-[var(--border-color)] overflow-hidden">
+              <div className="truncate">{meta}</div>
+            </div>
+          )}
+        </div>
+      </motion.article>
+
+      {/* Expanded Modal - Longer card */}
       {createPortal(
         <AnimatePresence>
           {active && (
             <motion.div
-              key={`expand-${id}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{ position: "fixed", inset: 0, zIndex: 999999 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+              onClick={handleCollapse}
             >
               <motion.div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={handleCollapse}
-              />
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                id={`card-${id}`}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+              // Consistent width, long expanded card for all card types
+              "w-full max-w-[min(520px,calc(100vw-2rem))] max-h-[min(92vh,1000px)] flex flex-col overflow-hidden rounded-2xl relative",
+                  "bg-white dark:bg-[#0a0a0a]",
+                  "border border-neutral-200 dark:border-[var(--border-color)]",
+                  "shadow-2xl dark:shadow-black/60",
+                  classNameExpanded
+                )}
+                {...props}
+              >
+                {/* Hero image - Consistent height */}
+                <div className="relative shrink-0 h-56 sm:h-64 overflow-hidden">
+                  <motion.img
+                    src={src}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                    initial={{ scale: 1.1 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/8B5CF6/white?text=No+Image' }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-transparent to-transparent opacity-70" />
 
-              <div className="absolute inset-0 grid place-items-center p-4 sm:p-6" onClick={handleCollapse}>
-                <motion.div
-                  ref={cardRef}
-                  initial={{ opacity: 0, scale: 0.96, y: 8 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, y: 8 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  role="dialog"
-                  aria-label={title}
-                  aria-modal="true"
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(
-                    "w-[min(28rem,calc(100vw-2rem))] max-h-[min(90vh,640px)] flex flex-col overflow-hidden rounded-xl relative",
-                    "bg-white dark:bg-[#0a0a0a]",
-                    "shadow-2xl dark:shadow-black/60",
-                    classNameExpanded
-                  )}
-                  {...props}
-                >
-                  {/* Hero image */}
-                  <div className="relative shrink-0 h-44 sm:h-52 overflow-hidden">
-                    <img
-                      src={src}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/8B5CF6/white?text=No+Image' }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-transparent to-transparent opacity-60" />
-
-                    {/* Close — tiny, top-right on image */}
-                    <button
-                      ref={expandedCloseRef}
-                      aria-label="Close card"
-                      className="absolute top-2.5 right-2.5 h-7 w-7 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/80 hover:bg-black/50 hover:text-white transition-all duration-150 focus:outline-none"
-                      onClick={handleCollapse}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Scrollable content */}
-                  <div
-                    onWheel={(e) => e.stopPropagation()}
-                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+                  <motion.button
+                    ref={expandedCloseRef}
+                    aria-label="Close card"
+                    whileHover={{ scale: 1.1, backgroundColor: "rgba(0,0,0,0.6)" }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/80 hover:text-white transition-all duration-150 focus:outline-none"
+                    onClick={handleCollapse}
                   >
-                    {/* Title */}
-                    <div className="px-4 pt-3 pb-1">
-                      {badge && <div className="mb-1.5">{badge}</div>}
-                      <h3 className="font-bold text-base leading-tight mb-0.5" style={{ color: 'var(--text-primary)' }}>
-                        {title}
-                      </h3>
-                      {description && (
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{description}</p>
-                      )}
-                    </div>
+                    <X size={16} />
+                  </motion.button>
+                  
+                  {badge && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="absolute bottom-3 left-4 max-w-[calc(100%-2rem)]"
+                    >
+                      {badge}
+                    </motion.div>
+                  )}
+                </div>
 
-                    {/* Children */}
-                    {children && (
-                      <div className="px-4">
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.08, duration: 0.25 }}
-                          className="text-sm pb-4 pt-2 flex flex-col items-start gap-3"
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          {children}
-                        </motion.div>
-                      </div>
+                {/* Scrollable content */}
+                <div
+                  onWheel={(e) => e.stopPropagation()}
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  <div className="px-6 pt-5 pb-5">
+                    <motion.h3 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.3 }}
+                      className="font-bold text-lg leading-tight mb-3 font-heading break-words overflow-hidden" 
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {title}
+                    </motion.h3>
+                    {description && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15, duration: 0.3 }}
+                        className="text-sm leading-relaxed line-clamp-5 break-words overflow-hidden mt-2" 
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        {description}
+                      </motion.p>
                     )}
-
-                    {/* Interactions — tiny, bottom */}
-                    <div className="px-4 py-2.5 shrink-0 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                      <InteractionBar {...interactionProps} />
-                    </div>
                   </div>
-                </motion.div>
-              </div>
+
+                  {children && (
+                    <div className="px-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.25 }}
+                        className="text-sm pb-5 pt-3 flex flex-col items-start gap-3 overflow-hidden"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {children}
+                      </motion.div>
+                    </div>
+                  )}
+
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="px-6 py-4 shrink-0 border-t" 
+                    style={{ borderColor: 'var(--border-color)' }}
+                  >
+                    <InteractionBar {...interactionProps} />
+                  </motion.div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
-        </AnimatePresence>,
+        </AnimatePresence>, 
         document.body
       )}
     </>

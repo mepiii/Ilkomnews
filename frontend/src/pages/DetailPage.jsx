@@ -79,7 +79,7 @@ const DetailPage = ({ type }) => {
   if (!isValidType) {
     return (
       <div className="min-h-screen bg-transparent relative z-0">
-        <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-20 relative z-10">
           <Breadcrumb />
           <ErrorMessage message={`Tipe konten "${type}" tidak valid`} onRetry={() => navigate('/')} />
         </div>
@@ -87,9 +87,9 @@ const DetailPage = ({ type }) => {
     )
   }
 
-  if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
-  if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
-  if (!data) return <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div></div>
+  if (loading) return <div className="min-h-screen bg-transparent relative z-0 pt-6 pb-20"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><LoadingSpinner /></div></div>
+  if (error) return <div className="min-h-screen bg-transparent relative z-0 pt-6 pb-20"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message={error} onRetry={() => window.location.reload()} /></div></div>
+  if (!data) return <div className="min-h-screen bg-transparent relative z-0 pt-6 pb-20"><div className="max-w-7xl mx-auto px-4 relative z-10"><Breadcrumb /><ErrorMessage message="Konten tidak ditemukan" onRetry={() => navigate(`/${type}`)} /></div></div>
 
   const renderDetail = () => {
     switch (type) {
@@ -103,7 +103,7 @@ const DetailPage = ({ type }) => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen bg-transparent relative z-0 pt-24 pb-8">
+      <div className="min-h-screen bg-transparent relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <Breadcrumb />
           {renderDetail()}

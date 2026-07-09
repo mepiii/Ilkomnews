@@ -1,0 +1,6 @@
+
+    // Admin profile (current logged in admin)
+    Route::get("/admin/profile", [AdminProfileController::class, "showCurrent"]);
+    Route::put("/admin/profile", [AdminProfileController::class, "updateCurrent"]);
+    Route::put("/admin/profile/password", [AdminProfileController::class, "updateCurrentPassword"]);
+

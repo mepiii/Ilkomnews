@@ -10,8 +10,10 @@ use Illuminate\Validation\Rule;
 
 class AdminProfileController extends Controller
 {
+    const MAX_ADMIN_SLOTS = 9;
+
     /**
-     * Get all admin users
+     * Get all admin users (limited to 9 slots)
      */
     public function index()
     {
@@ -19,7 +21,14 @@ class AdminProfileController extends Controller
             ->orderBy('id')
             ->get(['id', 'name', 'email', 'created_at', 'updated_at']);
 
-        return response()->json($admins);
+        return response()->json([
+            'admins' => $admins,
+            'slots' => [
+                'used' => $admins->count(),
+                'max' => self::MAX_ADMIN_SLOTS,
+                'available' => self::MAX_ADMIN_SLOTS - $admins->count(),
+            ],
+        ]);
     }
 
     /**
@@ -50,7 +59,7 @@ class AdminProfileController extends Controller
         $admin->update(['name' => $validated['name']]);
 
         return response()->json([
-            'message' => 'Name updated successfully',
+            'message' => 'Nama berhasil diperbarui',
             'admin' => [
                 'id' => $admin->id,
                 'name' => $admin->name,
@@ -76,11 +85,11 @@ class AdminProfileController extends Controller
 
         $admin->update([
             'email' => $validated['email'],
-            'email_verified_at' => null, // Reset verification
+            'email_verified_at' => null,
         ]);
 
         return response()->json([
-            'message' => 'Email updated successfully. Please verify the new email.',
+            'message' => 'Email berhasil diperbarui. Silakan verifikasi email baru.',
             'admin' => [
                 'id' => $admin->id,
                 'name' => $admin->name,
@@ -100,14 +109,13 @@ class AdminProfileController extends Controller
             'current_password' => 'required|string',
             'password' => 'required|string|min:12|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
         ], [
-            'password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
-            'password.min' => 'Password must be at least 12 characters.',
+            'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
+            'password.min' => 'Password minimal 12 karakter.',
         ]);
 
-        // Verify current password
         if (!Hash::check($validated['current_password'], $admin->password)) {
             return response()->json([
-                'errors' => ['current_password' => ['Current password is incorrect.']],
+                'errors' => ['current_password' => ['Password saat ini tidak sesuai.']],
             ], 422);
         }
 
@@ -115,26 +123,31 @@ class AdminProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        // Log out other sessions for this user
-        \DB::table('sessions')->where('user_id', $admin->id)->delete();
-
         return response()->json([
-            'message' => 'Password updated successfully. Please login again.',
+            'message' => 'Password berhasil diperbarui.',
         ]);
     }
 
     /**
-     * Create new admin
+     * Create new admin (limited to 9 slots)
      */
     public function store(Request $request)
     {
+        $currentCount = User::where('is_admin', true)->count();
+        
+        if ($currentCount >= self::MAX_ADMIN_SLOTS) {
+            return response()->json([
+                'message' => 'Slot admin penuh. Maksimal ' . self::MAX_ADMIN_SLOTS . ' admin.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:12|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
         ], [
-            'password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
-            'password.min' => 'Password must be at least 12 characters.',
+            'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
+            'password.min' => 'Password minimal 12 karakter.',
         ]);
 
         $admin = User::create([
@@ -146,41 +159,49 @@ class AdminProfileController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Admin created successfully',
+            'message' => 'Admin berhasil dibuat',
             'admin' => [
                 'id' => $admin->id,
                 'name' => $admin->name,
                 'email' => $admin->email,
             ],
+            'slots' => [
+                'used' => $currentCount + 1,
+                'max' => self::MAX_ADMIN_SLOTS,
+                'available' => self::MAX_ADMIN_SLOTS - $currentCount - 1,
+            ],
         ], 201);
     }
 
     /**
-     * Delete admin (cannot delete self or last admin)
+     * Delete admin (cannot delete self or if only one remains)
      */
     public function destroy(Request $request, $id)
     {
         $admin = User::where('is_admin', true)->findOrFail($id);
 
-        // Prevent self-deletion
         if ($request->user()->id === $admin->id) {
             return response()->json([
-                'message' => 'Cannot delete your own account.',
+                'message' => 'Tidak dapat menghapus akun sendiri.',
             ], 403);
         }
 
-        // Prevent deleting last admin
         $adminCount = User::where('is_admin', true)->count();
         if ($adminCount <= 1) {
             return response()->json([
-                'message' => 'Cannot delete the last admin account.',
+                'message' => 'Tidak dapat menghapus admin terakhir.',
             ], 403);
         }
 
         $admin->delete();
 
         return response()->json([
-            'message' => 'Admin deleted successfully',
+            'message' => 'Admin berhasil dihapus',
+            'slots' => [
+                'used' => $adminCount - 1,
+                'max' => self::MAX_ADMIN_SLOTS,
+                'available' => self::MAX_ADMIN_SLOTS - $adminCount + 1,
+            ],
         ]);
     }
 }

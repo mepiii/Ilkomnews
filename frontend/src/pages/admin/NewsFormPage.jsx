@@ -14,13 +14,17 @@ const INITIAL_STATE = {
   author_position: '',
   author_image: null,
   image: null,
-  tags: '',
   published: false,
 };
 
 const CATEGORIES = ['Workshop', 'Kompetisi', 'Pelatihan', 'Seminar'];
 
-const TAG_OPTIONS = ['Berita', 'Kampus', 'Lomba', 'Teknologi', 'Workshop', 'Seminar', 'Kompetisi', 'Pelatihan', 'Event', 'Tutorial', 'Pembelajaran', 'Fasilkom', 'Unsri', 'Open Source', 'AI', 'Web Development', 'Mobile', 'UI/UX', 'Cyber Security', 'Data Science'];
+// Helper to get full URL for stored images
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `/storage/${path}`;
+};
 
 export default function NewsFormPage() {
   const { id } = useParams();
@@ -52,15 +56,20 @@ export default function NewsFormPage() {
           author_institution: item.author_institution || '',
           author_position: item.author_position || '',
           author_image: null,
-          image: null, 
-          tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
+          image: null,
           published: Boolean(item.published),
         });
-        if (item.image_url || item.image) {
-          setImagePreview(item.image_url || item.image);
+        
+        // Handle main image preview - check both image_url and image
+        const mainImageUrl = item.image_url || getImageUrl(item.image);
+        if (mainImageUrl) {
+          setImagePreview(mainImageUrl);
         }
-        if (item.author_image) {
-          setAuthorImagePreview(item.author_image);
+        
+        // Handle author image preview - check both author_image_url and author_image
+        const authorUrl = item.author_image_url || getImageUrl(item.author_image);
+        if (authorUrl) {
+          setAuthorImagePreview(authorUrl);
         }
       })
       .catch((err) => setServerError(err.message || 'Failed to fetch news'))
@@ -75,12 +84,15 @@ export default function NewsFormPage() {
   };
 
   const objectUrlRef = useRef(null);
+  const authorObjectUrlRef = useRef(null);
 
-  // Cleanup object URL on unmount
   useEffect(() => {
     return () => {
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
+      }
+      if (authorObjectUrlRef.current) {
+        URL.revokeObjectURL(authorObjectUrlRef.current);
       }
     };
   }, []);
@@ -89,7 +101,6 @@ export default function NewsFormPage() {
     const file = e.target.files[0];
     if (file) {
       updateField('image', file);
-      // Revoke previous object URL to avoid memory leaks
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
       }
@@ -115,13 +126,21 @@ export default function NewsFormPage() {
     const file = e.target.files[0];
     if (file) {
       updateField('author_image', file);
+      if (authorObjectUrlRef.current) {
+        URL.revokeObjectURL(authorObjectUrlRef.current);
+      }
       const url = URL.createObjectURL(file);
+      authorObjectUrlRef.current = url;
       setAuthorImagePreview(url);
     }
   };
 
   const removeAuthorImage = () => {
     updateField('author_image', null);
+    if (authorObjectUrlRef.current) {
+      URL.revokeObjectURL(authorObjectUrlRef.current);
+      authorObjectUrlRef.current = null;
+    }
     setAuthorImagePreview(null);
     if (authorFileInputRef.current) {
       authorFileInputRef.current.value = '';
@@ -143,8 +162,8 @@ export default function NewsFormPage() {
     
     const errs = validate();
     if (Object.keys(errs).length > 0) { 
-      setErrors(errs); 
-      return; 
+      setErrors(errs);
+      return;
     }
     
     setSaving(true);
@@ -161,15 +180,10 @@ export default function NewsFormPage() {
       if (form.author) formData.append('author', form.author);
       if (form.author_institution) formData.append('author_institution', form.author_institution);
       if (form.author_position) formData.append('author_position', form.author_position);
-      if (form.tags) {
-        const tagsArray = form.tags.split(',').map((t) => t.trim()).filter(Boolean);
-        formData.append('tags', JSON.stringify(tagsArray));
-      }
       
       if (form.image instanceof File) {
         formData.append('image', form.image);
       } else if (isEdit && !imagePreview) {
-        // user removed the image in edit mode
         formData.append('remove_image', '1');
       }
 
@@ -178,9 +192,8 @@ export default function NewsFormPage() {
       } else if (isEdit && !authorImagePreview) {
         formData.append('remove_author_image', '1');
       }
-
+      
       if (isEdit) {
-        formData.append('_method', 'PUT');
         await adminNews.updateWithForm(id, formData);
       } else {
         await adminNews.createWithForm(formData);
@@ -188,7 +201,7 @@ export default function NewsFormPage() {
       
       navigate('/admin/news');
     } catch (err) {
-      setServerError(err.message || 'Failed to save article');
+      setServerError(err.message || 'Failed to save news');
     } finally {
       setSaving(false);
     }
@@ -197,141 +210,192 @@ export default function NewsFormPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-gray-900 dark:border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   const inputClass = (field) =>
-    `w-full px-3 py-2 border rounded-lg text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-colors placeholder:text-[var(--text-muted)] ${
-      errors[field]
-        ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
-        : 'border-[var(--border-color)]'
+    `w-full px-4 py-2.5 border rounded-xl text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors ${
+      errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-[#262626]'
     }`;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 border-b border-[var(--border-color)] pb-4">
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-6">
         <button
           onClick={() => navigate('/admin/news')}
-          className="p-2 border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] transition-colors"
-          aria-label="Kembali"
+          className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 transition-colors mb-3"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
+          Kembali ke Daftar Berita
         </button>
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-            {isEdit ? 'Edit Berita' : 'Tambah Berita'}
-          </h1>
-          <p className="text-[var(--text-secondary)] text-sm mt-1">Lengkapi form di bawah untuk artikel berita.</p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {isEdit ? 'Edit Berita' : 'Buat Berita Baru'}
+        </h1>
       </div>
 
       {serverError && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm font-medium">
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm">
           {serverError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 md:p-8 space-y-6 shadow-sm">
-        
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">Judul <span className="text-red-500">*</span></label>
-          <input type="text" value={form.title} onChange={(e) => updateField('title', e.target.value)} className={inputClass('title')} placeholder="Masukkan judul..." />
-          {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">Ringkasan</label>
-          <textarea value={form.summary} onChange={(e) => updateField('summary', e.target.value)} rows={2} className={inputClass('summary')} placeholder="Ringkasan singkat (opsional)..." />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Kategori <span className="text-red-500">*</span></label>
-            <select value={form.category} onChange={(e) => updateField('category', e.target.value)} className={inputClass('category')}>
-              <option value="">-- Pilih Kategori --</option>
-              {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Judul <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              className={inputClass('title')}
+              placeholder="Judul berita"
+            />
+            {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Kategori <span className="text-red-500">*</span></label>
+            <select
+              value={form.category}
+              onChange={(e) => updateField('category', e.target.value)}
+              className={inputClass('category')}
+            >
+              <option value="">Pilih kategori</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
             </select>
             {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Tanggal <span className="text-red-500">*</span></label>
-            <input type="date" value={form.date} onChange={(e) => updateField('date', e.target.value)} className={inputClass('date')} />
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Tanggal <span className="text-red-500">*</span></label>
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) => updateField('date', e.target.value)}
+              className={inputClass('date')}
+            />
             {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Penulis</label>
-            <input type="text" value={form.author} onChange={(e) => updateField('author', e.target.value)} className={inputClass('author')} placeholder="Nama Penulis" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Institusi/Perusahaan</label>
-            <input type="text" value={form.author_institution} onChange={(e) => updateField('author_institution', e.target.value)} className={inputClass('author_institution')} placeholder="Contoh: FASILKOM Unsri" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Jabatan</label>
-            <input type="text" value={form.author_position} onChange={(e) => updateField('author_position', e.target.value)} className={inputClass('author_position')} placeholder="Contoh: Ketua BEM" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-[var(--text-primary)]">Tags</label>
-            <select
-              value={form.tags ? form.tags.split(',')[0]?.trim() || '' : ''}
-              onChange={(e) => updateField('tags', e.target.value)}
-              className={inputClass('tags')}
-            >
-              <option value="">-- Pilih Tag --</option>
-              {TAG_OPTIONS.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Ringkasan</label>
+            <input
+              type="text"
+              value={form.summary}
+              onChange={(e) => updateField('summary', e.target.value)}
+              className={inputClass('summary')}
+              placeholder="Ringkasan singkat (opsional)"
+            />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">Foto Profil Penulis</label>
-          <div className="flex items-center gap-4">
+        {/* Author Section */}
+        <div className="p-4 border border-gray-200 dark:border-[#262626] rounded-xl bg-gray-50 dark:bg-[#141414]/30">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Informasi Penulis</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="space-y-1">
+              <label className="block text-sm text-gray-900 dark:text-gray-100">Nama Penulis</label>
+              <input
+                type="text"
+                value={form.author}
+                onChange={(e) => updateField('author', e.target.value)}
+                className={inputClass('author')}
+                placeholder="Nama penulis"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm text-gray-900 dark:text-gray-100">Institusi</label>
+              <input
+                type="text"
+                value={form.author_institution}
+                onChange={(e) => updateField('author_institution', e.target.value)}
+                className={inputClass('author_institution')}
+                placeholder="Universitas/Institusi"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm text-gray-900 dark:text-gray-100">Posisi/Jabatan</label>
+              <input
+                type="text"
+                value={form.author_position}
+                onChange={(e) => updateField('author_position', e.target.value)}
+                className={inputClass('author_position')}
+                placeholder="Dosen/Mahasiswa/Staf"
+              />
+            </div>
+          </div>
+          
+          {/* Author Image Upload */}
+          <div className="flex items-start gap-4">
             <div
               onClick={() => authorFileInputRef.current?.click()}
-              className="relative group cursor-pointer shrink-0"
+              className="relative cursor-pointer group"
             >
               <input type="file" accept="image/*" ref={authorFileInputRef} onChange={handleAuthorImageChange} className="hidden" />
-              <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${authorImagePreview ? 'border-green-500/50' : 'border-[var(--border-color)] hover:border-[var(--accent)]'}`}>
+              <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${
+                authorImagePreview 
+                  ? 'border-green-500/50 bg-gray-50 dark:bg-[#141414]' 
+                  : 'border-gray-200 dark:border-[#262626] hover:border-gray-900 dark:border-white bg-gray-50 dark:bg-[#141414]'
+              }`}>
                 {authorImagePreview ? (
-                  <img src={authorImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img 
+                    src={authorImagePreview} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50%" y="50%" fill="%239CA3AF" font-size="12" text-anchor="middle" dy=".3em">Error</text></svg>';
+                    }}
+                  />
                 ) : (
                   <div className="flex flex-col items-center gap-1">
-                    <Upload size={20} className="text-[var(--text-secondary)]" />
-                    <span className="text-[9px] text-[var(--text-muted)]">Foto</span>
+                    <Upload size={20} className="text-gray-500 dark:text-gray-400" />
+                    <span className="text-[9px] text-gray-400 dark:text-gray-500">Foto</span>
                   </div>
                 )}
               </div>
               {authorImagePreview && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); removeAuthorImage(); }} className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.stopPropagation(); removeAuthorImage(); }} 
+                  className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+                >
                   <X size={12} />
                 </button>
               )}
             </div>
-            <div className="text-xs text-[var(--text-muted)]">
-              <p className="font-medium text-[var(--text-primary)]">Foto Profil</p>
-              <p>Opsional. JPG/PNG, max 5MB.</p>
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              <p className="font-medium text-gray-900 dark:text-gray-100">Foto Profil Penulis</p>
+              <p>Opsional. JPG/PNG, max 500KB.</p>
+              <p className="mt-1 text-gray-500 dark:text-gray-400">Gambar akan ditampilkan di preview berita.</p>
             </div>
           </div>
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">Konten <span className="text-red-500">*</span></label>
-          <textarea value={form.content} onChange={(e) => updateField('content', e.target.value)} rows={10} className={inputClass('content')} placeholder="Isi lengkap berita..." />
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Konten <span className="text-red-500">*</span></label>
+          <textarea 
+            value={form.content} 
+            onChange={(e) => updateField('content', e.target.value)} 
+            rows={10} 
+            className={inputClass('content')} 
+            placeholder="Isi lengkap berita..." 
+          />
           {errors.content && <p className="text-xs text-red-500">{errors.content}</p>}
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[var(--text-primary)]">Thumbnail Berita</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Thumbnail Berita</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="mt-2 block border-2 border-dashed border-[var(--border-color)] rounded-xl p-6 bg-[var(--bg-secondary)] text-center transition-colors hover:border-[var(--accent)] cursor-pointer"
+            className="mt-2 block border-2 border-dashed border-gray-200 dark:border-[#262626] rounded-xl p-6 bg-gray-50 dark:bg-[#141414] text-center transition-colors hover:border-gray-900 dark:border-white cursor-pointer"
           >
             <input
               type="file"
@@ -342,37 +406,63 @@ export default function NewsFormPage() {
             />
             {imagePreview ? (
               <div className="relative inline-block">
-                <img src={imagePreview} alt="Preview" className="max-h-64 rounded-lg shadow-sm" />
-                <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md">
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  className="max-h-64 rounded-lg shadow-sm"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%23374151" width="400" height="200"/><text x="50%" y="50%" fill="%239CA3AF" font-size="14" text-anchor="middle" dy=".3em">Image Error</text></svg>';
+                  }}
+                />
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.stopPropagation(); removeImage(); }} 
+                  className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+                >
                   <X size={16} />
                 </button>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center space-y-3">
-                <div className="p-3 bg-[var(--bg-primary)] rounded-full">
-                  <Upload size={24} className="text-[var(--text-secondary)]" />
+                <div className="p-3 bg-white dark:bg-[#0a0a0a] rounded-full">
+                  <Upload size={24} className="text-gray-500 dark:text-gray-400" />
                 </div>
-                <div className="text-sm text-[var(--text-secondary)]">
-                  <span className="font-medium text-[var(--accent)]">Klik atau seret gambar</span>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Klik atau seret gambar</span>
                 </div>
-                <p className="text-xs text-[var(--text-muted)]">PNG, JPG, GIF up to 5MB</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">PNG, JPG, GIF up to 10MB</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-4 border-t border-[var(--border-color)]">
-          <input type="checkbox" id="isPublished" checked={form.published} onChange={(e) => updateField('published', e.target.checked)} className="w-5 h-5 accent-[var(--accent)] rounded" />
-          <label htmlFor="isPublished" className="font-medium text-[var(--text-primary)] cursor-pointer">
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-[#262626]">
+          <input 
+            type="checkbox" 
+            id="isPublished" 
+            checked={form.published} 
+            onChange={(e) => updateField('published', e.target.checked)} 
+            className="w-5 h-5 accent-gray-900 dark:accent-white rounded" 
+          />
+          <label htmlFor="isPublished" className="font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
             Publikasikan secara publik
           </label>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
-          <button type="button" onClick={() => navigate('/admin/news')} className="px-5 py-2 border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors font-medium">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#262626]">
+          <button 
+            type="button" 
+            onClick={() => navigate('/admin/news')} 
+            className="px-5 py-2 border border-gray-200 dark:border-[#262626] text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors font-medium"
+          >
             Batal
           </button>
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-5 py-2 bg-[var(--accent)] text-white rounded-lg hover:brightness-110 transition-colors font-medium disabled:opacity-50">
+          <button 
+            type="submit" 
+            disabled={saving} 
+            className="inline-flex items-center gap-2 px-5 py-2 bg-gray-900 dark:bg-white text-white rounded-lg hover:brightness-110 transition-colors font-medium disabled:opacity-50"
+          >
             <Save size={18} />
             {saving ? 'Menyimpan...' : 'Simpan Berita'}
           </button>

@@ -40,7 +40,12 @@ export function unlockScroll() {
   }
 }
 
+/**
+ * Emergency reset — call on unmount to guarantee scroll is never stuck.
+ * Safe to call even if no lock is active.
+ */
 export function resetScrollLock() {
+  if (lockCount === 0) return
   lockCount = 0
   document.documentElement.style.overflow = ''
   document.documentElement.style.touchAction = ''
@@ -50,4 +55,6 @@ export function resetScrollLock() {
   document.body.style.top = ''
   document.body.style.left = ''
   document.body.style.right = ''
+  window.scrollTo(0, savedScrollY)
 }
+

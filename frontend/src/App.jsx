@@ -50,7 +50,7 @@ function AppContent() {
       )}
 
       {!isAdminRoute && <Navbar />}
-      <main className="relative z-0 flex-grow">
+      <main className="relative z-0 flex-grow pt-20 pb-16">
         <Suspense fallback={<PageLoader />}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>

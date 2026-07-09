@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Globe, Smartphone, Palette, Gamepad2, Sparkles, Filter, Tag } from 'lucide-react'
+import { Globe, Smartphone, Palette, Gamepad2, Sparkles, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 import Breadcrumb from '../components/common/Breadcrumb'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import { GlowCard } from '../components/ui/GlowCard'
@@ -15,6 +15,7 @@ import { parseTags } from '../utils/parsers'
 import { projectsService } from '../services/api'
 
 const TABS = [
+  { id: 'all', label: 'Semua', icon: Sparkles },
   { id: 'web', label: 'Pengembangan Web', icon: Globe },
   { id: 'mobile', label: 'Aplikasi Mobile', icon: Smartphone },
   { id: 'uiux', label: 'Desain UI/UX', icon: Palette },
@@ -30,9 +31,10 @@ import { container, itemVariant } from '../lib/animations'
 const IlkomGalleryPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('web')
+  const [activeTab, setActiveTab] = useState('all')
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('Terbaru')
   const [currentPage, setCurrentPage] = useState(1)
@@ -56,12 +58,21 @@ const IlkomGalleryPage = () => {
   }, [location.search, navigate])
 
   useEffect(() => {
+    const controller = new AbortController()
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
-    projectsService.getAll(activeTab === 'all' ? {} : { category: activeTab })
+    setError('')
+    projectsService.getAll(activeTab === 'all' ? {} : { category: activeTab }, { signal: controller.signal })
       .then(res => setProjects(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setProjects([]))
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'Gagal memuat proyek')
+          // Do NOT clear projects — keep stale data visible and surface
+          // the error in the UI with a "Muat ulang" button instead.
+        }
+      })
       .finally(() => setLoading(false))
+    return () => controller.abort()
   }, [activeTab])
 
   useEffect(() => {
@@ -99,7 +110,7 @@ const IlkomGalleryPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-24 pb-12">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <Breadcrumb />
 
@@ -116,7 +127,7 @@ const IlkomGalleryPage = () => {
           />
 
           {/* Tabs */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
             <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
           </div>
 
@@ -138,13 +149,18 @@ const IlkomGalleryPage = () => {
 
           {/* Projects Grid — same as homepage */}
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab + currentPage + selectedTag} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }} className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+            <motion.div key={activeTab + currentPage + selectedTag} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }}              className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <motion.div key={i} variants={itemVariant}>
                     <div className="h-64 rounded-xl bg-theme-secondary animate-pulse" />
                   </motion.div>
                 ))
+              ) : error ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-sm text-red-500 mb-3">{error}</p>
+                  <button onClick={() => { setError(''); setActiveTab(t => t) }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--accent)] text-white text-sm font-semibold hover:bg-[var(--accent-hover)] transition-all">Muat ulang</button>
+                </div>
               ) : paginatedItems.length === 0 ? (
                 <EmptyResults
                   icon={<Globe size={40} className="text-accent" />}
@@ -170,7 +186,7 @@ const IlkomGalleryPage = () => {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
               >
                 <ChevronLeft size={18} className="text-[var(--accent)]" />
               </button>
@@ -181,7 +197,7 @@ const IlkomGalleryPage = () => {
                   className={`w-10 h-10 rounded-full text-sm font-medium transition-all ${
                     currentPage === page
                       ? 'bg-[var(--accent)] text-white shadow-md'
-                      : 'border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
+                      : 'border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 hover:bg-[var(--accent)]/10'
                   }`}
                 >
                   {page}
@@ -190,7 +206,7 @@ const IlkomGalleryPage = () => {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
+                className="p-2 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-800/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent)]/10 transition-colors"
               >
                 <ChevronRight size={18} className="text-[var(--accent)]" />
               </button>

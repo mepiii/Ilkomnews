@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BasePublishableController extends Controller
 {
+    /**
+     * Cache TTL for list endpoints (seconds).
+     * Tight enough that updates feel live, wide enough to absorb
+     * burst reads from the public site.
+     */
+    protected int $cacheTtl = 60;
+
     /**
      * Get the model class for this controller.
      */
@@ -37,25 +45,48 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
+     * Build a stable cache key for the current request.
+     * We only cache on the cheap public reads (no user, no page > 1, no search).
+     */
+    protected function cacheKey(string $tag, Request $request): ?string
+    {
+        // Don't cache personalised or paginated-after-first-page requests
+        if ($request->has('search')) return null;
+        if ($request->get('page', 1) > 1) return null;
+        if ($request->has('nocache')) return null;
+
+        $parts = [$tag];
+        foreach ($request->query() as $k => $v) {
+            if (in_array($k, ['page', 'search', 'nocache'], true)) continue;
+            $parts[] = $k . '=' . $v;
+        }
+        return implode('|', $parts);
+    }
+
+    /**
      * List resources with optional filtering and pagination.
      */
     public function index(Request $request)
     {
         $modelClass = $this->getModelClass();
-        $query = $modelClass::published()->latest($this->getSortColumn());
+        $key = $this->cacheKey(static::class . '::index', $request);
 
-        // Apply filter (category/type/etc)
-        $filterParam = $this->getFilterParam();
-        if ($request->has($filterParam) && $request->$filterParam !== 'all') {
-            $query->where($this->getFilterColumn(), $request->$filterParam);
-        }
+        $run = function () use ($modelClass, $request) {
+            $query = $modelClass::published()->latest($this->getSortColumn());
+            $filterParam = $this->getFilterParam();
+            if ($request->has($filterParam) && $request->$filterParam !== 'all') {
+                $query->where($this->getFilterColumn(), $request->$filterParam);
+            }
+            if ($request->has('search')) {
+                $this->applySearch($query, $request->search);
+            }
+            return $query->paginate(12);
+        };
 
-        // Apply search if implemented by child controller
-        if ($request->has('search')) {
-            $this->applySearch($query, $request->search);
-        }
+        $payload = $key ? Cache::remember($key, $this->cacheTtl, $run) : $run();
 
-        return response()->json($query->paginate(12));
+        return response()->json($payload)
+            ->header('X-Cache', $key ? 'HIT' : 'BYPASS');
     }
 
     /**
@@ -64,11 +95,16 @@ abstract class BasePublishableController extends Controller
     public function show($id)
     {
         $modelClass = $this->getModelClass();
-        return response()->json(
-            $modelClass::published()
+        $key = "show:{$modelClass}:{$id}";
+
+        $payload = Cache::remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
+            return $modelClass::published()
                 ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
-                ->firstOrFail()
-        );
+                ->firstOrFail();
+        });
+
+        return response()->json($payload)
+            ->header('X-Cache', 'HIT');
     }
 
     /**
@@ -78,12 +114,16 @@ abstract class BasePublishableController extends Controller
     {
         $modelClass = $this->getModelClass();
         $limit = min($request->get('limit', 6), 20);
-        return response()->json(
-            $modelClass::published()
+        $key = "latest:{$modelClass}:{$limit}";
+
+        $payload = Cache::remember($key, 30, function () use ($modelClass, $request, $limit) {
+            return $modelClass::published()
                 ->latest($this->getSortColumn())
                 ->take($limit)
-                ->get()
-        );
+                ->get();
+        });
+
+        return response()->json($payload);
     }
 
     /**
@@ -92,11 +132,15 @@ abstract class BasePublishableController extends Controller
     public function categories()
     {
         $modelClass = $this->getModelClass();
-        return response()->json(
-            $modelClass::published()
+        $key = "categories:{$modelClass}";
+
+        $payload = Cache::remember($key, 300, function () use ($modelClass) {
+            return $modelClass::published()
                 ->distinct()
-                ->pluck($this->getFilterColumn())
-        );
+                ->pluck($this->getFilterColumn());
+        });
+
+        return response()->json($payload);
     }
 
     /**

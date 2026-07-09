@@ -39,6 +39,7 @@ Route::middleware(['auth', 'admin', 'throttle:admin'])->prefix('api/admin')->gro
     Route::put('/news/{news}', [Admin\NewsController::class, 'update']);
     Route::post('/news/{news}', [Admin\NewsController::class, 'update']); // _method=PUT spoofing
     Route::delete('/news/{news}', [Admin\NewsController::class, 'destroy']);
+    Route::put('/news/{news}/toggle-hidden', [Admin\NewsController::class, 'toggleHidden']);
 
     // Notifications
     Route::get('/notifications', [Admin\NotificationController::class, 'index']);

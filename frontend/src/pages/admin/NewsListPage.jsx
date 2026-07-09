@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Plus, Edit, Trash2, Newspaper, GripVertical } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Newspaper, GripVertical, RefreshCw } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
+import ErrorState from '../../components/admin/ui/ErrorState'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -24,6 +25,10 @@ export default function NewsListPage() {
 
   const [searchInput, setSearchInput] = useState(search)
   const [draggedIndex, setDraggedIndex] = useState(null)
+  const [backgroundLoading, setBackgroundLoading] = useState(false)
+  const abortRef = useRef(null)
+  const isFirstLoad = useRef(true)
+  const debounceRef = useRef(null)
 
   const handleDragStart = (e, index) => {
     setDraggedIndex(index)
@@ -54,25 +59,43 @@ export default function NewsListPage() {
     }
   }
 
-  const fetchNews = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const params = { page, limit: PAGE_SIZE }
-      if (search) params.search = search
-      if (status) params.status = status
-      const res = await adminNews.getAll(params)
-      setItems(res.data || res.news || res || [])
-      setTotal(res.total || (res.data || res.news || res || []).length)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+  const fetchNews = useCallback(() => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    if (isFirstLoad.current) {
+      setLoading(true)
+    } else {
+      setBackgroundLoading(true)
     }
+    setError('')
+
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    const params = { page, limit: PAGE_SIZE }
+    if (search) params.search = search
+    if (status) params.status = status
+
+    adminNews.getAll(params, { signal: controller.signal })
+      .then(res => {
+        const data = res.data || res.news || res || []
+        setItems(Array.isArray(data) ? data : [])
+        setTotal(res.total || (Array.isArray(data) ? data.length : 0))
+        isFirstLoad.current = false
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        setError(err.message || 'Gagal memuat berita')
+      })
+      .finally(() => {
+        clearTimeout(timeout)
+        setLoading(false)
+        setBackgroundLoading(false)
+      })
   }, [page, search, status])
 
    
-  useEffect(() => { fetchNews() }, [fetchNews])
+  useEffect(() => { fetchNews(); return () => abortRef.current?.abort() }, [fetchNews])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -100,6 +123,17 @@ export default function NewsListPage() {
     }
   }
 
+  const handleToggleHidden = async (id) => {
+    try {
+      await adminNews.toggleHidden(id)
+      setItems((prev) => prev.map((item) =>
+        item.id === id ? { ...item, published: !item.published } : item
+      ))
+    } catch (err) {
+      alert('Gagal mengubah status: ' + err.message)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const setPage = (p) => {
@@ -112,36 +146,67 @@ export default function NewsListPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Berita</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Berita</h1>
         <Link
           to="/admin/news/create"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors"        >
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium rounded-lg transition-colors"        >
           <Plus size={16} />
           Tambah Berita
         </Link>
       </div>
 
+      {/* Background loading */}
+      {backgroundLoading && (
+        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+          <div className="w-3 h-3 border border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin" />
+          Memperbarui...
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-between gap-2">
+          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+          <button
+            onClick={fetchNews}
+            className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 transition-colors"
+          >
+            <RefreshCw size={12} /> Muat ulang
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        <div className="flex-1 relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value
+              setSearchInput(val)
+              clearTimeout(debounceRef.current)
+              debounceRef.current = setTimeout(() => {
+                const next = new URLSearchParams(searchParams)
+                if (val) next.set('search', val); else next.delete('search')
+                next.set('page', '1')
+                setSearchParams(next)
+              }, 500)
+            }}
             placeholder="Cari berita..."
-            className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-[#262626] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
           />
-        </form>
-        <div className="flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1">
+        </div>
+        <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1">
           {STATUS_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => handleStatusFilter(opt.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 status === opt.value
-                  ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  ? 'bg-white dark:bg-[#262626] text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               {opt.label}
@@ -152,24 +217,24 @@ export default function NewsListPage() {
 
       {/* Error */}
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 rounded-lg text-red-600 dark:text-red-400 text-sm">{error}</div>
+        <ErrorState message={error} onRetry={() => { setError(''); setLoading(true); /* re-fetch triggered by state change */ }} />
       )}
 
       {/* Table */}
-      <div className="bg-[var(--bg-card)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden">
+      <div className="bg-gray-50 dark:bg-[#141414] rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-[var(--text-muted)] text-sm">Memuat...</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat...</div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <Newspaper size={48} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
-            <p className="text-[var(--text-secondary)] text-sm">Tidak ada berita ditemukan</p>
+            <Newspaper size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3 opacity-40" />
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Tidak ada berita ditemukan</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                <tr className="border-b border-[var(--border-color)] text-left text-[var(--text-secondary)]">
+                <tr className="border-b border-gray-200 dark:border-[#262626] text-left text-gray-500 dark:text-gray-400">
                     <th className="px-2 py-3 w-10"></th>
                     <th className="px-5 py-3 font-medium">Judul</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Kategori</th>
@@ -179,46 +244,49 @@ export default function NewsListPage() {
                     <th className="px-5 py-3 font-medium text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-color)]">
+                <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
                   {items.map((item, index) => (
-                    <tr key={item.id} className={`hover:bg-[var(--bg-secondary)] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
+                    <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragEnd={handleDragEnd}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      <td className="px-2 py-3 text-[var(--text-muted)] cursor-grab">
+                      <td className="px-2 py-3 text-gray-400 dark:text-gray-500 cursor-grab">
                         <GripVertical size={16} />
                       </td>
                       <td className="px-5 py-3 max-w-[250px]">
-                        <span className="font-medium text-[var(--text-primary)] truncate block">{item.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{item.title}</span>
                       </td>
-                      <td className="px-5 py-3 hidden md:table-cell text-[var(--text-secondary)]">{item.category || '-'}</td>
-                      <td className="px-5 py-3 hidden lg:table-cell text-[var(--text-secondary)]">
+                      <td className="px-5 py-3 hidden md:table-cell text-gray-500 dark:text-gray-400">{item.category || '-'}</td>
+                      <td className="px-5 py-3 hidden lg:table-cell text-gray-500 dark:text-gray-400">
                         {item.date ? new Date(item.date).toLocaleDateString('id-ID') : '-'}
                       </td>
-                      <td className="px-5 py-3 hidden lg:table-cell text-[var(--text-secondary)] text-right">{item.views ?? 0}</td>
+                      <td className="px-5 py-3 hidden lg:table-cell text-gray-500 dark:text-gray-400 text-right">{item.views ?? 0}</td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.published
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                        }`}>
+                        <button
+                          onClick={() => handleToggleHidden(item.id)}
+                          className={`text-xs px-2.5 py-0.5 rounded-full font-medium cursor-pointer transition-colors ${
+                            item.published
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                        >
                           {item.published ? 'Tayang' : 'Draft'}
-                        </span>
+                        </button>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             to={`/admin/news/${item.id}/edit`}
-                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-secondary)] transition-colors"
+                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
                           >
                             <Edit size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -232,22 +300,22 @@ export default function NewsListPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)]">
-                <p className="text-xs text-[var(--text-muted)]">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-[#262626]">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   Halaman {page} dari {totalPages}
                 </p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page <= 1}
-                    className="px-3 py-1 text-xs border border-[var(--border-color)] text-[var(--text-secondary)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Sebelumnya
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-xs border border-[var(--border-color)] text-[var(--text-secondary)] rounded-md disabled:opacity-40 hover:bg-[var(--bg-secondary)] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Berikutnya
                   </button>

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class FileUploadTest extends TestCase
@@ -13,30 +14,23 @@ class FileUploadTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->admin = User::factory()->admin()->create();
-        $this->token = $this->admin->createToken('admin-token')->plainTextToken;
-
         Storage::fake('public');
-    }
-
-    private function authHeaders(): array
-    {
-        return ['Authorization' => "Bearer {$this->token}"];
     }
 
     public function test_valid_jpeg_upload_succeeds()
     {
         $file = $this->createFakeImageFile('photo.jpg', 'jpg');
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         $response->assertCreated()
             ->assertJsonStructure(['path', 'url', 'filename', 'size']);
@@ -46,9 +40,10 @@ class FileUploadTest extends TestCase
     {
         $file = UploadedFile::fake()->create('shell.php', 100, 'application/x-php');
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         $response->assertStatus(422);
     }
@@ -57,9 +52,10 @@ class FileUploadTest extends TestCase
     {
         $file = UploadedFile::fake()->create('document.txt', 100, 'text/plain');
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         $response->assertStatus(422);
     }
@@ -69,9 +65,10 @@ class FileUploadTest extends TestCase
         // Create a fake image that's larger than 10 MB (10 * 1024 * 1024 bytes)
         $file = $this->createFakeImageFile('huge.jpg', 'jpg', 11 * 1024 * 1024);
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         // Will be rejected either by validation (max file) or by the controller's size check
         $this->assertTrue(in_array($response->status(), [422, 413]));
@@ -81,9 +78,10 @@ class FileUploadTest extends TestCase
     {
         $file = $this->createFakeImageFile('shell.php.jpg', 'jpg');
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         $response->assertStatus(422);
     }
@@ -102,20 +100,21 @@ class FileUploadTest extends TestCase
     public function test_upload_requires_admin_role()
     {
         $user = User::factory()->create(['is_admin' => false]);
-        $token = $user->createToken('user-token')->plainTextToken;
 
         $file = $this->createFakeImageFile('photo.jpg', 'jpg');
 
+        Sanctum::actingAs($user);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], ['Authorization' => "Bearer {$token}"]);
+        ]);
 
         $response->assertStatus(403);
     }
 
     public function test_upload_requires_file_field()
     {
-        $response = $this->postJson('/api/admin/upload', [], $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->postJson('/api/admin/upload', []);
         $response->assertStatus(422)
             ->assertJsonValidationErrors('file');
     }
@@ -124,9 +123,10 @@ class FileUploadTest extends TestCase
     {
         $file = $this->createFakeImageFile('original-name.jpg', 'jpg');
 
+        Sanctum::actingAs($this->admin);
         $response = $this->post('/api/admin/upload', [
             'file' => $file,
-        ], $this->authHeaders());
+        ]);
 
         $response->assertCreated();
         $filename = $response->json('filename');

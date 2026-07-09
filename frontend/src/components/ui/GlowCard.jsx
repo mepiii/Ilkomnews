@@ -59,6 +59,8 @@ const GlowCard = ({
         width: width !== undefined ? (typeof width === 'number' ? `${width}px` : width) : undefined,
         height: height !== undefined ? (typeof height === 'number' ? `${height}px` : height) : undefined,
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'var(--bg-card)',
         border: '1px solid var(--border-glass)',
         borderRadius: '16px',

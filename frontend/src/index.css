@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+/* Custom Fonts */
+@font-face {
+  font-family: 'RePo';
+  src: url('/assets/request/RePeOnly.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
   :root {
     /* Light Mode */
     --bg-primary: #ffffff;
@@ -11,7 +19,7 @@
     --bg-card-hover: rgba(248, 248, 248, 0.98);
     --text-primary: #111827;
     --text-secondary: #374151;
-    --text-muted: #6b7280;
+    --text-muted: #4b5563;
     --border-color: rgba(0, 0, 0, 0.12);
     --border-glass: rgba(0, 0, 0, 0.12);
     --shadow-glass: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -21,10 +29,11 @@
     --nav-bg: rgba(255, 255, 255, 0.85);
     --nav-scrolled-bg: rgba(255, 255, 255, 0.98);
     --footer-bg: linear-gradient(135deg, #1a0533 0%, #0d001a 50%, #0a0a0f 100%);
+    /* Light accent: deep purple */
     --accent: rgb(48, 11, 85);
-    --accent-hover: rgb(122, 71, 166);
+    --accent-hover: rgb(72, 22, 120);
     --text-header: rgb(48, 11, 85);
-    --text-header-secondary: rgb(122, 71, 166);
+    --text-header-secondary: rgb(80, 30, 120);
     --tile: rgba(122, 71, 166, 0.02);
     --tile-border: rgba(122, 71, 166, 0.05);
     --font-heading-weight: 700;
@@ -43,62 +52,113 @@
     --text-primary: #e8e8e8;
     --text-secondary: #a0a0a0;
     --text-muted: #606060;
-    --border-color: #1a1a1a;
-    --border-glass: #1a1a1a;
+    --border-color: rgba(255, 255, 255, 0.04);
+    --border-glass: rgba(255, 255, 255, 0.04);
     --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.5);
     --glass-blur: blur(20px) saturate(190%);
     --glass-bg: rgba(15, 15, 15, 0.85);
-    --glass-border: #1a1a1a;
+    --glass-border: rgba(255, 255, 255, 0.04);
     --nav-bg: rgba(0, 0, 0, 0.92);
     --nav-scrolled-bg: rgba(0, 0, 0, 0.98);
     --footer-bg: linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%);
+    /* Dark accent: vibrant purple */
     --accent: rgb(122, 71, 166);
-    --accent-hover: rgb(155, 111, 198);
+    --accent-hover: rgb(148, 100, 195);
     --text-header: #e0e0e0;
     --text-header-secondary: #b0b0b0;
     --tile: rgba(255, 255, 255, 0.02);
-    --tile-border: rgba(255, 255, 255, 0.04);
+    --tile-border: rgba(255, 255, 255, 0.06);
   }
 
-  /*
-    Stacking contract for the global Tiles grid:
-      html  → holds the opaque base color (--bg-primary) as the page canvas.
-      body  → TRANSPARENT, so nothing paints over the grid.
-      Tiles is `fixed inset-0 z-0` — it sits above the html canvas but
-      below all real content (which is z-0+). Because body is transparent, the
-      grid stays visible on every page and reacts to light/dark via
-      --tile. Navbar/Footer/Admin paint their own backgrounds on top.
-  */
   html {
     scroll-behavior: smooth;
     background-color: var(--bg-primary);
     overflow-x: hidden;
   }
 
+  /* ── Global custom scrollbar ── */
+  html::-webkit-scrollbar { width: 6px; height: 6px; }
+  html::-webkit-scrollbar-track { background: transparent; }
+  html::-webkit-scrollbar-thumb {
+    background: rgba(122, 71, 166, 0.35);
+    border-radius: 99px;
+  }
+  html::-webkit-scrollbar-thumb:hover {
+    background: rgba(122, 71, 166, 0.6);
+  }
+  /* Firefox */
+  html { scrollbar-width: thin; scrollbar-color: rgba(122, 71, 166, 0.35) transparent; }
+
   body {
     background: transparent;
     color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
   }
 
+  /* body.scroll-locked applied by modals */
+  body.scroll-locked {
+    overflow: hidden;
+  }
+
   h1 {
     color: var(--text-header);
-    font-family: 'CustomFont', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'RePo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 700;
     line-height: 1.2;
   }
 
   h2, h3, h4, h5, h6 {
     color: var(--text-header-secondary);
-    font-family: 'CustomFont', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'RePo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
     line-height: 1.2;
   }
 
   p, span, li, td, th {
     line-height: 1.6;
+  }
+
+  /* Admin panel — B&W minimalistic, no RePo font */
+  .admin-panel {
+    --admin-bg: #ffffff;
+    --admin-surface: #f9fafb;
+    --admin-border: #e5e7eb;
+    --admin-text: #111827;
+    --admin-text-secondary: #6b7280;
+    --admin-accent: #111827;
+    --admin-success: #059669;
+    --admin-danger: #dc2626;
+    --admin-warning: #d97706;
+  }
+
+  .admin-panel.dark {
+    --admin-bg: #0a0a0a;
+    --admin-surface: #141414;
+    --admin-border: #262626;
+    --admin-text: #e5e5e5;
+    --admin-text-secondary: #737373;
+    --admin-accent: #ffffff;
+    --admin-success: #34d399;
+    --admin-danger: #f87171;
+    --admin-warning: #fbbf24;
+  }
+
+  .admin-panel,
+  .admin-panel *,
+  .admin-panel h1, .admin-panel h2, .admin-panel h3,
+  .admin-panel h4, .admin-panel h5, .admin-panel h6 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+
+  /* Dark mode: remove light borders on cards/tables/containers */
+  .dark .glass-card,
+  .dark [class*="border-gray-200"],
+  .dark [class*="border-white"] {
+    border-color: var(--border-color) !important;
   }
 }
 
@@ -120,12 +180,104 @@
   .dark .glass-card:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
+
+  /* Accent button — picks up the CSS variable so it auto-switches per theme */
+  .btn-accent {
+    background-color: var(--accent);
+    color: #ffffff;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .btn-accent:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(122, 71, 166, 0.25);
+  }
+
+  /* Tech-stack badge — high contrast in both modes */
+  .tech-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9999px;
+    border: 1px solid rgba(48, 11, 85, 0.35);
+    background-color: rgba(48, 11, 85, 0.1);
+    color: rgb(48, 11, 85);
+  }
+  .dark .tech-badge {
+    border-color: rgba(122, 71, 166, 0.45);
+    background-color: rgba(122, 71, 166, 0.15);
+    color: rgb(196, 162, 230);
+  }
+
+  /* Stacked avatar group */
+  .avatar-stack {
+    display: flex;
+    align-items: center;
+  }
+  .avatar-stack .avatar-item {
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    border: 2px solid var(--bg-card);
+    margin-left: -6px;
+    overflow: hidden;
+    background-color: rgb(122, 71, 166);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: white;
+  }
+  .avatar-stack .avatar-item:first-child {
+    margin-left: 0;
+  }
+  .avatar-stack .avatar-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    border: 2px solid var(--bg-card);
+    margin-left: -6px;
+    background-color: rgba(122, 71, 166, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: rgb(122, 71, 166);
+  }
 }
 
 @layer utilities {
   .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-5 { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Hide scrollbar but keep scrollable — used for notification dropdown */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Subtle custom scrollbar for non-html elements (modals, panels) */
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(122, 71, 166, 0.3);
+    border-radius: 99px;
+  }
+  .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(122, 71, 166, 0.3) transparent; }
+
+  /* Accent-color utilities that respond to theme */
+  .bg-accent { background-color: var(--accent); }
+  .text-accent { color: var(--accent); }
+  .border-accent { border-color: var(--accent); }
+  .hover\:bg-accent:hover { background-color: var(--accent-hover); }
 
   .text-theme-primary { color: var(--text-primary); }
   .text-theme-secondary { color: var(--text-secondary); }
@@ -135,113 +287,134 @@
   .bg-theme-card,
   .bg-card { background-color: var(--bg-card); }
   .border-theme { border-color: var(--border-color); }
-  .font-header { font-family: 'CustomFont', 'Inter', sans-serif; }
+  .font-header, .font-heading { font-family: 'RePo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; }
+  .font-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400; }
 
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* Section gradient text */
+  .section-gradient-text {
+    background: linear-gradient(135deg, var(--accent) 0%, rgb(122, 71, 166) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+
+  /* Mobile-first responsive text scaling */
+  .text-responsive-xs { font-size: 0.75rem; line-height: 1rem; }
+  .text-responsive-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .text-responsive-base { font-size: 1rem; line-height: 1.5rem; }
+  .text-responsive-lg { font-size: 1.125rem; line-height: 1.75rem; }
+  .text-responsive-xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .text-responsive-2xl { font-size: 1.5rem; line-height: 2rem; }
+
+  @media (min-width: 640px) {
+    .text-responsive-xs { font-size: 0.8rem; }
+    .text-responsive-sm { font-size: 0.9rem; }
+    .text-responsive-base { font-size: 1.05rem; }
+    .text-responsive-lg { font-size: 1.2rem; }
+    .text-responsive-xl { font-size: 1.4rem; }
+    .text-responsive-2xl { font-size: 1.75rem; }
   }
-}
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 3px; }
-.dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+  @media (min-width: 1024px) {
+    .text-responsive-xs { font-size: 0.875rem; }
+    .text-responsive-sm { font-size: 1rem; }
+    .text-responsive-base { font-size: 1.125rem; }
+    .text-responsive-lg { font-size: 1.35rem; }
+    .text-responsive-xl { font-size: 1.6rem; }
+    .text-responsive-2xl { font-size: 2rem; }
+  }
 
-/* Custom font */
-@font-face {
-  font-family: 'CustomFont';
-  src: url('./assets/request/RePeOnly.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+  /* Mobile tab scroll container */
+  .tabs-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .tabs-scroll::-webkit-scrollbar { display: none; }
 
-/* Smooth focus ring */
-*:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+  /* Card minimum heights */
+  .card-mobile-tall { min-height: 14rem; }
+  @media (min-width: 640px) {
+    .card-mobile-tall { min-height: 18rem; }
+  }
 
-/* Premium text selection */
-::selection {
-  background: rgba(122, 71, 166, 0.15);
-  color: inherit;
-}
-.dark ::selection {
-  background: rgba(191, 148, 255, 0.2);
-}
+  /* Touch-friendly tap targets */
+  .tap-target { min-height: 44px; min-width: 44px; }
 
-/* Button press feedback — scale down slightly on active */
-button:active:not(:disabled),
-a:active {
-  transform: scale(0.985);
-  transition: transform 0.1s ease;
-}
+  /* Improved mobile navigation */
+  .mobile-nav-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* Link hover — smooth color transition */
-a {
-  transition: color 0.2s ease;
-}
+  /* Responsive card grid */
+  .card-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .card-grid { gap: 1.5rem; grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .card-grid { gap: 2rem; grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1280px) {
+    .card-grid { grid-template-columns: repeat(4, 1fr); }
+  }
 
-/* Refined scrollbar dark mode */
-.dark ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-}
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* Subtle page-transition feel — smooth background on theme switch */
-html.theme-transition,
-html.theme-transition *,
-html.theme-transition *::before,
-html.theme-transition *::after {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
-}
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* Skeleton shimmer loading */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
 
-/* Select dropdown text — no forced uppercase */
+  @keyframes slideLeft {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
 
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--bg-secondary) 25%,
-    rgba(122, 71, 166, 0.08) 50%,
-    var(--bg-secondary) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: 0.75rem;
-}
+  @keyframes slideRight {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
 
-.dark .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--bg-secondary) 25%,
-    rgba(122, 71, 166, 0.12) 50%,
-    var(--bg-secondary) 75%
-  );
-  background-size: 200% 100%;
-}
+  /* Hover Animations */
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1); }
 
-/* Tiles grid — interactive hover glow per cell */
-.tile-cell:hover,
-.tile-cell.tile-glow {
-  background-color: var(--tile);
-}
+  .hover-glow { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+  .hover-glow:hover { box-shadow: 0 0 20px rgba(122, 71, 166, 0.3); }
 
-.tile-cell.tile-glow-neighbor {
-  background-color: var(--tile);
-  opacity: 0.4;
+  .hover-scale { transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+  .hover-scale:hover { transform: scale(1.02); }
+
+  /* Stagger delays */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-7 { animation-delay: 0.35s; }
+  .stagger-8 { animation-delay: 0.4s; }
+
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

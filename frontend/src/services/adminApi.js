@@ -1,7 +1,9 @@
 import { API_BASE } from './api'
 
 // ponytail: httpOnly cookie auth — no localStorage token, credentials:'include' on all requests
-export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
+// Implements retry with exponential backoff for 429 and network errors (max 3 retries)
+export async function fetchAdmin(endpoint, options = {}, isFormData = false, retryOptions = {}) {
+  const { maxRetries = 3, baseDelay = 600 } = retryOptions
   const headers = { ...options.headers }
 
   const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
@@ -14,40 +16,62 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false) {
     headers['Accept'] = 'application/json'
   }
 
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 15000)
+  const attempt = async (n) => {
+    const controller = new AbortController()
+    // Honor caller-provided signal
+    if (options.signal) {
+      if (options.signal.aborted) controller.abort()
+      options.signal.addEventListener('abort', () => controller.abort(), { once: true })
+    }
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
-  try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
 
-    if (response.status === 401) {
-      if (!window.location.pathname.includes('/admin/login')) {
-        window.location.href = '/admin/login'
+      if (response.status === 429 && n < maxRetries) {
+        clearTimeout(timeoutId)
+        const retryAfter = Number(response.headers.get('Retry-After')) * 1000
+        const delay = retryAfter || baseDelay * Math.pow(2, n) + Math.random() * 200
+        await new Promise(r => setTimeout(r, delay))
+        return attempt(n + 1)
       }
-      throw new Error('Unauthorized')
-    }
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || error.error || `HTTP ${response.status}`)
-    }
+      if (response.status === 401) {
+        if (!window.location.pathname.includes('/admin/login')) {
+          window.location.href = '/admin/login'
+        }
+        throw new Error('Unauthorized')
+      }
 
-    if (response.status === 204) return null
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.message || error.error || `HTTP ${response.status}`)
+      }
 
-    return response.json()
-  } catch (error) {
-    clearTimeout(timeoutId)
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout', { cause: error })
+      if (response.status === 204) return null
+
+      return response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout', { cause: error })
+      }
+      // Retry on network errors if budget allows
+      if (n < maxRetries && !options.signal?.aborted) {
+        const delay = baseDelay * Math.pow(2, n) + Math.random() * 200
+        await new Promise(r => setTimeout(r, delay))
+        return attempt(n + 1)
+      }
+      throw error
     }
-    throw error
   }
+  return attempt(0)
 }
 
 export const adminAuth = {
@@ -190,11 +214,12 @@ export const adminChatbot = {
   delete(id) {
     return fetchAdmin(`/admin/chatbot-api/${id}`, { method: 'DELETE' })
   },
-}
 
-export const adminHealth = {
-  check() {
-    return fetchAdmin('/admin/health')
+  testConnection(data) {
+    return fetchAdmin('/admin/chatbot-api/test', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   },
 }
 
@@ -203,4 +228,28 @@ export const adminSecurity = {
     const qs = new URLSearchParams(params).toString()
     return fetchAdmin(`/admin/security/login-attempts${qs ? `?${qs}` : ''}`)
   },
+}
+
+// Admin profile management
+adminAuth.getProfile = function() {
+  return fetchAdmin('/admin/profile')
+}
+
+adminAuth.updateProfile = function(data) {
+  return fetchAdmin('/admin/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+adminAuth.updatePassword = function(data) {
+  return fetchAdmin('/admin/profile/password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+// Admin management API
+export const adminFetch = async (endpoint, options = {}) => {
+  return fetchAdmin(`/admin${endpoint}`, options)
 }

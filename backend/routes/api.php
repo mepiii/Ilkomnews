@@ -6,6 +6,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ProjectSubmissionController;
+use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin;
@@ -44,10 +45,15 @@ Route::middleware('throttle:api')->group(function () {
 
     // Notifications (public - by tracking ID)
     Route::get('/notifications/{trackingId}', [NotificationController::class, 'publicByTracking']);
+    Route::post('/notifications/{trackingId}/{id}/read', [NotificationController::class, 'publicMarkRead']);
 
-    // Submissions (public)
-    Route::post('/submissions', [ProjectSubmissionController::class, 'store']);
+    // Submissions (public, rate limited)
+    Route::post('/submissions', [ProjectSubmissionController::class, 'store'])->middleware('throttle:5,1');
     Route::get('/submissions/track/{trackingId}', [ProjectSubmissionController::class, 'track']);
+    Route::get('/upload-quota', function (\Illuminate\Http\Request $request) {
+        $service = new \App\Services\UploadQuotaService();
+        return response()->json($service->getStatus($request));
+    });
 
     // Public projects (accepted only)
     Route::get('/projects', [ProjectSubmissionController::class, 'publicIndex']);
@@ -55,77 +61,14 @@ Route::middleware('throttle:api')->group(function () {
 
     // Chatbot (Wolfy) — rate limited separately
     Route::post('/chat', [ChatController::class, 'chat'])->middleware('throttle:chatbot');
+
+    // Interaction tracking (public)
+    Route::get('/interactions/{type}/{id}/stats', [InteractionController::class, 'stats']);
+    Route::post('/interactions/{type}/{id}/view', [InteractionController::class, 'incrementView']);
+    Route::post('/interactions/{type}/{id}/like', [InteractionController::class, 'toggleLike']);
+    Route::post('/interactions/{type}/{id}/save', [InteractionController::class, 'toggleSave']);
+    Route::post('/interactions/{type}/{id}/share', [InteractionController::class, 'incrementShare']);
 });
 
-// ── Admin API (authenticated + admin) ──
-Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')->group(function () {
-
-    // Auth
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
-
-    // File upload (stricter rate limit: 10 uploads per minute)
-    Route::post('/upload', [\App\Http\Controllers\UploadController::class, 'store'])
-        ->middleware('throttle:10,1');
-
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'apiStats']);
-
-    // Projects
-    Route::get('/projects', [Admin\GalleryController::class, 'index']);
-    Route::get('/projects/stats', [Admin\GalleryController::class, 'stats']);
-    Route::get('/projects/{submission}', [Admin\GalleryController::class, 'show']);
-    Route::post('/projects/{submission}/accept', [Admin\GalleryController::class, 'accept']);
-    Route::post('/projects/{submission}/reject', [Admin\GalleryController::class, 'reject']);
-    Route::delete('/projects/{submission}', [Admin\GalleryController::class, 'destroy']);
-
-    // News management
-    Route::get('/news', [Admin\NewsController::class, 'index']);
-    Route::get('/news/stats', [Admin\NewsController::class, 'stats']);
-    Route::post('/news', [Admin\NewsController::class, 'store']);
-    Route::get('/news/{news}', [Admin\NewsController::class, 'show']);
-    Route::put('/news/{news}', [Admin\NewsController::class, 'update']);
-    Route::delete('/news/{news}', [Admin\NewsController::class, 'destroy']);
-
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
-
-    // Audit logs
-    Route::get('/audit-logs', [Admin\AuditLogController::class, 'index']);
-    Route::get('/audit-logs/summary', [Admin\AuditLogController::class, 'summary']);
-
-    // Chat statistics
-    Route::get('/chat-stats', [Admin\ChatStatsController::class, 'index']);
-
-    // Health monitoring
-    Route::get('/health', [Admin\HealthController::class, 'index']);
-
-    // Security center
-    Route::get('/security/login-attempts', [Admin\SecurityController::class, 'loginAttempts']);
-
-    // Chatbot API configuration
-    Route::get('/chatbot-api', [Admin\ChatbotApiController::class, 'index']);
-    Route::get('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'show']);
-    Route::post('/chatbot-api', [Admin\ChatbotApiController::class, 'store']);
-    Route::put('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'update']);
-    Route::delete('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'destroy']);
-
-    // Admin Profile Management (separate endpoints for each field)
-    Route::get('/admins', [AdminProfileController::class, 'index']);
-    Route::post('/admins', [AdminProfileController::class, 'store']);
-    Route::get('/admins/{id}', [AdminProfileController::class, 'show']);
-    Route::put('/admins/{id}/name', [AdminProfileController::class, 'updateName']);
-    Route::put('/admins/{id}/email', [AdminProfileController::class, 'updateEmail']);
-    Route::put('/admins/{id}/password', [AdminProfileController::class, 'updatePassword']);
-    Route::delete('/admins/{id}', [AdminProfileController::class, 'destroy']);
-
-    // API Key Management (encrypted, never exposed to frontend)
-    Route::get('/api-keys', [ApiKeyController::class, 'index']);
-    Route::put('/api-keys/azure', [ApiKeyController::class, 'updateAzure']);
-    Route::put('/api-keys/gemini', [ApiKeyController::class, 'updateGemini']);
-    Route::post('/api-keys/test-azure', [ApiKeyController::class, 'testAzure']);
-    Route::post('/api-keys/test-gemini', [ApiKeyController::class, 'testGemini']);
-});
+// Note: Admin API routes are defined in web.php using session-based auth (web guard)
+// This file only contains public API routes

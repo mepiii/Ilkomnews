@@ -11,12 +11,19 @@ class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // Public API: bumped 60 → 300/min/IP.
+        // The home page fires news + projects + interactions in parallel,
+        // and the notification popover polls every 60s. 60/min exhausted
+        // those in well under a minute, surfacing as intermittent 429s
+        // and frontend state wipeouts.
         RateLimiter::for('api', fn (Request $request) => [
-            Limit::perMinute(60)->by($request->ip()),
+            Limit::perMinute(300)->by($request->ip()),
         ]);
 
+        // Admin API: 600/min/user. Admin panel is CRUD-heavy; 240 was
+        // tight when paginating + filtering + viewing details in succession.
         RateLimiter::for('admin', fn (Request $request) => [
-            Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()),
+            Limit::perMinute(600)->by($request->user()?->id ?: $request->ip()),
         ]);
 
         RateLimiter::for('login', fn (Request $request) => [

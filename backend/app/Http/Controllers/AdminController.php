@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RejectSubmissionRequest;
 use App\Models\ProjectSubmission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AdminController extends Controller
 {
@@ -51,6 +52,9 @@ class AdminController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        // Bust the public projects cache so the gallery reflects the change
+        try { Cache::tags('public-projects')->flush(); } catch (\Throwable $e) {}
+
         return response()->json(['message' => 'Submission accepted', 'submission' => $submission]);
     }
 
@@ -63,6 +67,9 @@ class AdminController extends Controller
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
+
+        // Bust the public projects cache so the gallery reflects the change
+        try { Cache::tags('public-projects')->flush(); } catch (\Throwable $e) {}
 
         return response()->json(['message' => 'Submission rejected', 'submission' => $submission]);
     }

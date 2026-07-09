@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class ProjectSubmission extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'tracking_id', 'status', 'title', 'category', 'description',
         'thumbnail', 'tech_stack', 'live_demo', 'github_link',
@@ -59,6 +61,11 @@ class ProjectSubmission extends Model
     {
         if (!$this->screenshots) return [];
         return array_map(fn($path) => asset('storage/' . $path), $this->screenshots);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'project_id');
     }
 
     public function scopePending($query) { return $query->where('status', 'pending'); }

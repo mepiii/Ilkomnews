@@ -6,6 +6,7 @@ use App\Models\News;
 use App\Models\ProjectSubmission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class HealthEndpointTest extends TestCase
@@ -13,19 +14,12 @@ class HealthEndpointTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->admin = User::factory()->admin()->create();
-        $this->token = $this->admin->createToken('admin-token')->plainTextToken;
-    }
-
-    private function authHeaders(): array
-    {
-        return ['Authorization' => "Bearer {$this->token}"];
     }
 
     public function test_dashboard_returns_200_with_stats()
@@ -35,7 +29,8 @@ class HealthEndpointTest extends TestCase
         ProjectSubmission::factory()->count(3)->pending()->create();
         ProjectSubmission::factory()->accepted()->create();
 
-        $response = $this->getJson('/api/admin/dashboard', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/dashboard');
         $response->assertOk()
             ->assertJsonStructure([
                 'stats' => [
@@ -62,11 +57,9 @@ class HealthEndpointTest extends TestCase
     public function test_dashboard_requires_admin_role()
     {
         $user = User::factory()->create(['is_admin' => false]);
-        $token = $user->createToken('user-token')->plainTextToken;
 
-        $response = $this->getJson('/api/admin/dashboard', [
-            'Authorization' => "Bearer {$token}",
-        ]);
+        Sanctum::actingAs($user);
+        $response = $this->getJson('/api/admin/dashboard');
         $response->assertStatus(403);
     }
 
@@ -78,7 +71,8 @@ class HealthEndpointTest extends TestCase
         ProjectSubmission::factory()->count(3)->accepted()->create();
         ProjectSubmission::factory()->rejected()->create();
 
-        $response = $this->getJson('/api/admin/dashboard', $this->authHeaders());
+        Sanctum::actingAs($this->admin);
+        $response = $this->getJson('/api/admin/dashboard');
         $response->assertOk()
             ->assertJsonPath('stats.total_news', 5)
             ->assertJsonPath('stats.published_news', 4)
