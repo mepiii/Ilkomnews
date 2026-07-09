@@ -17,7 +17,7 @@ Paste this whole file into a Claude Code session (or save as `ORCHESTRATOR.md` i
 ```
 Project name          : IlkomNews
 Repo root path         : ___________ (fill in)
-Backend stack          : Laravel + MySQL/MariaDB — confirm exact versions in Phase 0
+Backend stack          : Laravel + MariaDB — confirm exact versions in Phase 0
 Frontend stack (now)   : Blade + React/Vue components + Tailwind — confirm exact split in Phase 0
 Hosting                : shared hosting (cPanel-style) — confirm exact provider in Phase 0
 Node available on host?: assume NO unless confirmed in Phase 0
