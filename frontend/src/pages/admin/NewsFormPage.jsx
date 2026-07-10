@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { adminNews } from '../../services/adminApi';
+import { ADMIN_BASE } from '../../config/admin';
+import { springPreset, useReducedMotionSafe } from '../../lib/animations';
+import { useToast } from '../../components/ui/Toast';
+import NewsPreviewCard from '../../components/admin/NewsPreviewCard';
+
+const NEWS_LIST = `/${ADMIN_BASE}/news`;
 
 const INITIAL_STATE = {
   title: '',
@@ -40,12 +47,14 @@ export default function NewsFormPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
+  const reduce = useReducedMotionSafe();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isEdit) return;
     adminNews.getById(id)
       .then((data) => {
-        const item = data.news || data;
+        const item = data.news || data.data || data;
         setForm({
           title: item.title || '',
           summary: item.summary || '',
@@ -199,9 +208,11 @@ export default function NewsFormPage() {
         await adminNews.createWithForm(formData);
       }
       
-      navigate('/admin/news');
+      showToast(isEdit ? 'Berita berhasil diperbarui' : 'Berita berhasil dibuat', { type: 'success' });
+      navigate(NEWS_LIST);
     } catch (err) {
       setServerError(err.message || 'Failed to save news');
+      showToast(err.message || 'Gagal menyimpan berita', { type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -217,14 +228,19 @@ export default function NewsFormPage() {
 
   const inputClass = (field) =>
     `w-full px-4 py-2.5 border rounded-xl text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors ${
-      errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-[#262626]'
+      errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-neutral-800'
     }`;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <motion.div
+      className="max-w-3xl mx-auto"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
       <div className="mb-6">
         <button
-          onClick={() => navigate('/admin/news')}
+          onClick={() => navigate(NEWS_LIST)}
           className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 transition-colors mb-3"
         >
           <ArrowLeft size={16} />
@@ -236,10 +252,28 @@ export default function NewsFormPage() {
       </div>
 
       {serverError && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm">
+        <motion.div
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : springPreset}
+          className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm"
+        >
           {serverError}
-        </div>
+        </motion.div>
       )}
+
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Preview Berita</h3>
+        <NewsPreviewCard
+          image={imagePreview}
+          authorImage={authorImagePreview}
+          title={form.title}
+          category={form.category}
+          summary={form.summary}
+          author={form.author}
+          date={form.date}
+        />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,7 +312,7 @@ export default function NewsFormPage() {
               type="date"
               value={form.date}
               onChange={(e) => updateField('date', e.target.value)}
-              className={inputClass('date')}
+              className={`${inputClass('date')} dark:[color-scheme:dark]`}
             />
             {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
           </div>
@@ -296,7 +330,7 @@ export default function NewsFormPage() {
         </div>
 
         {/* Author Section */}
-        <div className="p-4 border border-gray-200 dark:border-[#262626] rounded-xl bg-gray-50 dark:bg-[#141414]/30">
+        <div className="p-4 border border-gray-200 dark:border-neutral-800 rounded-xl bg-gray-50 dark:bg-[#141414]/30">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Informasi Penulis</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -342,7 +376,7 @@ export default function NewsFormPage() {
               <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${
                 authorImagePreview 
                   ? 'border-green-500/50 bg-gray-50 dark:bg-[#141414]' 
-                  : 'border-gray-200 dark:border-[#262626] hover:border-gray-900 dark:border-white bg-gray-50 dark:bg-[#141414]'
+                  : 'border-gray-200 dark:border-neutral-800 hover:border-gray-900 dark:border-white bg-gray-50 dark:bg-[#141414]'
               }`}>
                 {authorImagePreview ? (
                   <img 
@@ -357,7 +391,7 @@ export default function NewsFormPage() {
                 ) : (
                   <div className="flex flex-col items-center gap-1">
                     <Upload size={20} className="text-gray-500 dark:text-gray-400" />
-                    <span className="text-[9px] text-gray-400 dark:text-gray-500">Foto</span>
+                    <span className="text-[9px] text-gray-500 dark:text-gray-400">Foto</span>
                   </div>
                 )}
               </div>
@@ -371,7 +405,7 @@ export default function NewsFormPage() {
                 </button>
               )}
             </div>
-            <div className="text-xs text-gray-400 dark:text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               <p className="font-medium text-gray-900 dark:text-gray-100">Foto Profil Penulis</p>
               <p>Opsional. JPG/PNG, max 500KB.</p>
               <p className="mt-1 text-gray-500 dark:text-gray-400">Gambar akan ditampilkan di preview berita.</p>
@@ -395,7 +429,7 @@ export default function NewsFormPage() {
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">Thumbnail Berita</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="mt-2 block border-2 border-dashed border-gray-200 dark:border-[#262626] rounded-xl p-6 bg-gray-50 dark:bg-[#141414] text-center transition-colors hover:border-gray-900 dark:border-white cursor-pointer"
+            className="mt-2 block border-2 border-dashed border-gray-200 dark:border-neutral-800 rounded-xl p-6 bg-gray-50 dark:bg-[#141414] text-center transition-colors hover:border-gray-900 dark:border-white cursor-pointer"
           >
             <input
               type="file"
@@ -431,13 +465,13 @@ export default function NewsFormPage() {
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   <span className="font-medium text-gray-900 dark:text-gray-100">Klik atau seret gambar</span>
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF up to 10MB</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-[#262626]">
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-neutral-800">
           <input 
             type="checkbox" 
             id="isPublished" 
@@ -450,24 +484,27 @@ export default function NewsFormPage() {
           </label>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#262626]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-neutral-800">
           <button 
             type="button" 
-            onClick={() => navigate('/admin/news')} 
-            className="px-5 py-2 border border-gray-200 dark:border-[#262626] text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors font-medium"
+            onClick={() => navigate(NEWS_LIST)} 
+            className="px-5 py-2 border border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors font-medium"
           >
             Batal
           </button>
-          <button 
+          <motion.button 
             type="submit" 
             disabled={saving} 
-            className="inline-flex items-center gap-2 px-5 py-2 bg-gray-900 dark:bg-white text-white rounded-lg hover:brightness-110 transition-colors font-medium disabled:opacity-50"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={springPreset}
+            className="inline-flex items-center gap-2 px-5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:brightness-110 transition-colors font-medium disabled:opacity-50"
           >
             <Save size={18} />
             {saving ? 'Menyimpan...' : 'Simpan Berita'}
-          </button>
+          </motion.button>
         </div>
       </form>
-    </div>
+    </motion.div>
   );
 }

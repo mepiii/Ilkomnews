@@ -10,10 +10,10 @@ use Illuminate\Validation\Rule;
 
 class AdminProfileController extends Controller
 {
-    const MAX_ADMIN_SLOTS = 9;
+    const MAX_ADMIN_SLOTS = 12;
 
     /**
-     * Get all admin users (limited to 9 slots)
+     * Get all admin users (limited to 12 slots)
      */
     public function index()
     {
@@ -99,24 +99,32 @@ class AdminProfileController extends Controller
     }
 
     /**
-     * Update admin password only
+     * Update admin password. Admins may reset ANOTHER admin's password
+     * without supplying the current password; the current password is only
+     * required (and verified) when changing your own account.
      */
     public function updatePassword(Request $request, $id)
     {
         $admin = User::where('is_admin', true)->findOrFail($id);
 
-        $validated = $request->validate([
-            'current_password' => 'required|string',
+        $isSelf = $request->user()->id === $admin->id;
+
+        $rules = [
             'password' => 'required|string|min:12|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
-        ], [
+        ];
+        if ($isSelf) {
+            $rules['current_password'] = 'required|string';
+        }
+
+        $validated = $request->validate($rules, [
             'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
             'password.min' => 'Password minimal 12 karakter.',
         ]);
 
-        if (!Hash::check($validated['current_password'], $admin->password)) {
+        if ($isSelf && !Hash::check($validated['current_password'], $admin->password)) {
             return response()->json([
-                'errors' => ['current_password' => ['Password saat ini tidak sesuai.']],
-            ], 422);
+                'message' => 'Password lama yang Anda masukkan salah!',
+            ], 400);
         }
 
         $admin->update([
@@ -124,12 +132,12 @@ class AdminProfileController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Password berhasil diperbarui.',
+            'message' => $isSelf ? 'Password berhasil diperbarui.' : 'Password admin berhasil direset.',
         ]);
     }
 
     /**
-     * Create new admin (limited to 9 slots)
+     * Create new admin (limited to 12 slots)
      */
     public function store(Request $request)
     {

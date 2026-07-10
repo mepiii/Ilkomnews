@@ -107,6 +107,7 @@ class GalleryController extends Controller
         ]);
 
         Cache::forget(self::STATS_CACHE_KEY);
+        Cache::forget("public-notifications:{$submission->tracking_id}");
         $this->flushPublicProjectsCache();
 
         if (request()->expectsJson()) {
@@ -157,6 +158,7 @@ class GalleryController extends Controller
         ]);
 
         Cache::forget(self::STATS_CACHE_KEY);
+        Cache::forget("public-notifications:{$submission->tracking_id}");
         $this->flushPublicProjectsCache();
 
         if ($request->expectsJson()) {

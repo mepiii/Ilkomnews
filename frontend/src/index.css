@@ -52,12 +52,12 @@
     --text-primary: #e8e8e8;
     --text-secondary: #a0a0a0;
     --text-muted: #606060;
-    --border-color: rgba(255, 255, 255, 0.04);
-    --border-glass: rgba(255, 255, 255, 0.04);
+    --border-color: rgba(125, 125, 125, 0.25);
+    --border-glass: rgba(125, 125, 125, 0.25);
     --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.5);
     --glass-blur: blur(20px) saturate(190%);
     --glass-bg: rgba(15, 15, 15, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(125, 125, 125, 0.25);
     --nav-bg: rgba(0, 0, 0, 0.92);
     --nav-scrolled-bg: rgba(0, 0, 0, 0.98);
     --footer-bg: linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%);
@@ -67,7 +67,7 @@
     --text-header: #e0e0e0;
     --text-header-secondary: #b0b0b0;
     --tile: rgba(255, 255, 255, 0.02);
-    --tile-border: rgba(255, 255, 255, 0.06);
+    --tile-border: rgba(122, 71, 166, 0.08);
   }
 
   html {
@@ -154,10 +154,14 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 
-  /* Dark mode: remove light borders on cards/tables/containers */
+  /* Dark mode: remove light borders on cards/tables/containers.
+     Also catches arbitrary `border-[var(--accent)]/opacity` utilities, which
+     Tailwind can't apply alpha to and which otherwise fall back to the
+     preflight default (gray-200) — a visible light border on dark surfaces. */
   .dark .glass-card,
   .dark [class*="border-gray-200"],
-  .dark [class*="border-white"] {
+  .dark [class*="border-white"],
+  .dark [class*="border-[var(--accent)]"] {
     border-color: var(--border-color) !important;
   }
 }
@@ -217,8 +221,8 @@
     align-items: center;
   }
   .avatar-stack .avatar-item {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 9999px;
     border: 2px solid var(--bg-card);
     margin-left: -6px;
@@ -227,7 +231,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: white;
   }
@@ -235,8 +239,8 @@
     margin-left: 0;
   }
   .avatar-stack .avatar-badge {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 9999px;
     border: 2px solid var(--bg-card);
     margin-left: -6px;
@@ -244,7 +248,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
     color: rgb(122, 71, 166);
   }
@@ -399,6 +403,33 @@
   .hover-scale { transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
   .hover-scale:hover { transform: scale(1.02); }
 
+  /* Sliding underline link — accent slides in from the left on hover/focus */
+  .hover-underline {
+    position: relative;
+    transition: color 0.2s ease;
+  }
+  .hover-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1.5px;
+    width: 100%;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.2, 1, 0.2, 1);
+  }
+  .hover-underline:hover::after,
+  .hover-underline:focus-visible::after { transform: scaleX(1); }
+
+  /* Subtle heading lift — no color change, preserves contrast */
+  .heading-hover {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .heading-hover:hover,
+  .heading-hover:focus-visible { transform: translateY(-1px); }
+
   /* Stagger delays */
   .stagger-1 { animation-delay: 0.05s; }
   .stagger-2 { animation-delay: 0.1s; }
@@ -417,4 +448,15 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+* {
+  cursor: url('./assets/cursor.png') 0 0, auto !important;
+}
+
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  cursor: auto !important;
 }

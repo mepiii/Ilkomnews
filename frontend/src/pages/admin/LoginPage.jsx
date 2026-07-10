@@ -3,10 +3,12 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Lock, Mail, AlertCircle } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import { ADMIN_BASE } from '../../config/admin'
 
 export default function LoginPage() {
   const { login, isAuthenticated, loading } = useAdminAuth()
   const navigate = useNavigate()
+  const DASHBOARD = `/${ADMIN_BASE}/dashboard`
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +25,7 @@ export default function LoginPage() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/admin/dashboard" replace />
+    return <Navigate to={DASHBOARD} replace />
   }
 
   const handleSubmit = async (e) => {
@@ -33,7 +35,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password, remember)
-      navigate('/admin/dashboard', { replace: true })
+      navigate(DASHBOARD, { replace: true })
     } catch (err) {
       setError(err.message || 'Email atau password salah')
     } finally {
@@ -49,7 +51,7 @@ export default function LoginPage() {
         transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
         className="w-full max-w-sm relative z-10"
       >
-        <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-8">
+        <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <motion.div
@@ -85,7 +87,7 @@ export default function LoginPage() {
             <div>
               <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   id="login-email"
                   type="email"
@@ -93,7 +95,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@ilkom.example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#262626] rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>
@@ -101,7 +103,7 @@ export default function LoginPage() {
             <div>
               <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   id="login-password"
                   type="password"
@@ -110,7 +112,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#262626] rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>

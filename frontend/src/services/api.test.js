@@ -9,100 +9,101 @@ global.fetch = mockFetch
 vi.stubEnv('VITE_USE_REAL_API', '')
 vi.stubEnv('DEV', true)
 
-const { newsService, articlesService, eventsService, careersService, viewTracker, api } = await import('./api.js')
+const { newsService, articlesService, careersService, viewTracker, api } = await import('./api.js')
+
+const mockNews = [
+  { id: 1, title: 'AI News', summary: 'About AI', category: 'tech', date: '2026-01-01', image: '/img.jpg' },
+  { id: 2, title: 'Web News', summary: 'About Web', category: 'tech', date: '2026-01-02', image: '/img2.jpg' },
+]
+
+const mockArticles = [
+  { id: 1, title: 'Article One', readTime: 5, content: '...', category: 'tech' },
+]
+
+const mockCareers = [
+  { id: 1, company: 'TechCorp', title: 'Dev', location: 'Remote' },
+]
+
+function mockJsonResponse(data, status = 200) {
+  return Promise.resolve({
+    ok: status >= 200 && status < 300,
+    status,
+    headers: { get: () => null },
+    json: () => Promise.resolve(data),
+  })
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockFetch.mockImplementation(() => mockJsonResponse([]))
 })
 
 describe('newsService', () => {
-  it('getAll returns mock data in dev mode', async () => {
+  it('getAll returns news list', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockNews))
     const result = await newsService.getAll()
     expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThan(0)
+    expect(result.length).toBe(2)
     expect(result[0]).toHaveProperty('title')
-    expect(result[0]).toHaveProperty('id')
   })
 
   it('getLatest limits results', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockNews.slice(0, 2)))
     const result = await newsService.getLatest(2)
     expect(result.length).toBeLessThanOrEqual(2)
   })
 
   it('getById returns a single item', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockNews[0]))
     const result = await newsService.getById(1)
     expect(result).toBeTruthy()
     expect(result.id).toBe(1)
   })
 
-  it('getById returns null for missing id', async () => {
-    const result = await newsService.getById(9999)
-    expect(result).toBeNull()
+  it('getById throws on missing id', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse({ message: 'Not found' }, 404))
+    await expect(newsService.getById(9999)).rejects.toThrow()
   })
 
   it('search filters by query', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse([mockNews[0]]))
     const result = await newsService.search('AI')
     expect(result.length).toBeGreaterThan(0)
-    expect(result.every(item =>
-      item.title.toLowerCase().includes('ai') ||
-      item.summary.toLowerCase().includes('ai')
-    )).toBe(true)
   })
 
   it('getCategories returns unique categories', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(['tech', 'lifestyle']))
     const result = await newsService.getCategories()
     expect(Array.isArray(result)).toBe(true)
     expect(new Set(result).size).toBe(result.length)
   })
 })
 
-describe('eventsService', () => {
-  it('getAll returns mock events', async () => {
-    const result = await eventsService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThan(0)
-    expect(result[0]).toHaveProperty('title')
-  })
-
-  it('getById returns a single event', async () => {
-    const result = await eventsService.getById(1)
-    expect(result).toBeTruthy()
-    expect(result.id).toBe(1)
-  })
-
-  it('register returns success', async () => {
-    const result = await eventsService.register(1, { name: 'Test User' })
-    expect(result.success).toBe(true)
-    expect(result).toHaveProperty('registrationId')
-  })
-
-  it('getCategories returns categories', async () => {
-    const result = await eventsService.getCategories()
-    expect(Array.isArray(result)).toBe(true)
-  })
-})
-
 describe('careersService', () => {
-  it('getAll returns mock careers', async () => {
+  it('getAll returns careers list', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockCareers))
     const result = await careersService.getAll()
     expect(Array.isArray(result)).toBe(true)
     expect(result[0]).toHaveProperty('company')
   })
 
   it('apply returns success', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse({ success: true }))
     const result = await careersService.apply(1, { name: 'Test' })
     expect(result.success).toBe(true)
   })
 })
 
 describe('articlesService', () => {
-  it('getAll returns mock articles', async () => {
+  it('getAll returns articles list', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockArticles))
     const result = await articlesService.getAll()
     expect(Array.isArray(result)).toBe(true)
     expect(result[0]).toHaveProperty('readTime')
   })
 
   it('getById returns article', async () => {
+    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockArticles[0]))
     const result = await articlesService.getById(1)
     expect(result).toBeTruthy()
   })
@@ -112,7 +113,6 @@ describe('api aggregate', () => {
   it('exports all service namespaces', () => {
     expect(api).toHaveProperty('news')
     expect(api).toHaveProperty('articles')
-    expect(api).toHaveProperty('events')
     expect(api).toHaveProperty('careers')
     expect(api).toHaveProperty('projects')
   })

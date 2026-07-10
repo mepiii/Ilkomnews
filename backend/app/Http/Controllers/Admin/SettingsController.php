@@ -22,7 +22,9 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'provider_type' => 'required|in:openai,anthropic',
-            'base_url' => 'required|url|max:255',
+            'prefix' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'api_type' => 'required|string|in:chat,raw',
+            'base_url' => 'required|url|max:500',
             'api_key' => 'required|string',
             'model_id' => 'required|string|max:255',
             'priority' => 'required|integer|min:0',
@@ -41,7 +43,9 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'provider_type' => 'required|in:openai,anthropic',
-            'base_url' => 'required|url|max:255',
+            'prefix' => ['sometimes', 'required', 'string', 'max:50', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'api_type' => 'sometimes|required|string|in:chat,raw',
+            'base_url' => 'required|url|max:500',
             'api_key' => 'nullable|string',
             'model_id' => 'required|string|max:255',
             'priority' => 'required|integer|min:0',

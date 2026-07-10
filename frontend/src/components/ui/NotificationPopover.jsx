@@ -1,70 +1,88 @@
-import { useState, useRef, useEffect, useCallback, useContext } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, CheckCircle, XCircle, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { fetchAdmin } from '../../services/adminApi'
-import { AdminAuthContext } from '../../context/AdminAuthContext'
 import { API_BASE } from '../../services/api'
+
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const typeConfig = {
   accepted: { icon: CheckCircle, color: 'text-green-500', label: 'Diterima' },
   rejected: { icon: XCircle, color: 'text-red-500', label: 'Ditolak' },
+  submitted: { icon: CheckCircle, color: 'text-emerald-500', label: 'Dikirim' },
 }
 
-const NotificationPopover = () => {
+// All tracking IDs the visitor has stored locally (from submissions and lookups).
+function getTrackingIds() {
+  let ids = []
+  try {
+    const parsed = JSON.parse(localStorage.getItem('tracking_ids') || '[]')
+    if (Array.isArray(parsed)) ids = parsed
+  } catch { /* corrupt value — ignore */ }
+  const single = localStorage.getItem('tracking_id')
+  return [...new Set([...ids, single].filter(Boolean))]
+}
+
+const NotificationPopover = ({ align = 'right', openUp = false }) => {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [selectedNotification, setSelectedNotification] = useState(null)
   const ref = useRef(null)
+  // Last-good notifications per tracking ID. Kept in a ref so a transient
+  // failure on one ID never drops its notifications from the merged list.
+  const cacheRef = useRef({})
   const navigate = useNavigate()
 
-  const authContext = useContext(AdminAuthContext)
-  const isAuthenticated = authContext?.isAuthenticated || false
+  // Derived during render — never stored separately, so it cannot desync.
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   const fetchNotifications = useCallback(async () => {
+    const trackingIds = getTrackingIds()
+    if (trackingIds.length === 0) {
+      cacheRef.current = {}
+      setNotifications([])
+      return
+    }
     setLoading(true)
     try {
-      if (isAuthenticated) {
-        const data = await fetchAdmin('/admin/notifications')
-        setNotifications(data.data || [])
-        setUnreadCount(data.unread_count || 0)
-      } else {
-        // Fetch notifications for all stored tracking IDs
-        const trackingIds = JSON.parse(localStorage.getItem('tracking_ids') || '[]')
-        const singleTrackingId = localStorage.getItem('tracking_id')
-        
-        // Combine both sources and dedupe
-        const allTrackingIds = [...new Set([...trackingIds, singleTrackingId].filter(Boolean))]
-        
-        if (allTrackingIds.length > 0) {
-          const fetchPromises = allTrackingIds.map(id => 
-            fetch(`${API_BASE}/notifications/${id}`)
-              .then(r => r.ok ? r.json() : { data: [] })
-              .catch(() => ({ data: [] }))
-          )
-          
-          const results = await Promise.all(fetchPromises)
-          const allNotifications = results.flatMap(r => r.data || [])
-          
-          // Sort by created_at descending and remove duplicates by id
-          const uniqueNotifications = allNotifications
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .filter((notif, index, self) => 
-              index === self.findIndex(n => n.id === notif.id)
+      // Fetch every tracked ID. Update the per-ID cache only on success; a
+      // failed request leaves that ID's previous data untouched (no flicker).
+      await Promise.all(
+        trackingIds.map(async (id) => {
+          try {
+            const res = await fetch(`${API_BASE}/notifications/${id}`)
+            if (!res.ok) return
+            const json = await res.json()
+            cacheRef.current[id] = (json.data || []).filter(
+              (n) => n && n.tracking_id != null && n.type !== 'admin'
             )
-          
-          setNotifications(uniqueNotifications)
-          setUnreadCount(uniqueNotifications.filter(n => !n.read).length)
-        }
+          } catch {
+            // network error — keep last-good data for this ID
+          }
+        })
+      )
+
+      // Drop cached entries for IDs the user no longer tracks.
+      const active = new Set(trackingIds)
+      for (const key of Object.keys(cacheRef.current)) {
+        if (!active.has(key)) delete cacheRef.current[key]
       }
-    } catch {
-      // silently fail
+
+      const merged = Object.values(cacheRef.current)
+        .flat()
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .filter((n, i, self) => i === self.findIndex((x) => x.id === n.id))
+
+      setNotifications(merged)
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated])
+  }, [])
 
   useEffect(() => {
     fetchNotifications()
@@ -80,63 +98,61 @@ const NotificationPopover = () => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleMarkRead = async (notification) => {
-    try {
-      if (isAuthenticated) {
-        await fetchAdmin(`/admin/notifications/${notification.id}/read`, { method: 'POST' })
-      } else {
-        // Find the tracking_id for this notification from stored IDs
-        const trackingIds = JSON.parse(localStorage.getItem('tracking_ids') || '[]')
-        const singleTrackingId = localStorage.getItem('tracking_id')
-        const allTrackingIds = [...new Set([...trackingIds, singleTrackingId].filter(Boolean))]
-        
-        // Try each tracking_id until one works
-        for (const trackingId of allTrackingIds) {
-          try {
-            const res = await fetch(`${API_BASE}/notifications/${trackingId}/${notification.id}/read`, { method: 'POST' })
-            if (res.ok) break
-          } catch {
-            continue
-          }
-        }
-      }
-      setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n))
-      setUnreadCount(prev => Math.max(0, prev - 1))
-    } catch {
-      // silently fail
+  // Refetch when the app signals new notifications, when a tracking ID is added
+  // in another tab, or when the window regains focus.
+  useEffect(() => {
+    const onRefresh = () => fetchNotifications()
+    window.addEventListener('notifications:refresh', onRefresh)
+    window.addEventListener('storage', onRefresh)
+    window.addEventListener('focus', onRefresh)
+    return () => {
+      window.removeEventListener('notifications:refresh', onRefresh)
+      window.removeEventListener('storage', onRefresh)
+      window.removeEventListener('focus', onRefresh)
     }
+  }, [fetchNotifications])
+
+  const markRead = async (notification) => {
+    // Optimistic update; reconciles on the next fetch if the request fails.
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+    )
+    const trackingId = notification.tracking_id
+    if (!trackingId) return
+    // Mirror the read flag into the per-ID cache so a background refetch that
+    // finishes before the server persists the change doesn't revert it.
+    if (Array.isArray(cacheRef.current[trackingId])) {
+      cacheRef.current[trackingId] = cacheRef.current[trackingId].map((n) =>
+        n.id === notification.id ? { ...n, read: true } : n
+      )
+    }
+    try {
+      await fetch(
+        `${API_BASE}/notifications/${trackingId}/${notification.id}/read`,
+        { method: 'POST' }
+      )
+    } catch { /* ignore */ }
   }
 
   const handleNotificationClick = async (notification) => {
-    await handleMarkRead(notification)
+    await markRead(notification)
     setOpen(false)
-
     if (notification.type === 'accepted' && notification.project_id) {
-      // Redirect to the published project in gallery
       navigate(`/ilkomgallery/project/${notification.project_id}`)
     } else if (notification.type === 'rejected') {
-      // Show rejection reason modal
-      document.body.classList.add("scroll-locked")
+      document.body.classList.add('scroll-locked')
       setSelectedNotification(notification)
-    }
-  }
-
-  const handleMarkAllRead = async () => {
-    if (!isAuthenticated) return
-    try {
-      await fetchAdmin('/admin/notifications/read-all', { method: 'POST' })
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-      setUnreadCount(0)
-    } catch {
-      // silently fail
+    } else if (notification.type === 'submitted' && notification.tracking_id) {
+      navigate(`/track?id=${notification.tracking_id}`)
     }
   }
 
   return (
     <>
       <div className="relative" ref={ref}>
-        <button
-          onClick={() => setOpen(!open)}
+        <motion.button
+          onClick={() => { const next = !open; setOpen(next); if (next) fetchNotifications() }}
+          whileTap={{ scale: 0.92 }}
           className="relative p-2 rounded-full hover:bg-black/[0.04] dark:hover:bg-white/[0.1] transition-colors"
           aria-label="Notifikasi"
         >
@@ -146,76 +162,79 @@ const NotificationPopover = () => {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </button>
+        </motion.button>
 
-        {open && (
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 shadow-lg z-50">
-            <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-              <p className="text-sm font-semibold text-black dark:text-white">Notifikasi</p>
-              {isAuthenticated && unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
-                >
-                  Tandai semua dibaca
-                </button>
-              )}
-            </div>
-            <div className="max-h-80 overflow-y-auto no-scrollbar">
-              {loading ? (
-                <div className="p-4 text-center">
-                  <p className="text-sm text-neutral-400">Memuat...</p>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-4">
-                  <p className="text-sm text-neutral-400 text-center py-4">Tidak ada notifikasi</p>
-                </div>
-              ) : (
-                notifications.map((notification) => {
-                  const config = typeConfig[notification.type] || typeConfig.accepted
-                  const Icon = config.icon
-                  return (
-                    <button
-                      key={notification.id}
-                      onClick={() => handleNotificationClick(notification)}
-                      className={`w-full text-left px-4 py-3 border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${
-                        !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Icon size={18} className={`mt-0.5 flex-shrink-0 ${config.color}`} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
-                            {notification.created_at ? new Date(notification.created_at).toLocaleString('id-ID') : ''}
-                          </p>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: openUp ? 8 : -8, scale: 0.98 }}
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: openUp ? 8 : -8, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+              className={`absolute w-[440px] max-w-[calc(100vw-1rem)] bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-xl z-50 ${openUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${align === 'left' ? 'right-0 lg:left-0 lg:right-auto' : 'right-0'}`}
+            >
+              <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+                <p className="text-sm font-semibold text-black dark:text-white">Notifikasi</p>
+              </div>
+              <div className="max-h-[32rem] overflow-y-auto no-scrollbar">
+                {loading && notifications.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-neutral-400">Memuat...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-4">
+                    <p className="text-sm text-neutral-400 text-center py-4">Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notification, idx) => {
+                    const config = typeConfig[notification?.type] || typeConfig.submitted
+                    const Icon = config.icon
+                    const title = notification?.title || notification?.message || 'Notifikasi'
+                    const message = notification?.message || (notification?.title ? '' : 'Anda memiliki pemberitahuan baru')
+                    return (
+                      <motion.button
+                        key={notification?.id ?? `notify-${idx}`}
+                        layout={!prefersReducedMotion}
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full text-left px-4 py-4 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${
+                          !notification?.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Icon size={18} className={`mt-0.5 flex-shrink-0 ${config.color}`} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-black dark:text-white truncate">{title}</p>
+                            {message && (
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">{message}</p>
+                            )}
+                            <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
+                              {notification?.created_at ? new Date(notification.created_at).toLocaleString('id-ID') : ''}
+                            </p>
+                          </div>
+                          {!notification?.read && (
+                            <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+                          )}
                         </div>
-                        {!notification.read && (
-                          <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
-                        )}
-                      </div>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          </div>
-        )}
+                      </motion.button>
+                    )
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Rejection Reason Modal — portaled to body for proper centering */}
       {selectedNotification && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => { document.body.classList.remove("scroll-locked"); setSelectedNotification(null) }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}>
           <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
               <p className="text-sm font-semibold text-black dark:text-white">Alasan Penolakan</p>
               <button
-                onClick={() => { document.body.classList.remove("scroll-locked"); setSelectedNotification(null) }}
+                onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}
                 className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <X size={16} className="text-neutral-500" />
@@ -226,23 +245,23 @@ const NotificationPopover = () => {
                 <XCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-black dark:text-white">
-                    {selectedNotification.title}
+                    {selectedNotification?.title || selectedNotification?.message || 'Notifikasi'}
                   </p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                    {selectedNotification.created_at ? new Date(selectedNotification.created_at).toLocaleString('id-ID') : ''}
+                    {selectedNotification?.created_at ? new Date(selectedNotification.created_at).toLocaleString('id-ID') : ''}
                   </p>
                 </div>
               </div>
               <div className="bg-red-50 dark:bg-red-900/10 rounded-lg p-3 border border-red-100 dark:border-red-900/20">
                 <p className="text-sm text-red-800 dark:text-red-200">
-                  {selectedNotification.project?.rejection_reason ||
-                   selectedNotification.rejection_reason ||
-                   selectedNotification.message?.replace(/.*Alasan: /, '') ||
+                  {selectedNotification?.project?.rejection_reason ||
+                   selectedNotification?.rejection_reason ||
+                   selectedNotification?.message?.replace(/.*Alasan: /, '') ||
                    'Tidak ada alasan spesifik'}
                 </p>
               </div>
               <button
-                onClick={() => { document.body.classList.remove("scroll-locked"); setSelectedNotification(null) }}
+                onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}
                 className="mt-4 w-full px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-lg text-sm font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Tutup

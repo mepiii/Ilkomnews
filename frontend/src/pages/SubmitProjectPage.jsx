@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { CheckCircle, Copy, ExternalLink, Plus, X, Globe, Smartphone, Palette, Gamepad2, Cpu, Image as ImageIcon, Tag, Layers, User, Users } from 'lucide-react'
@@ -7,6 +7,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { PageBackground } from '../components/ui/PageBackground'
 import SlideButton from '../components/ui/SlideButton'
 import SlideConfirm from '../components/ui/SlideConfirm'
+import { useToast } from '../components/ui/Toast'
 
 const CATEGORIES = [
   { id: 'web', label: 'Web', icon: Globe },
@@ -35,7 +36,7 @@ import { API_BASE } from '../services/api'
 
 const baseForm = {
   title: '', category: 'web', description: '', thumbnail: '', thumbnailFile: null,
-  creator_name: '', creator_type: 'mahasiswa', creator_nim: '', creator_major: '', creator_year: '',
+  creator_name: '', creator_type: 'mahasiswa', creator_nim: '', creator_nidn: '', creator_major: '', creator_year: '', creator_jabatan: '',
   creator_avatar: '', creator_avatarFile: null,
   collaborators: [],
 }
@@ -79,6 +80,39 @@ const categoryFields = {
 const inputCls = "w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)] transition-colors"
 const labelCls = "block text-sm font-medium text-neutral-600 dark:text-neutral-300 mb-1.5"
 
+const ProfilePhotoUpload = ({ preview, name, onFile, onClear, size = 'w-20 h-20' }) => (
+  <div className="flex items-center gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
+    <div className={`relative ${size} shrink-0`}>
+      <div className="w-full h-full rounded-full overflow-hidden bg-neutral-100 dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+        {preview ? (
+          <img src={preview} className="w-full h-full object-cover" alt="Foto profil" />
+        ) : (
+          <User size={32} className="text-neutral-400" />
+        )}
+      </div>
+      <label className="absolute -bottom-1 -right-1 rounded-full bg-[var(--accent)] text-white border-2 border-white dark:border-neutral-900 w-8 h-8 flex items-center justify-center cursor-pointer hover:brightness-110 transition-all shadow">
+        <ImageIcon size={15} />
+        <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+      </label>
+    </div>
+    <div className="min-w-0">
+      <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 truncate">
+        {name?.trim() || 'Foto Profil'}
+      </p>
+      <p className="text-xs text-neutral-400 mb-2">Klik ikon untuk mengunggah foto <span className="text-neutral-400 font-normal">(opsional)</span></p>
+      <div className="flex items-center gap-3">
+        <label className="text-xs font-medium text-[var(--accent)] cursor-pointer hover:underline">
+          {preview ? 'Ubah Foto' : 'Unggah Foto'}
+          <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+        </label>
+        {preview && (
+          <button type="button" onClick={onClear} className="text-xs text-red-500 hover:underline">Hapus</button>
+        )}
+      </div>
+    </div>
+  </div>
+)
+
 const SubmitProjectPage = () => {
   const [form, setForm] = useState({ ...baseForm })
   const [extraFields, setExtraFields] = useState({})
@@ -90,6 +124,8 @@ const SubmitProjectPage = () => {
   const [collabMajor, setCollabMajor] = useState(MAJORS[0])
   const [collabYear, setCollabYear] = useState(2024)
   const [collabType, setCollabType] = useState('mahasiswa')
+  const [collabNidn, setCollabNidn] = useState('')
+  const [collabJabatan, setCollabJabatan] = useState('')
   const [collabAvatar, setCollabAvatar] = useState('')
   const [collabAvatarFile, setCollabAvatarFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -97,6 +133,8 @@ const SubmitProjectPage = () => {
   const [error, setError] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [quota, setQuota] = useState(null)
+  const { showToast } = useToast()
+  const slideButtonRef = useRef(null)
 
   useEffect(() => {
     fetch(`${API_BASE}/upload-quota`)
@@ -115,6 +153,23 @@ const SubmitProjectPage = () => {
       setTechStackTags(prev => [...prev, value])
     }
     setSelectedTech('') // Reset select after adding
+  }
+
+  const handleTechInput = (e) => {
+    const value = e.target.value
+    if (value.includes(',')) {
+      value.split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .forEach(token => {
+          if (!techStackTags.includes(token)) {
+            setTechStackTags(prev => [...prev, token])
+          }
+        })
+      setTechInput('')
+    } else {
+      setTechInput(value)
+    }
   }
 
   const addTechTag = () => {
@@ -140,11 +195,12 @@ const SubmitProjectPage = () => {
 
   const addCollab = () => {
     if (collabName.trim()) {
-      update('collaborators', [...form.collaborators, {
-        name: collabName.trim(), nim: collabNim.trim(), major: collabMajor,
-        year: collabYear, type: collabType, avatar: collabAvatar, avatarFile: collabAvatarFile
-      }])
-      setCollabName(''); setCollabNim(''); setCollabMajor(MAJORS[0])
+      const isDosen = collabType === 'dosen'
+      const collabObj = isDosen
+        ? { name: collabName.trim(), type: 'dosen', nidn: collabNidn.trim(), jabatan: collabJabatan.trim(), avatar: collabAvatar, avatarFile: collabAvatarFile }
+        : { name: collabName.trim(), type: 'mahasiswa', nim: collabNim.trim(), major: collabMajor, year: collabYear, avatar: collabAvatar, avatarFile: collabAvatarFile }
+      update('collaborators', [...form.collaborators, collabObj])
+      setCollabName(''); setCollabNim(''); setCollabMajor(MAJORS[0]); setCollabNidn(''); setCollabJabatan('')
       setCollabYear(2024); setCollabType('mahasiswa'); setCollabAvatar(''); setCollabAvatarFile(null)
     }
   }
@@ -188,9 +244,14 @@ const SubmitProjectPage = () => {
       formData.append('description', form.description)
       formData.append('creator_name', form.creator_name)
       formData.append('creator_type', form.creator_type)
-      formData.append('creator_nim', form.creator_nim)
       formData.append('creator_major', form.creator_major)
-      formData.append('creator_year', form.creator_year.toString())
+      if (form.creator_type === 'dosen') {
+        if (form.creator_nidn) formData.append('creator_nidn', form.creator_nidn)
+        if (form.creator_jabatan) formData.append('creator_jabatan', form.creator_jabatan)
+      } else {
+        if (form.creator_nim) formData.append('creator_nim', form.creator_nim)
+        if (form.creator_year) formData.append('creator_year', form.creator_year.toString())
+      }
 
       if (form.thumbnailFile) {
         formData.append('thumbnail', form.thumbnailFile)
@@ -219,9 +280,15 @@ const SubmitProjectPage = () => {
             formData.append(`collaborators[${index}][name]`, collab)
           } else {
             formData.append(`collaborators[${index}][name]`, collab.name)
-            if (collab.nim) formData.append(`collaborators[${index}][nim]`, collab.nim)
-            if (collab.major) formData.append(`collaborators[${index}][major]`, collab.major)
-            if (collab.year) formData.append(`collaborators[${index}][year]`, collab.year)
+            if (collab.type === 'dosen') {
+              if (collab.nidn) formData.append(`collaborators[${index}][nidn]`, collab.nidn)
+              if (collab.major) formData.append(`collaborators[${index}][major]`, collab.major)
+              if (collab.jabatan) formData.append(`collaborators[${index}][jabatan]`, collab.jabatan)
+            } else {
+              if (collab.nim) formData.append(`collaborators[${index}][nim]`, collab.nim)
+              if (collab.major) formData.append(`collaborators[${index}][major]`, collab.major)
+              if (collab.year) formData.append(`collaborators[${index}][year]`, collab.year.toString())
+            }
             if (collab.type) formData.append(`collaborators[${index}][type]`, collab.type)
             if (collab.avatarFile) {
               formData.append(`collaborators[${index}][avatar]`, collab.avatarFile)
@@ -250,7 +317,9 @@ const SubmitProjectPage = () => {
           existingIds.push(data.tracking_id)
           localStorage.setItem('tracking_ids', JSON.stringify(existingIds))
         }
+        window.dispatchEvent(new Event('notifications:refresh'))
       }
+      showToast(`Proyek berhasil dikirim! ID Pelacakan: ${data.tracking_id}`)
     } catch (err) {
       setError(err.name === 'AbortError' ? 'Request timeout. Please try again.' : err.message)
     } finally {
@@ -312,9 +381,13 @@ const SubmitProjectPage = () => {
         <PageHeader title="Kirim Proyek" subtitle="Bagikan karya Anda ke galeri ILKOM" />
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm"
+          >
             {error}
-          </div>
+          </motion.div>
         )}
 
         <form onSubmit={(e) => { e.preventDefault(); setShowConfirm(true); }} className="space-y-6">
@@ -402,21 +475,21 @@ const SubmitProjectPage = () => {
               </div>
               
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={techInput} 
-                  onChange={e => setTechInput(e.target.value)}
+                <input
+                  type="text"
+                  value={techInput}
+                  onChange={handleTechInput}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
                       addTechTag()
                     }
                   }}
-                  placeholder="Atau ketik teknologi kustom..." 
-                  className={`${inputCls} flex-1`} 
+                  placeholder="Atau ketik teknologi kustom..."
+                  className={`${inputCls} flex-1`}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={addTechTag}
                   className="px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl hover:brightness-110 transition-colors flex items-center gap-1 text-sm font-medium"
                 >
@@ -435,7 +508,7 @@ const SubmitProjectPage = () => {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)]/10 text-[var(--accent)] text-sm rounded-lg font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 text-[var(--accent)] text-sm rounded-full font-medium"
                       >
                         {tag}
                         <button 
@@ -519,33 +592,39 @@ const SubmitProjectPage = () => {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className={labelCls}>{form.creator_type === 'dosen' ? 'NIP' : 'NIM'}</label>
-                  <input type="text" value={form.creator_nim} onChange={e => update('creator_nim', e.target.value)} placeholder={form.creator_type === 'dosen' ? 'NIP' : 'NIM'} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Prodi</label>
-                  <select value={form.creator_major} onChange={e => update('creator_major', e.target.value)} className={inputCls}>
-                    <option value="">Pilih...</option>
-                    {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Angkatan</label>
-                  <input type="number" min={2000} max={2030} value={form.creator_year} onChange={e => update('creator_year', e.target.value)} placeholder="2024" className={inputCls} />
-                </div>
+                {form.creator_type === 'dosen' ? (
+                  <>
+                    <div>
+                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={form.creator_nidn} onChange={e => update('creator_nidn', e.target.value)} placeholder="NIDN / NIDK" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Jabatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={form.creator_jabatan} onChange={e => update('creator_jabatan', e.target.value)} placeholder="Jabatan" className={inputCls} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className={labelCls}>NIM <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={form.creator_nim} onChange={e => update('creator_nim', e.target.value)} placeholder="NIM" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Prodi <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <select value={form.creator_major} onChange={e => update('creator_major', e.target.value)} className={inputCls}>
+                        <option value="">Pilih...</option>
+                        {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Angkatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="number" min={2000} max={2030} value={form.creator_year} onChange={e => update('creator_year', e.target.value)} placeholder="2024" className={inputCls} />
+                    </div>
+                  </>
+                )}
               </div>
               <div>
-                <label className={labelCls}>Foto Profil <span className="text-neutral-400 font-normal">(opsional)</span></label>
-                <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-neutral-300 dark:border-neutral-600 hover:border-[var(--accent)]/50">
-                  <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-                  {form.creator_avatar ? (
-                    <img src={form.creator_avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
-                  ) : (
-                    <ImageIcon size={16} className="text-neutral-400" />
-                  )}
-                  <span className="text-sm text-neutral-400">{form.creator_avatar ? 'Terpilih' : 'Upload foto'}</span>
-                </label>
+                <ProfilePhotoUpload preview={form.creator_avatar} name={form.creator_name} onFile={handleAvatarUpload} onClear={() => { update('creator_avatar', ''); update('creator_avatarFile', null) }} />
               </div>
             </div>
           </div>
@@ -577,33 +656,39 @@ const SubmitProjectPage = () => {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className={labelCls}>{collabType === 'dosen' ? 'NIP' : 'NIM'} <span className="text-neutral-400 font-normal">(opsional)</span></label>
-                  <input type="text" value={collabNim} onChange={e => setCollabNim(e.target.value)} placeholder={collabType === 'dosen' ? 'NIP' : 'NIM'} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Prodi <span className="text-neutral-400 font-normal">(opsional)</span></label>
-                  <select value={collabMajor} onChange={e => setCollabMajor(e.target.value)} className={inputCls}>
-                    <option value="">Pilih...</option>
-                    {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Angkatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
-                  <input type="number" min={2000} max={2030} value={collabYear} onChange={e => setCollabYear(parseInt(e.target.value))} placeholder="2024" className={inputCls} />
-                </div>
+                {collabType === 'dosen' ? (
+                  <>
+                    <div>
+                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={collabNidn} onChange={e => setCollabNidn(e.target.value)} placeholder="NIDN / NIDK" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Jabatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={collabJabatan} onChange={e => setCollabJabatan(e.target.value)} placeholder="Jabatan" className={inputCls} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className={labelCls}>NIM <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="text" value={collabNim} onChange={e => setCollabNim(e.target.value)} placeholder="NIM" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Prodi <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <select value={collabMajor} onChange={e => setCollabMajor(e.target.value)} className={inputCls}>
+                        <option value="">Pilih...</option>
+                        {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Angkatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <input type="number" min={2000} max={2030} value={collabYear} onChange={e => setCollabYear(parseInt(e.target.value))} placeholder="2024" className={inputCls} />
+                    </div>
+                  </>
+                )}
               </div>
               <div>
-                <label className={labelCls}>Foto Profil <span className="text-neutral-400 font-normal">(opsional)</span></label>
-                <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-neutral-300 dark:border-neutral-600 hover:border-[var(--accent)]/50">
-                  <input type="file" accept="image/*" onChange={handleCollabAvatarUpload} className="hidden" />
-                  {collabAvatar ? (
-                    <img src={collabAvatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
-                  ) : (
-                    <ImageIcon size={16} className="text-neutral-400" />
-                  )}
-                  <span className="text-sm text-neutral-400">{collabAvatar ? 'Terpilih' : 'Upload foto'}</span>
-                </label>
+                <ProfilePhotoUpload preview={collabAvatar} name={collabName} onFile={handleCollabAvatarUpload} onClear={() => { setCollabAvatar(''); setCollabAvatarFile(null) }} />
               </div>
               <button type="button" onClick={addCollab}
                 className="px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium flex items-center gap-1.5 hover:brightness-110 transition-colors">
@@ -624,7 +709,7 @@ const SubmitProjectPage = () => {
                         {c.avatar ? <img src={c.avatar} alt="" className="w-9 h-9 rounded-full object-cover" /> : <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[var(--accent)]/60">{c.name.charAt(0)}</div>}
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium block truncate" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
-                          <span className="text-[11px] text-neutral-400">{c.type === 'dosen' ? 'Dosen' : 'Mahasiswa'}{c.major ? ` · ${c.major}` : ''}{c.nim ? ` · ${c.nim}` : ''}</span>
+                           <span className="text-[11px] text-neutral-400">{c.type === 'dosen' ? 'Dosen' : 'Mahasiswa'}{c.type !== 'dosen' && c.major ? ` · ${c.major}` : ''}{c.type === 'dosen' ? (c.nidn ? ` · ${c.nidn}` : '') : (c.nim ? ` · ${c.nim}` : '')}</span>
                         </div>
                         <button type="button" onClick={() => removeCollab(i)} className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg"><X size={12} className="text-neutral-400" /></button>
                       </motion.div>
@@ -641,11 +726,11 @@ const SubmitProjectPage = () => {
               <p className="text-sm text-red-500 mb-3">Batas upload harian tercapai (5MB/hari). Coba lagi besok.</p>
             )}
             {quota && !quota.is_exceeded && quota.remaining < 1024 * 1024 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 Sisa kuota hari ini: {Math.round(quota.remaining / 1024)}KB
               </p>
             )}
-            <SlideButton onSubmit={() => setShowConfirm(true)} disabled={submitting || (quota && quota.is_exceeded)}>
+            <SlideButton ref={slideButtonRef} onSubmit={() => { slideButtonRef.current?.reset(); setShowConfirm(true); }} disabled={submitting || (quota && quota.is_exceeded)}>
               Kirim Proyek
             </SlideButton>
           </div>

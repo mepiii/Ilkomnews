@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, Smartphone, Palette, Gamepad2, Sparkles, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -44,26 +44,26 @@ const IlkomGalleryPage = () => {
     const params = new URLSearchParams(location.search)
     const tabParam = params.get('tab')
     if (tabParam && TABS.some(t => t.id === tabParam)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(tabParam)
       localStorage.setItem('lastGalleryTab', tabParam)
     } else {
       const saved = localStorage.getItem('lastGalleryTab')
       if (saved && TABS.some(t => t.id === saved)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveTab(saved)
         navigate(`/ilkomgallery?tab=${saved}`, { replace: true })
       }
     }
   }, [location.search, navigate])
 
-  useEffect(() => {
+  const fetchProjects = useCallback(() => {
     const controller = new AbortController()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setError('')
     projectsService.getAll(activeTab === 'all' ? {} : { category: activeTab }, { signal: controller.signal })
-      .then(res => setProjects(Array.isArray(res.data) ? res.data : []))
+      .then(res => {
+        const data = Array.isArray(res) ? res : (res?.data ?? res?.projects ?? [])
+        setProjects(data)
+      })
       .catch(err => {
         if (err.name !== 'AbortError') {
           setError(err.message || 'Gagal memuat proyek')
@@ -72,8 +72,13 @@ const IlkomGalleryPage = () => {
         }
       })
       .finally(() => setLoading(false))
-    return () => controller.abort()
+    return controller
   }, [activeTab])
+
+  useEffect(() => {
+    const controller = fetchProjects()
+    return () => controller.abort()
+  }, [fetchProjects])
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -99,7 +104,7 @@ const IlkomGalleryPage = () => {
       if (sortBy === 'Terlama') return new Date(a.created_at) - new Date(b.created_at)
       if (sortBy === 'Terpopuler') return (b.views || 0) - (a.views || 0)
       return new Date(b.created_at) - new Date(a.created_at)
-    }), [projects, searchQuery, sortBy])
+    }), [projects, searchQuery, sortBy, selectedTag])
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
   const paginatedItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
@@ -159,7 +164,7 @@ const IlkomGalleryPage = () => {
               ) : error ? (
                 <div className="col-span-full text-center py-12">
                   <p className="text-sm text-red-500 mb-3">{error}</p>
-                  <button onClick={() => { setError(''); setActiveTab(t => t) }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--accent)] text-white text-sm font-semibold hover:bg-[var(--accent-hover)] transition-all">Muat ulang</button>
+                  <button onClick={() => { setError(''); fetchProjects() }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--accent)] text-white text-sm font-semibold hover:bg-[var(--accent-hover)] transition-all">Muat ulang</button>
                 </div>
               ) : paginatedItems.length === 0 ? (
                 <EmptyResults

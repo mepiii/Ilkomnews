@@ -10,9 +10,9 @@ import { PageBackground } from '../components/ui/PageBackground'
 import { API_BASE } from '../services/api'
 
 const STATUS_CONFIG = {
-  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: 'Pending Review' },
-  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20', label: 'Accepted' },
-  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Rejected' },
+  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: 'Menunggu Peninjauan' },
+  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20', label: 'Diterima' },
+  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Ditolak' },
 }
 
 const TrackPage = () => {
@@ -38,6 +38,15 @@ const TrackPage = () => {
       if (!res.ok) throw new Error('Submission not found')
       setResult(await res.json())
       setSearchParams({ id: id.trim() })
+      // Persist the tracked ID so the navbar notification bell can surface its notifications
+      try {
+        const ids = JSON.parse(localStorage.getItem('tracking_ids') || '[]')
+        if (!ids.includes(id.trim())) {
+          ids.push(id.trim())
+          localStorage.setItem('tracking_ids', JSON.stringify(ids))
+        }
+      } catch { /* ignore storage errors */ }
+      window.dispatchEvent(new Event('notifications:refresh'))
       // Fetch notifications for this tracking ID
       fetch(`${API_BASE}/notifications/${id.trim()}`)
         .then(r => r.json())
@@ -53,7 +62,6 @@ const TrackPage = () => {
 
   useEffect(() => {
     const id = searchParams.get('id')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (id) { setTrackingId(id); track(id) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -61,8 +69,7 @@ const TrackPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-6 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-lg mx-auto">
             <div className="mb-8">
               <Breadcrumb />
@@ -75,7 +82,7 @@ const TrackPage = () => {
                     <p className="pr-3 text-xs text-theme-muted">Track</p>
                   </div>
                 }
-                title="Lacak\nPengajuan"
+                title={'LACAK\nPENGAJUAN'}
                 subtitle="Masukkan ID pelacakan untuk memeriksa status pengajuan"
               />
             </div>
@@ -84,11 +91,11 @@ const TrackPage = () => {
             <form onSubmit={handleSubmit} className="mb-8">
               <div className="flex flex-col sm:flex-row gap-3">
                 <input type="text" value={trackingId} onChange={e => setTrackingId(e.target.value)}
-                  placeholder="Masukkan ID pelacakan (contoh: ABC12345)"
+                  placeholder="Masukkan ID pelacakan untuk memeriksa status pengajuan"
                   className="flex-1 px-4 py-3 bg-theme-secondary border border-theme rounded-xl text-theme-primary font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors" />
                 <button type="submit" disabled={loading || !trackingId.trim()}
-                  className="w-full sm:w-auto px-6 py-3 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm" style={{ background: 'var(--accent)' }}>
-                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Search size={18} /> Track</>}
+                  className="w-full sm:w-auto px-6 py-3 text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm">
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Search size={18} /> Lacak</>}
                 </button>
               </div>
             </form>
@@ -121,21 +128,21 @@ const TrackPage = () => {
                   })()}
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">ID Pelacakan</p>
+                      <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">ID PELACAKAN</p>
                       <p className="font-mono text-xl text-[var(--accent)] font-bold mt-1">{result.tracking_id}</p>
                     </div>
                     <div className="h-px bg-theme" />
                     <div>
-                      <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">Judul Proyek</p>
+                      <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">JUDUL PROYEK</p>
                       <p className="text-theme-primary font-semibold mt-1">{result.title}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">Kategori</p>
+                        <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">KATEGORI</p>
                         <p className="text-theme-primary capitalize mt-1">{result.category}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">Dikirim</p>
+                        <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">DIKIRIM</p>
                         <p className="text-theme-primary mt-1">{new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                       </div>
                     </div>
@@ -186,16 +193,19 @@ const TrackPage = () => {
                     <div key={notif.id} className={`rounded-2xl p-4 border ${
                       notif.type === 'accepted' ? 'bg-green-500/5 border-green-500/20' :
                       notif.type === 'rejected' ? 'bg-red-500/5 border-red-500/20' :
+                      notif.type === 'submitted' ? 'bg-emerald-500/5 border-emerald-500/20' :
                       'bg-blue-500/5 border-blue-500/20'
                     }`}>
                       <div className="flex items-start gap-3">
                         <div className={`mt-0.5 ${
                           notif.type === 'accepted' ? 'text-green-500' :
                           notif.type === 'rejected' ? 'text-red-500' :
+                          notif.type === 'submitted' ? 'text-emerald-500' :
                           'text-blue-500'
                         }`}>
                           {notif.type === 'accepted' ? <CheckCircle size={18} /> :
                            notif.type === 'rejected' ? <XCircle size={18} /> :
+                           notif.type === 'submitted' ? <CheckCircle size={18} /> :
                            <Bell size={18} />}
                         </div>
                         <div className="flex-1">
@@ -215,14 +225,13 @@ const TrackPage = () => {
             <div className="mt-8 text-center">
               <Link
                 to="/submit"
-                className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold text-white bg-[var(--accent)] hover:brightness-110 transition-all duration-300"
               >
                 Ajukan Proyek Baru
               </Link>
             </div>
           </div>
         </div>
-      </div>
     </PageBackground>
   )
 }

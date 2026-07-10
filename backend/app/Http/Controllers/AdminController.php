@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RejectSubmissionRequest;
+use App\Models\Notification;
 use App\Models\ProjectSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -52,6 +53,19 @@ class AdminController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        // Notify the submitter that their project was accepted & published
+        Notification::create([
+            'tracking_id' => $submission->tracking_id,
+            'project_id'  => $submission->id,
+            'type'        => 'accepted',
+            'title'       => 'Proyek Diterima',
+            'message'     => 'Selamat! Proyek "' . $submission->title . '" telah diterima dan dipublikasikan di ILKOM Gallery.',
+            'read'        => false,
+        ]);
+
+        // Bust the user's cached public notification list so it appears promptly
+        Cache::forget("public-notifications:{$submission->tracking_id}");
+
         // Bust the public projects cache so the gallery reflects the change
         try { Cache::tags('public-projects')->flush(); } catch (\Throwable $e) {}
 
@@ -67,6 +81,19 @@ class AdminController extends Controller
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
+
+        // Notify the submitter that their project was rejected
+        Notification::create([
+            'tracking_id' => $submission->tracking_id,
+            'project_id'  => $submission->id,
+            'type'        => 'rejected',
+            'title'       => 'Proyek Ditolak',
+            'message'     => 'Proyek "' . $submission->title . '" ditolak. Alasan: ' . $request->validated()['rejection_reason'],
+            'read'        => false,
+        ]);
+
+        // Bust the user's cached public notification list so it appears promptly
+        Cache::forget("public-notifications:{$submission->tracking_id}");
 
         // Bust the public projects cache so the gallery reflects the change
         try { Cache::tags('public-projects')->flush(); } catch (\Throwable $e) {}

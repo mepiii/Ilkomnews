@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X, Home, Newspaper, Image, ExternalLink, Users, ChevronDown, Send, Search, Bookmark } from 'lucide-react'
 import { AnimatedThemeToggle } from '../ui/AnimatedThemeToggle'
 import NotificationPopover from '../ui/NotificationPopover'
@@ -11,6 +11,8 @@ const navItems = [
   { name: 'Berita', path: '/news', icon: Newspaper },
   { name: 'Ilkom Gallery', path: '/ilkomgallery', icon: Image },
 ]
+
+const MotionLink = motion.create(Link)
 
 const activityItems = [
   { name: 'Submit Proyek', path: '/submit', icon: Send },
@@ -25,10 +27,12 @@ const bemApps = [
 
 const LampNavbar = () => {
   const location = useLocation()
+  const reduce = useReducedMotion()
   const [activeTab, setActiveTab] = useState('Beranda')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [bemDropdownOpen, setBemDropdownOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [hovered, setHovered] = useState(null)
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
 
@@ -69,7 +73,7 @@ const LampNavbar = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -100, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4"
+          className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4"
         >
           {/* Desktop — sleek compact navbar */}
           <div className="hidden md:flex items-center justify-center gap-1 bg-white/80 dark:bg-black/80 backdrop-blur-xl py-2 px-2 rounded-full border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)]">
@@ -84,11 +88,16 @@ const LampNavbar = () => {
             {navItems.map((item, index) => {
               const isActive = activeTab === item.name
               return (
-                <Link
+                <MotionLink
                   key={item.name}
                   to={item.path}
                   onClick={() => setActiveTab(item.name)}
-                  className={`relative cursor-pointer px-4 py-2 rounded-full transition-all duration-200 text-xs font-semibold tracking-wide uppercase ${
+                  onMouseEnter={() => setHovered(item.name)}
+                  onMouseLeave={() => setHovered(null)}
+                  whileHover={reduce ? undefined : { scale: 1.06 }}
+                  whileTap={reduce ? undefined : { scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  className={`relative cursor-pointer px-4 py-2 rounded-full transition-all duration-200 text-xs font-semibold tracking-wide uppercase hover-underline ${
                     isActive
                       ? 'bg-[var(--accent)]/10 text-[var(--accent)] dark:text-[var(--accent)]'
                       : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
@@ -96,22 +105,27 @@ const LampNavbar = () => {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <span className="hidden md:inline">{item.name}</span>
-                  {isActive && (
-                    <motion.span 
+                  {(hovered === item.name || activeTab === item.name) && (
+                    <motion.span
                       layoutId="navIndicator"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-[2px] bg-[var(--accent)] rounded-full"
+                      className="absolute bottom-0 left-0 right-0 mx-auto w-3 h-[2px] bg-[var(--accent)] rounded-full"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
-                </Link>
+                </MotionLink>
               )
             })}
 
             {/* Aktivitas Dropdown */}
             <div className="relative" data-dropdown>
-              <button
+              <motion.button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className={`relative cursor-pointer px-3 py-1.5 rounded-full transition-all duration-200 text-[11px] font-semibold tracking-wide uppercase flex items-center gap-1 ${
+                onMouseEnter={() => setHovered('Aktivitas')}
+                onMouseLeave={() => setHovered(null)}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className={`relative cursor-pointer px-3 py-1.5 rounded-full transition-all duration-200 text-[11px] font-semibold tracking-wide uppercase flex items-center gap-1 hover-underline ${
                   activeTab === 'Aktivitas'
                     ? 'bg-[var(--accent)]/10 text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
@@ -121,17 +135,17 @@ const LampNavbar = () => {
                 <motion.span animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                   <ChevronDown size={12} />
                 </motion.span>
-                {activeTab === 'Aktivitas' && (
-                  <motion.span 
-                    layoutId="navIndicator2"
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-[2px] bg-[var(--accent)] rounded-full"
+                {(hovered === 'Aktivitas' || activeTab === 'Aktivitas') && (
+                  <motion.span
+                    layoutId="navIndicator"
+                    className="absolute bottom-0 left-0 right-0 mx-auto w-3 h-[2px] bg-[var(--accent)] rounded-full"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
-              </button>
+               </motion.button>
 
-              <AnimatePresence>
-                {dropdownOpen && (
+               <AnimatePresence>
+                 {dropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -139,14 +153,14 @@ const LampNavbar = () => {
                     transition={{ duration: 0.15 }}
                     className="absolute top-full left-0 mt-2 min-w-[180px] bg-white dark:bg-neutral-900 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-xl overflow-hidden p-1.5"
                   >
-                    {activityItems.map((item, idx) => {
+                    {activityItems.map((item) => {
                       const Icon = item.icon
                       return (
                         <Link 
                           key={item.name} 
                           to={item.path}
                           onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
                         >
                           <Icon size={16} />
                           <span>{item.name}</span>
@@ -160,18 +174,21 @@ const LampNavbar = () => {
 
             {/* BEM Apps Dropdown */}
             <div className="relative" data-dropdown-bem>
-              <button
+              <motion.button
                 onClick={() => setBemDropdownOpen(!bemDropdownOpen)}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="relative cursor-pointer px-3 py-1.5 rounded-full transition-all duration-200 text-[11px] font-semibold tracking-wide uppercase flex items-center gap-1 text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
               >
                 BEM Apps
                 <motion.span animate={{ rotate: bemDropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                   <ChevronDown size={12} />
-                </motion.span>
-              </button>
+                 </motion.span>
+               </motion.button>
 
-              <AnimatePresence>
-                {bemDropdownOpen && (
+               <AnimatePresence>
+                 {bemDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -179,7 +196,7 @@ const LampNavbar = () => {
                     transition={{ duration: 0.15 }}
                     className="absolute top-full left-0 mt-2 min-w-[180px] bg-white dark:bg-neutral-900 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-xl overflow-hidden p-1.5"
                   >
-                    {bemApps.map((app, idx) => {
+                    {bemApps.map((app) => {
                       const Icon = app.icon
                       return (
                         <a 
@@ -188,7 +205,7 @@ const LampNavbar = () => {
                           target="_blank" 
                           rel="noopener noreferrer"
                           onClick={() => setBemDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
                         >
                           <Icon size={16} />
                           <span>{app.name}</span>
@@ -219,17 +236,20 @@ const LampNavbar = () => {
             <div className="flex items-center gap-1.5">
               <NotificationPopover />
               <AnimatedThemeToggle />
-              <button 
+              <motion.button 
                 onClick={() => setMobileOpen(!mobileOpen)} 
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors"
               >
                 <motion.div
                   animate={{ rotate: mobileOpen ? 90 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {mobileOpen ? <X size={18} className="text-black dark:text-white" /> : <Menu size={18} className="text-black dark:text-white" />}
-                </motion.div>
-              </button>
+                 {mobileOpen ? <X size={18} className="text-black dark:text-white" /> : <Menu size={18} className="text-black dark:text-white" />}
+                 </motion.div>
+               </motion.button>
             </div>
           </div>
 
@@ -244,20 +264,23 @@ const LampNavbar = () => {
               {navItems.map((item, idx) => {
                 const Icon = item.icon
                 return (
-                  <Link 
-                    key={item.name} 
-                    to={item.path}
-                    onClick={() => { setActiveTab(item.name); setMobileOpen(false) }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors duration-100 ${
-                      activeTab === item.name
-                        ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                        : 'text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
-                    }`}
-                    style={{ animationDelay: `${idx * 30}ms` }}
-                  >
+              <MotionLink 
+                key={item.name} 
+                to={item.path}
+                onClick={() => { setActiveTab(item.name); setMobileOpen(false) }}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors duration-100 hover-underline ${
+                  activeTab === item.name
+                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                    : 'text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
+                }`}
+                style={{ animationDelay: `${idx * 30}ms` }}
+              >
                     <Icon size={16} />
                     <span>{item.name}</span>
-                  </Link>
+                  </MotionLink>
                 )
               })}
               <div className="border-t border-black/[0.06] dark:border-white/[0.06] mt-1 pt-1">
@@ -265,16 +288,19 @@ const LampNavbar = () => {
                 {activityItems.map((item, idx) => {
                   const Icon = item.icon
                   return (
-                    <Link 
+                    <MotionLink 
                       key={item.name} 
                       to={item.path}
                       onClick={() => { setActiveTab('Aktivitas'); setMobileOpen(false) }}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
+                      whileHover={reduce ? undefined : { scale: 1.06 }}
+                      whileTap={reduce ? undefined : { scale: 0.94 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
                       style={{ animationDelay: `${(idx + 3) * 30}ms` }}
                     >
                       <Icon size={16} />
                       <span>{item.name}</span>
-                    </Link>
+                    </MotionLink>
                   )
                 })}
               </div>
@@ -288,7 +314,7 @@ const LampNavbar = () => {
                       target="_blank" 
                       rel="noopener noreferrer"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
                       style={{ animationDelay: `${(idx + 6) * 30}ms` }}
                     >
                       <Icon size={16} />

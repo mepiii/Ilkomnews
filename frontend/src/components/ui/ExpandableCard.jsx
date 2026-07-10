@@ -1,10 +1,62 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { Heart, Bookmark, Share2, X } from "lucide-react"
+import { Heart, Bookmark, Share2, X, Eye } from "lucide-react"
 import { cn } from "../../lib/utils"
-import { toggleLike, toggleSave, recordShare, recordView, getInteractionCounts, toggleGlobalLike, toggleGlobalSave } from "../../services/interactions"
+import { useEngagement } from "../../context/EngagementContext"
 import { lockScroll, unlockScroll, resetScrollLock } from "../../lib/scrollLock"
+import { shareItem } from "../../lib/share"
+import { useToast } from "../../components/ui/Toast"
+import { generateSlug } from "../../utils/formatters"
+
+// Abstract, themed placeholder rendered when no image is available.
+// Uses a dynamic CSS gradient (from themeColor) plus soft abstract SVG blobs,
+// so a broken-image icon never appears.
+export const GradientPlaceholder = React.memo(function GradientPlaceholder({
+  themeColor = "270 50% 40%",
+  title = "",
+  className,
+}) {
+  return (
+    <div
+      role="img"
+      aria-label={title ? `${title} — no image` : "No image"}
+      className={cn("relative w-full h-full overflow-hidden", className)}
+      style={{
+        background: `linear-gradient(135deg, hsl(${themeColor}) 0%, hsl(${themeColor} / 0.55) 55%, hsl(${themeColor} / 0.15) 100%)`,
+      }}
+    >
+      <svg
+        viewBox="0 0 800 500"
+        preserveAspectRatio="xMidYMid slice"
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute inset-0 w-full h-full"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="gp-fade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <circle cx="140" cy="120" r="180" fill="url(#gp-fade)" />
+        <circle cx="660" cy="420" r="220" fill="#ffffff" opacity="0.08" />
+        <path
+          d="M0 360 Q200 280 400 360 T800 340 V500 H0 Z"
+          fill="#000000"
+          opacity="0.12"
+        />
+        <path
+          d="M0 300 L260 140 L440 260 L620 120 L800 240"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="3"
+          opacity="0.18"
+        />
+      </svg>
+    </div>
+  )
+})
 
 const InteractionBar = React.memo(function InteractionBar({
   compact = false,
@@ -22,6 +74,7 @@ const InteractionBar = React.memo(function InteractionBar({
         aria-label={liked ? 'Unlike' : 'Like'}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={cn("p-2 rounded-lg transition-colors duration-150",
           liked ? "text-red-500" : "text-[var(--text-muted)] hover:text-red-400"
         )}
@@ -33,6 +86,7 @@ const InteractionBar = React.memo(function InteractionBar({
         aria-label={saved ? 'Unsave' : 'Save'}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={cn("p-2 rounded-lg transition-colors duration-150",
           saved ? "text-blue-500" : "text-[var(--text-muted)] hover:text-blue-400"
         )}
@@ -44,18 +98,39 @@ const InteractionBar = React.memo(function InteractionBar({
         aria-label="Share"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className="p-2 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
       >
         <Share2 size={compact ? 14 : 18} />
       </motion.button>
       {!compact && counts.likes > 0 && (
-        <motion.span 
+        <motion.span
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-xs ml-1 font-medium" 
+          className="text-xs ml-1 font-medium"
           style={{ color: 'var(--text-muted)' }}
         >
           {counts.likes}
+        </motion.span>
+      )}
+      {!compact && counts.saves > 0 && (
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-xs ml-1 font-medium"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {counts.saves}
+        </motion.span>
+      )}
+      {!compact && counts.shares > 0 && (
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-xs ml-1 font-medium"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {counts.shares}
         </motion.span>
       )}
     </div>
@@ -78,21 +153,33 @@ function ExpandableCard({
 }) {
   const [active, setActive] = React.useState(false)
   const collapsedCardRef = React.useRef(null)
+  const expandedCardRef = React.useRef(null)
   const expandedCloseRef = React.useRef(null)
   const id = React.useId()
 
-  const [liked, setLiked] = React.useState(false)
-  const [saved, setSaved] = React.useState(false)
-  const [counts, setCounts] = React.useState({ likes: 0, saves: 0, shares: 0 })
+  const { get, ensure, toggleLike, toggleSave, recordView, recordShare } = useEngagement()
+  const { showToast } = useToast()
+  const eng = itemId
+    ? get(itemType, itemId)
+    : { liked: false, saved: false, views: 0, likes: 0, saves: 0, shares: 0, loaded: false }
+  const liked = eng.liked
+  const saved = eng.saved
+  const counts = React.useMemo(() => ({
+    views: eng.views,
+    likes: eng.likes,
+    saves: eng.saves,
+    shares: eng.shares,
+  }), [eng.views, eng.likes, eng.saves, eng.shares])
 
+  // Thumbnail is optional. Fall back to an abstract themed placeholder when the
+  // src is missing/empty or fails to load — never show a broken-image icon.
+  const [imgError, setImgError] = React.useState(false)
+  const hasImage = Boolean(src) && !imgError
+
+  // Load server stats on mount and whenever the card expands.
   React.useEffect(() => {
-    if (itemId) {
-      const c = getInteractionCounts(itemType, itemId)
-      setLiked(c.isLiked)
-      setSaved(c.isSaved)
-      setCounts({ likes: c.likes, saves: c.saves, shares: c.shares })
-    }
-  }, [itemId, itemType, active])
+    if (itemId) ensure(itemType, itemId)
+  }, [itemId, itemType, ensure])
 
   // Item data to persist for Koleksi
   const getItemData = React.useCallback(() => ({
@@ -109,33 +196,29 @@ function ExpandableCard({
   const handleLike = React.useCallback((e) => {
     e.stopPropagation()
     if (!itemId) return
-    const isNowLiked = toggleLike(itemType, itemId, getItemData())
-    setLiked(isNowLiked)
-    setCounts(prev => ({ ...prev, likes: prev.likes + (isNowLiked ? 1 : -1) }))
-    toggleGlobalLike(itemType, itemId).catch(() => {})
-  }, [itemId, itemType, getItemData])
+    toggleLike(itemType, itemId)
+  }, [itemId, itemType, toggleLike])
 
   const handleSave = React.useCallback((e) => {
     e.stopPropagation()
     if (!itemId) return
-    const isNowSaved = toggleSave(itemType, itemId, getItemData())
-    setSaved(isNowSaved)
-    setCounts(prev => ({ ...prev, saves: prev.saves + (isNowSaved ? 1 : -1) }))
-    toggleGlobalSave(itemType, itemId).catch(() => {})
-  }, [itemId, itemType, getItemData])
+    toggleSave(itemType, itemId)
+  }, [itemId, itemType, toggleSave])
 
-  const handleShare = React.useCallback((e) => {
+  const handleShare = React.useCallback(async (e) => {
     e.stopPropagation()
     if (!itemId) return
-    const url = window.location.href
-    if (navigator.share) {
-      navigator.share({ title, url }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(url).catch(() => {})
-    }
-    const newCount = recordShare(itemType, itemId)
-    setCounts(prev => ({ ...prev, shares: newCount }))
-  }, [itemId, itemType, title])
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const path = itemType === 'project'
+      ? `/ilkomgallery/project/${itemId}`
+      : itemType === 'article'
+        ? `/articles/${generateSlug(title)}`
+        : `/news/${generateSlug(title)}`
+    const url = origin + path
+    await shareItem({ title, url })
+    showToast('Tautan berhasil disalin & dibagikan', { type: 'success' })
+    recordShare(itemType, itemId) // counter dedup happens inside EngagementContext
+  }, [itemId, itemType, title, recordShare, showToast])
 
   const scrollPositionRef = React.useRef(0)
   const isExpandedRef = React.useRef(false)
@@ -150,25 +233,33 @@ function ExpandableCard({
       recordView(itemType, itemId, getItemData())
     }
     setTimeout(() => expandedCloseRef.current?.focus(), 100)
-  }, [itemId, itemType, getItemData])
+  }, [itemId, itemType, getItemData, recordView])
 
   const handleCollapse = React.useCallback(() => {
     isExpandedRef.current = false
     unlockScroll()
-    window.scrollTo(0, scrollPositionRef.current)
     setActive(false)
     setTimeout(() => collapsedCardRef.current?.focus(), 100)
   }, [])
 
-  // Escape key handler
-  React.useEffect(() => {
-    if (!active) return
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') handleCollapse()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [active, handleCollapse])
+  // Pointer-tracked glow — sets --glow-x / --glow-y CSS vars on the
+  // card element so the sheen overlay can follow the cursor. Mirrors the
+  // technique used in GlowCard. The overlay stays pointer-events-none.
+  const handleCardMouseMove = React.useCallback((e) => {
+    const el = collapsedCardRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    el.style.setProperty('--glow-x', `${e.clientX - rect.left}px`)
+    el.style.setProperty('--glow-y', `${e.clientY - rect.top}px`)
+  }, [])
+
+  const handleModalMouseMove = React.useCallback((e) => {
+    const el = expandedCardRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    el.style.setProperty('--glow-x', `${e.clientX - rect.left}px`)
+    el.style.setProperty('--glow-y', `${e.clientY - rect.top}px`)
+  }, [])
 
   // Safety: if component unmounts while expanded, guarantee scroll is restored
   React.useEffect(() => {
@@ -179,7 +270,7 @@ function ExpandableCard({
 
   const interactionProps = React.useMemo(() => ({
     liked, saved, counts, onLike: handleLike, onSave: handleSave, onShare: handleShare
-  }), [liked, saved, counts, handleLike, handleSave, handleShare])
+  }),     [liked, saved, counts, handleLike, handleSave, handleShare])
 
   return (
     <>
@@ -188,32 +279,50 @@ function ExpandableCard({
         ref={collapsedCardRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -4 }}
+        whileHover={{ y: -4, boxShadow: '0 0 24px rgba(122,71,166,0.35)' }}
         whileTap={{ scale: 0.98 }}
+        onMouseMove={handleCardMouseMove}
         onClick={handleExpand}
         className={cn(
-          "group cursor-pointer overflow-hidden rounded-xl transition-all duration-300",
+          "group cursor-pointer overflow-hidden rounded-xl transition-all duration-300 relative",
           "bg-white dark:bg-neutral-900",
           "border border-neutral-200 dark:border-[var(--border-color)]",
           "hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-black/50",
           "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50",
           className
         )}
-        style={{ width: '100%', minHeight: '420px', height: '100%' }}
+        style={{ width: '100%', minHeight: '420px', height: '100%', position: 'relative', '--glow-x': '50%', '--glow-y': '50%' }}
         tabIndex={0}
         role="button"
         aria-expanded={active}
         {...props}
       >
-        {/* Image - Compact aspect ratio */}
-        <div className="relative aspect-[16/10] overflow-hidden">
-          <img
-            src={src}
-            alt={title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300/8B5CF6/white?text=No+Image' }}
-          />
+        {/* Pointer-tracked sheen glow — revealed softly on hover, behind content */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            zIndex: 1,
+            background: 'radial-gradient(420px circle at var(--glow-x) var(--glow-y), rgba(122,71,166,0.18), transparent 60%)',
+          }}
+        />
+        {/* Image - Compact aspect ratio (optional; falls back to placeholder) */}
+        <div className="relative z-[2] aspect-video overflow-hidden">
+          {hasImage ? (
+            <img
+              src={src}
+              alt={title}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <GradientPlaceholder
+              themeColor={themeColor}
+              title={title}
+              className="transition-transform duration-500 group-hover:scale-105"
+            />
+          )}
           
           {/* Gradient overlay */}
           <div 
@@ -230,10 +339,14 @@ function ExpandableCard({
         </div>
 
         {/* Content - Longer description area */}
-        <div className="p-5 min-h-[220px] flex flex-col flex-grow gap-3">
-          <h3 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2 mb-2 break-words overflow-hidden leading-snug pr-1">
+        <div className="relative z-[2] p-4 sm:p-5 min-h-[200px] sm:min-h-[220px] flex flex-col flex-grow gap-2 sm:gap-3">
+          <motion.h3 
+            whileHover={{ scale: 1.02 }} 
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2 mb-2 break-words overflow-hidden leading-snug pr-1"
+          >
             {title}
-          </h3>
+          </motion.h3>
           {description && (
             <p className="text-xs text-[var(--text-muted)] line-clamp-5 break-words overflow-hidden leading-relaxed">
               {description}
@@ -245,6 +358,33 @@ function ExpandableCard({
             </div>
           )}
         </div>
+
+        {/* Compact interaction bar (collapsed card footer) — shares the same
+            context state as the expanded modal, so a like here reflects there
+            instantly without a reload. */}
+        {itemId && (
+          <div className="relative z-[2] flex items-center justify-between gap-2 px-4 pb-4 pt-3 border-t border-[var(--border-color)]">
+            <InteractionBar
+              compact
+              liked={liked}
+              saved={saved}
+              counts={counts}
+              onLike={handleLike}
+              onSave={handleSave}
+              onShare={handleShare}
+            />
+            <div
+              className="flex items-center gap-3 text-[11px] font-medium shrink-0"
+              style={{ color: 'var(--text-muted)' }}
+              aria-hidden="true"
+            >
+              {counts.views > 0 && <span className="flex items-center gap-1"><Eye size={12} />{counts.views}</span>}
+              {counts.likes > 0 && <span className="flex items-center gap-1"><Heart size={12} />{counts.likes}</span>}
+              {counts.saves > 0 && <span className="flex items-center gap-1"><Bookmark size={12} />{counts.saves}</span>}
+              {counts.shares > 0 && <span className="flex items-center gap-1"><Share2 size={12} />{counts.shares}</span>}
+            </div>
+          </div>
+        )}
       </motion.article>
 
       {/* Expanded Modal - Longer card */}
@@ -264,28 +404,51 @@ function ExpandableCard({
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 id={`card-${id}`}
+                ref={expandedCardRef}
+                onMouseMove={handleModalMouseMove}
+                whileHover={{ boxShadow: '0 0 30px rgba(122,71,166,0.32)' }}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
               // Consistent width, long expanded card for all card types
-              "w-full max-w-[min(520px,calc(100vw-2rem))] max-h-[min(92vh,1000px)] flex flex-col overflow-hidden rounded-2xl relative",
+              "w-full max-w-[min(520px,calc(100vw-2rem))] max-h-[min(92vh,1000px)] flex flex-col overflow-hidden rounded-2xl relative group",
                   "bg-white dark:bg-[#0a0a0a]",
                   "border border-neutral-200 dark:border-[var(--border-color)]",
                   "shadow-2xl dark:shadow-black/60",
                   classNameExpanded
                 )}
+                style={{ position: 'relative', '--glow-x': '50%', '--glow-y': '50%' }}
                 {...props}
               >
-                {/* Hero image - Consistent height */}
-                <div className="relative shrink-0 h-56 sm:h-64 overflow-hidden">
-                  <motion.img
-                    src={src}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.4 }}
-                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/8B5CF6/white?text=No+Image' }}
-                  />
+                {/* Pointer-tracked sheen glow — revealed softly on hover, behind content */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 z-[1] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{
+                    background: 'radial-gradient(420px circle at var(--glow-x) var(--glow-y), rgba(122,71,166,0.18), transparent 60%)',
+                  }}
+                />
+                {/* Hero image - Consistent height (optional; placeholder fallback) */}
+                <div className="relative z-[2] shrink-0 h-56 sm:h-64 overflow-hidden">
+                  {hasImage ? (
+                    <motion.img
+                      src={src}
+                      alt={title}
+                      className="w-full h-full object-cover"
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                      onError={() => setImgError(true)}
+                    />
+                  ) : (
+                    <motion.div
+                      className="w-full h-full"
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <GradientPlaceholder themeColor={themeColor} title={title} />
+                    </motion.div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-transparent to-transparent opacity-70" />
 
                   <motion.button
@@ -314,7 +477,7 @@ function ExpandableCard({
                 {/* Scrollable content */}
                 <div
                   onWheel={(e) => e.stopPropagation()}
-                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+                  className="relative z-[2] flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
                   <div className="px-6 pt-5 pb-5">

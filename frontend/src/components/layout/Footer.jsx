@@ -57,15 +57,17 @@ export default function Footer() {
             <ul className="flex list-none mt-6 md:mt-0 gap-2">
               {socialLinks.map((link, i) => (
                 <motion.li key={i} variants={itemVariant}>
-                  <a
+                  <motion.a
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={link.label}
+                    whileHover={{ y: -4 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 12 }}
                     className={`inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-lg ${link.color}`}
                   >
                     <link.icon className="text-sm" />
-                  </a>
+                  </motion.a>
                 </motion.li>
               ))}
             </ul>
@@ -78,7 +80,7 @@ export default function Footer() {
                 <li key={i}>
                   <a
                     href={c.href}
-                    className="inline-flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+                    className="inline-flex items-center gap-2 text-xs text-white/40 hover:text-white/70 hover-underline transition-colors"
                   >
                     <c.icon size={12} />
                     {c.label}
@@ -102,26 +104,30 @@ export default function Footer() {
               <ul className="list-none flex flex-wrap gap-4">
                 {mainLinks.map((link, i) => (
                   <li key={i}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-white/50 hover:text-white transition-colors duration-200 inline-flex items-center gap-1 group"
-                    >
-                      {link.label}
-                      <ArrowUpRight size={12} className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                    </Link>
+                    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+                      <Link
+                        to={link.href}
+                        className="text-sm text-white/50 hover:text-white hover-underline transition-colors duration-200 inline-flex items-center gap-1 group"
+                      >
+                        {link.label}
+                        <ArrowUpRight size={12} className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      </Link>
+                    </motion.div>
                   </li>
                 ))}
                 <li className="text-white/15">|</li>
                 {legalLinks.map((link, i) => (
                   <li key={i}>
-                    <a
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-white/30 hover:text-white/70 transition-colors duration-200"
-                    >
-                      {link.label}
-                    </a>
+                    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-white/30 hover:text-white/70 hover-underline transition-colors duration-200"
+                      >
+                        {link.label}
+                      </a>
+                    </motion.div>
                   </li>
                 ))}
               </ul>

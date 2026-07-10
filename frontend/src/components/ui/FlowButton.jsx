@@ -1,14 +1,15 @@
 import React from 'react'
 import { ArrowRight } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const FlowButton = React.memo(function FlowButton({ text = 'Learn More', onClick, className = '' }) {
+  const reduce = useReducedMotion()
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ scale: 1.03, y: -2 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      whileHover={reduce ? undefined : { scale: 1.06 }}
+      whileTap={reduce ? undefined : { scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={`group relative flex items-center gap-1 overflow-hidden rounded-full border-[1.5px] border-[var(--accent)]/40 bg-[var(--accent)]/20 text-[var(--accent)] dark:text-white px-8 py-3 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)]/60 hover:shadow-lg hover:shadow-purple-500/20 ${className}`}
     >
       <span className="absolute -inset-[2px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0">

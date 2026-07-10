@@ -30,8 +30,8 @@ describe('itemVariant animation variant', () => {
     expect(itemVariant).toHaveProperty('show')
   })
 
-  it('hidden starts at opacity 0 and y 20', () => {
-    expect(itemVariant.hidden).toEqual({ opacity: 0, y: 20 })
+  it('hidden starts at opacity 0 and y 24 with subtle scale', () => {
+    expect(itemVariant.hidden).toEqual({ opacity: 0, y: 24, scale: 0.98 })
   })
 
   it('show animates to opacity 1 and y 0', () => {

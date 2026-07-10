@@ -1,12 +1,14 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
-    'allowed_origins_patterns' => [],
-    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'X-XSRF-TOKEN'],
-    'exposed_headers' => [],
+    'paths' => ['*'],
+    'allowed_methods' => ['*'],
+    'allowed_origins' => ['https://ilkomnews.bemfasilkomunsri.org', 'https://bemfasilkomunsri.org', 'https://www.bemfasilkomunsri.org', 'http://localhost:5173', 'http://localhost:8000'],
+    'allowed_origins_patterns' => [
+        '#^https://.*\.bemfasilkomunsri\.org$#',
+    ],
+    'allowed_headers' => ['*'],
+    'exposed_headers' => ['X-CSRF-TOKEN', 'X-XSRF-TOKEN'],
     'max_age' => 0,
     'supports_credentials' => true,
 ];

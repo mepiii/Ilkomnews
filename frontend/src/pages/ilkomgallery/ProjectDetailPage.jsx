@@ -11,9 +11,10 @@ import { motion } from 'framer-motion'
 import { API_BASE } from '../../services/api'
 import Breadcrumb from '../../components/common/Breadcrumb'
 import { formatNumber, generateSlug } from '../../utils/formatters'
-import { viewTracker } from '../../services/api'
 import ImageWithFallback from '../../components/ui/ImageWithFallback'
-import { isProjectLiked, isProjectSaved } from '../../hooks/useEngagement'
+import { useEngagement } from '../../context/EngagementContext'
+import { shareItem } from '../../lib/share'
+import { useToast } from '../../components/ui/Toast'
 
 const getCategoryDisplay = (category) => ({
   web: 'Web Development', mobile: 'Mobile App', uiux: 'UI/UX Design',
@@ -26,12 +27,14 @@ const ProjectDetailPage = () => {
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [realViews, setRealViews] = useState(0)
   const [relatedProjects, setRelatedProjects] = useState([])
+  const { get, ensure, toggleLike, toggleSave, recordView, recordShare } = useEngagement()
+  const { showToast } = useToast()
+  const eng = project
+    ? get('project', project.id)
+    : { liked: false, saved: false, views: 0, likes: 0, saves: 0, shares: 0 }
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -53,7 +56,8 @@ const ProjectDetailPage = () => {
           if (!foundProject) throw new Error('Project not found')
         }
         setProject(foundProject)
-        viewTracker.increment('projects', foundProject.id, foundProject.views || 0).then(setRealViews)
+        ensure('project', foundProject.id)
+        recordView('project', foundProject.id, foundProject)
         const allRes = await fetch(`${API_BASE}/projects`)
         if (allRes.ok) {
           const allData = await allRes.json()
@@ -62,16 +66,10 @@ const ProjectDetailPage = () => {
       } catch (err) { setError(err.message) } finally { setLoading(false) }
     }
     fetchProject()
-  }, [slug])
-
-  useEffect(() => {
-    if (project) {
-      setIsLiked(isProjectLiked(project.id))
-      setIsBookmarked(isProjectSaved(project.id))
-    }
-  }, [project])
+  }, [slug, ensure, recordView])
 
   const handleShare = async (platform) => {
+    if (project?.id) recordShare('project', project.id)
     const url = window.location.href, title = project?.title || ''
     const urls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -79,23 +77,17 @@ const ProjectDetailPage = () => {
       linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
       whatsapp: `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`
     }
-    if (platform === 'copy') { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard may be unavailable */ } }
+    if (platform === 'copy') { try { await shareItem({ title, url }); setCopied(true); setTimeout(() => setCopied(false), 2000); showToast('Tautan berhasil disalin', { type: 'success' }) } catch { /* clipboard may be unavailable */ } }
     else if (urls[platform]) window.open(urls[platform], '_blank', 'width=600,height=400')
     setShowShareMenu(false)
   }
 
   const handleToggleLike = () => {
-    const likes = JSON.parse(localStorage.getItem('project_likes') || '{}')
-    if (likes[project.id]) { delete likes[project.id]; setIsLiked(false) }
-    else { likes[project.id] = { likedAt: new Date().toISOString() }; setIsLiked(true) }
-    localStorage.setItem('project_likes', JSON.stringify(likes))
+    if (project?.id) toggleLike('project', project.id)
   }
 
   const handleToggleSave = () => {
-    const saves = JSON.parse(localStorage.getItem('project_saves') || '{}')
-    if (saves[project.id]) { delete saves[project.id]; setIsBookmarked(false) }
-    else { saves[project.id] = { savedAt: new Date().toISOString() }; setIsBookmarked(true) }
-    localStorage.setItem('project_saves', JSON.stringify(saves))
+    if (project?.id) toggleSave('project', project.id)
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-3 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>
@@ -143,10 +135,17 @@ const ProjectDetailPage = () => {
               {getCategoryDisplay(project.category)}
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight font-heading">{project.title}</h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            whileHover={{ scale: 1.01, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+            className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight font-heading"
+          >{project.title}</motion.h1>
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
             {project.creator_name && <span className="flex items-center gap-1"><User size={12} /> {project.creator_name}</span>}
-            <span className="flex items-center gap-1"><Eye size={12} /> {formatNumber(realViews)} views</span>
+            <span className="flex items-center gap-1">             <Eye size={12} /> {formatNumber(eng.views)} views</span>
           </div>
         </div>
       </motion.div>
@@ -217,9 +216,9 @@ const ProjectDetailPage = () => {
             {project.creator_name && (
               <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
                 {creatorAvatarUrl ? (
-                  <img src={creatorAvatarUrl} alt={project.creator_name} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={creatorAvatarUrl} alt={project.creator_name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold" style={{ background: 'var(--accent)' }}>
                     {project.creator_name.charAt(0)}
                   </div>
                 )}
@@ -240,9 +239,9 @@ const ProjectDetailPage = () => {
               return (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
                   {avatar ? (
-                    <img src={avatar} alt={name} className="w-10 h-10 rounded-full object-cover" />
+                    <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold bg-purple-500/60">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold bg-purple-500/60">
                       {name.charAt(0)}
                     </div>
                   )}
@@ -263,18 +262,18 @@ const ProjectDetailPage = () => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             className="p-2.5 rounded-xl transition-all" 
-            style={{ color: isLiked ? '#ef4444' : 'var(--text-muted)', background: isLiked ? 'rgba(239,68,68,0.1)' : 'transparent' }}
+            style={{ color: eng.liked ? '#ef4444' : 'var(--text-muted)', background: eng.liked ? 'rgba(239,68,68,0.1)' : 'transparent' }}
           >
-            <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={eng.liked ? 'currentColor' : 'none'} />
           </motion.button>
           <motion.button 
             onClick={handleToggleSave} 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             className="p-2.5 rounded-xl transition-all" 
-            style={{ color: isBookmarked ? 'var(--accent)' : 'var(--text-muted)', background: isBookmarked ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent' }}
+            style={{ color: eng.saved ? 'var(--accent)' : 'var(--text-muted)', background: eng.saved ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent' }}
           >
-            <Bookmark size={18} fill={isBookmarked ? 'currentColor' : 'none'} />
+            <Bookmark size={18} fill={eng.saved ? 'currentColor' : 'none'} />
           </motion.button>
           <div className="relative">
             <motion.button 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import { User, Mail, Lock, Save, Eye, EyeOff } from 'lucide-react'
+import { User, Lock, Save, Eye, EyeOff } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { adminAuth } from '../../services/adminApi'
+import { springPreset, pageContainer, pageItem, useReducedMotionSafe } from '../../lib/animations'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ name: '', email: '' })
@@ -13,21 +15,28 @@ export default function SettingsPage() {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(() => {
     return !localStorage.getItem('password_prompt_dismissed')
   })
+  const reduce = useReducedMotionSafe()
+  const containerVariants = reduce
+    ? { hidden: {}, show: {} }
+    : pageContainer
+  const itemVariants = reduce
+    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0 } } }
+    : pageItem
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  async function fetchProfile() {
     try {
       const data = await adminAuth.getProfile()
       setProfile({ name: data.name || '', email: data.email || '' })
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Gagal memuat profil' })
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
 
   const handleProfileChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }))
@@ -76,7 +85,12 @@ export default function SettingsPage() {
       setMessage({ type: 'success', text: 'Password berhasil diperbarui' })
       setPasswords({ current_password: '', password: '', password_confirmation: '' })
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Gagal memperbarui password' })
+      const msg = err.message || 'Gagal memperbarui password'
+      if (msg.includes('Password lama yang Anda masukkan salah')) {
+        setErrors(prev => ({ ...prev, current_password: msg }))
+      } else {
+        setMessage({ type: 'error', text: msg })
+      }
     } finally {
       setSaving(false)
     }
@@ -92,26 +106,36 @@ export default function SettingsPage() {
 
   const inputClass = (field) =>
     `w-full px-4 py-2.5 border rounded-xl text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors ${
-      errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-[#262626]'
+      errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-neutral-800'
     }`
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
+    <motion.div
+      className="max-w-2xl mx-auto space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={itemVariants}>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pengaturan</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kelola profil dan keamanan akun Anda</p>
-      </div>
+      </motion.div>
 
       {message.text && (
-        <div className={`p-4 rounded-xl text-sm font-medium ${
-          message.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 border border-red-500/20'
-        }`}>
+        <motion.div
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : springPreset}
+          className={`p-4 rounded-xl text-sm font-medium ${
+            message.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 border border-red-500/20'
+          }`}
+        >
           {message.text}
-        </div>
+        </motion.div>
       )}
 
       {/* Profile Section */}
-      <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-6">
+      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-6">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <User size={18} /> Profil
         </h2>
@@ -138,18 +162,21 @@ export default function SettingsPage() {
             />
             {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
           </div>
-          <button
+          <motion.button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white rounded-xl text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={springPreset}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
           >
             <Save size={16} /> {saving ? 'Menyimpan...' : 'Simpan Profil'}
-          </button>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
 
       {/* Password Section */}
-      <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-6">
+      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-6">
         {showPasswordPrompt && (
           <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400 text-sm flex items-start justify-between gap-2">
             <span>Disarankan mengubah password setelah login pertama untuk keamanan akun.</span>
@@ -178,7 +205,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               >
                 {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -198,7 +225,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               >
                 {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -216,15 +243,18 @@ export default function SettingsPage() {
             />
             {errors.password_confirmation && <p className="text-xs text-red-500 mt-1">{errors.password_confirmation}</p>}
           </div>
-          <button
+          <motion.button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white rounded-xl text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={springPreset}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
           >
             <Lock size={16} /> {saving ? 'Menyimpan...' : 'Ubah Password'}
-          </button>
+          </motion.button>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

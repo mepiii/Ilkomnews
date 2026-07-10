@@ -1,0 +1,73 @@
+# ============================================================
+#  ILKOM NEWS — Frontend (React + Vite) .gitignore
+# ============================================================
+
+# ---------------- Dependencies ----------------
+node_modules/
+.pnp
+.pnp.js
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ---------------- Build output (regenerated) ----------------
+dist/
+dist-ssr/
+build/
+*.local
+.vite/
+*.tsbuildinfo
+
+# ---------------- Deploy bundles (regenerated) ----------------
+frontend_prod.zip
+frontend.zip
+*.zip
+
+# ---------------- Environment / Secrets  NEVER COMMIT ----------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+# keep templates tracked:
+!.env.example
+
+# ---------------- Testing / Playwright ----------------
+playwright-report/
+test-results/
+/blob-report/
+playwright/.cache/
+coverage/
+.e2e-report/
+
+# ---------------- Linters / caches ----------------
+.eslintcache
+.cache/
+.turbo/
+
+# ---------------- Logs ----------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# ---------------- OS / Editor ----------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ---------------- Agent / scratch ----------------
+.remember/
+.fallow/
+.claude/
+shot.js

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { springPreset, useReducedMotionSafe } from '../lib/animations'
 import NewsDetail from '../components/news/NewsDetail'
 import ArticleDetail from '../components/articles/ArticleDetail'
-import EventDetail from '../components/events/EventDetail'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
@@ -10,7 +11,7 @@ import { PageBackground } from '../components/ui/PageBackground'
 import { api } from '../services/api'
 import { isNumericId, generateSlug } from '../utils/formatters'
 
-const VALID_TYPES = ['news', 'articles', 'events', 'career']
+const VALID_TYPES = ['news', 'articles']
 
 const DetailPage = ({ type }) => {
   const { slug } = useParams()
@@ -19,6 +20,8 @@ const DetailPage = ({ type }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [related, setRelated] = useState([])
+  const abortRef = useRef(null)
+  const reduce = useReducedMotionSafe()
 
   // NOTE: all hooks must be called before any conditional return (Rules of Hooks)
   const isValidType = Boolean(type && VALID_TYPES.includes(type))
@@ -26,11 +29,15 @@ const DetailPage = ({ type }) => {
   useEffect(() => {
     if (!isValidType) return
 
+    const controller = new AbortController()
+    abortRef.current = controller
+    let active = true
+
     const fetchData = async () => {
       setLoading(true)
       setError(null)
       try {
-        const service = type === 'news' ? api.news : type === 'articles' ? api.articles : api.events
+        const service = type === 'news' ? api.news : api.articles
         let result = null
         let allData = []
 
@@ -59,6 +66,7 @@ const DetailPage = ({ type }) => {
           }
         }
 
+        if (!active) return
         if (result) {
           setData(result)
           setRelated(allData.filter(item => item.id !== result.id).slice(0, 3))
@@ -66,12 +74,14 @@ const DetailPage = ({ type }) => {
           setError('Konten tidak ditemukan')
         }
       } catch (err) {
-        setError(err.message || 'Gagal memuat data')
+        if (!active) return
+        if (err.name !== 'AbortError') setError(err.message || 'Gagal memuat data')
       } finally {
-        setLoading(false)
+        if (active) setLoading(false)
       }
     }
     if (slug) fetchData()
+    return () => { active = false; controller.abort() }
   }, [type, slug, navigate, isValidType])
 
   useEffect(() => { if (data) window.scrollTo(0, 0) }, [data])
@@ -95,20 +105,23 @@ const DetailPage = ({ type }) => {
     switch (type) {
       case 'news': return <NewsDetail news={data} relatedNews={related} />
       case 'articles': return <ArticleDetail article={data} relatedArticles={related} />
-      case 'events': return <EventDetail event={data} relatedEvents={related} />
-      case 'career': return <EventDetail event={data} relatedEvents={related} />
       default: return <ErrorMessage message="Tipe konten tidak valid" />
     }
   }
 
   return (
     <PageBackground>
-      <div className="min-h-screen bg-transparent relative z-0 pt-6 pb-20">
+      <motion.div
+        className="min-h-screen bg-transparent relative z-0 pt-6 pb-20"
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+      >
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <Breadcrumb />
           {renderDetail()}
         </div>
-      </div>
+      </motion.div>
     </PageBackground>
   )
 }

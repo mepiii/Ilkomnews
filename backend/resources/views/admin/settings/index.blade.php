@@ -36,6 +36,7 @@
                         <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                         <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Prioritas</th>
                         <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nama Provider</th>
+                        <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Prefix / API</th>
                         <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Model ID</th>
                         <th class="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
@@ -58,6 +59,10 @@
                         <td class="py-3 px-4">
                             <div class="font-medium text-white">{{ $provider->name }}</div>
                             <div class="text-xs text-gray-500">{{ $provider->provider_type }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <code class="text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded">{{ $provider->prefix }}</code>
+                            <span class="ml-1 text-xs text-gray-500">{{ $provider->api_type }}</span>
                         </td>
                         <td class="py-3 px-4">
                             <code class="text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded">{{ $provider->model_id }}</code>
@@ -124,7 +129,22 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">Base URL</label>
-                <input type="url" name="base_url" id="base_url" required class="w-full px-3 py-2 bg-black/50 border border-purple-900/30 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-sm" placeholder="https://api.openai.com/v1/chat/completions">
+                <input type="url" name="base_url" id="base_url" required class="w-full px-3 py-2 bg-black/50 border border-purple-900/30 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-sm" placeholder="https://api.openai.com/v1">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Prefix <span class="text-xs text-gray-500 font-normal">(slug namespacing)</span></label>
+                    <input type="text" name="prefix" id="prefix" required class="w-full px-3 py-2 bg-black/50 border border-purple-900/30 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-sm" placeholder="e.g. gemini" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$">
+                    <p class="text-xs text-gray-500 mt-1">URL-safe slug used to namespace model IDs (e.g. <code class="text-purple-300">gemini</code> resolves <code class="text-purple-300">gemini/gemini-3.1-pro-preview</code>).</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">API Type</label>
+                    <select name="api_type" id="api_type" class="w-full px-3 py-2 bg-black/50 border border-purple-900/30 rounded-lg text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-sm">
+                        <option value="chat">Chat Completions</option>
+                        <option value="raw">API (Raw)</option>
+                    </select>
+                </div>
             </div>
 
             <div>
@@ -173,6 +193,8 @@
         document.getElementById('provider_type').value = provider.provider_type;
         document.getElementById('priority').value = provider.priority;
         document.getElementById('base_url').value = provider.base_url;
+        document.getElementById('prefix').value = provider.prefix || '';
+        document.getElementById('api_type').value = provider.api_type || 'chat';
         document.getElementById('model_id').value = provider.model_id;
         document.getElementById('is_active').checked = provider.is_active;
         

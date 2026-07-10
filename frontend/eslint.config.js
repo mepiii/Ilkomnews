@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'e2e', 'playwright.config.js', 'vite.config.js', 'shot.js', 'node_modules', 'coverage']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -16,6 +16,12 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    rules: {
+      // Fetch-on-mount effects intentionally call setState to load data.
+      // The set-state-in-effect rule is too noisy for that standard pattern;
+      // exhaustive-deps and rules-of-hooks remain enabled for real issues.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])

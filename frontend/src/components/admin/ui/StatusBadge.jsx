@@ -11,7 +11,7 @@ const STATUS_LABELS = {
   accepted:  'Diterima',
   rejected:  'Ditolak',
   published: 'Tayang',
-  draft:     'Draft',
+  draft:     'Belum Tayang',
 }
 
 export default function StatusBadge({ status }) {

@@ -34,9 +34,7 @@ export function unlockScroll() {
     document.body.style.top = ''
     document.body.style.left = ''
     document.body.style.right = ''
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y)
-    })
+    window.scrollTo(0, y)
   }
 }
 

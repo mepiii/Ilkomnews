@@ -2,7 +2,7 @@ export default function SkeletonTable({ rows = 5, columns = 4 }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626]">
+        <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800">
           {Array.from({ length: columns }).map((_, j) => (
             <div
               key={j}

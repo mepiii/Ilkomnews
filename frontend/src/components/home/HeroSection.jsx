@@ -22,7 +22,7 @@ const HeroSection = () => {
   const newsLetters = 'NEWS'.split('')
 
   return (
-    <div className="relative min-h-[90vh] w-full flex items-center justify-center overflow-hidden">
+    <div className="relative -mt-20 min-h-[90vh] w-full flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <motion.div
         className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -35,7 +35,7 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-24 sm:pt-32 pb-24 sm:pb-32 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-32 sm:pt-36 pb-24 sm:pb-32 text-center">
         <div className="text-center">
           {/* Title - RePo font with letter-by-letter animation */}
           <motion.div
@@ -55,32 +55,34 @@ const HeroSection = () => {
               <span className="block whitespace-nowrap">
                <span className="mr-3 inline-block font-heading" style={{ letterSpacing: '-0.02em' }}>
                  {ilkomLetters.map((letter, i) => (
-                   <motion.span
-                     key={i}
-                     custom={i}
-                     variants={letterAnimation}
-                     initial="hidden"
-                     animate="visible"
-                     className="inline-block"
-                      style={{ color: '#8B5CF6' }}
-                   >
-                     {letter}
-                   </motion.span>
+                    <motion.span
+                      key={i}
+                      custom={i}
+                      variants={letterAnimation}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover={{ y: [-2, -12, 0], transition: { type: 'spring', stiffness: 500, damping: 10 } }}
+                      className="inline-block"
+                       style={{ color: '#8B5CF6' }}
+                    >
+                      {letter}
+                    </motion.span>
                  ))}
                </span>
                <span className="inline-block font-heading" style={{ letterSpacing: '0.05em', fontWeight: 600 }}>
                  {newsLetters.map((letter, i) => (
-                   <motion.span
-                     key={i}
-                     custom={i + 5}
-                     variants={letterAnimation}
-                     initial="hidden"
-                     animate="visible"
-                     className="inline-block"
-                      style={{ color: '#A78BFA' }}
-                   >
-                     {letter}
-                   </motion.span>
+                    <motion.span
+                      key={i}
+                      custom={i + 5}
+                      variants={letterAnimation}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover={{ y: [-2, -12, 0], transition: { type: 'spring', stiffness: 500, damping: 10 } }}
+                      className="inline-block"
+                       style={{ color: '#A78BFA' }}
+                    >
+                      {letter}
+                    </motion.span>
                  ))}
                </span>
               </span>

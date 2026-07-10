@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { adminAuth } from '../services/adminApi'
+import { adminAuth, setOnUnauthorized } from '../services/adminApi'
+import { ADMIN_LOGIN_PATH } from '../config/admin'
 
 // Export the context so it can be imported directly
 // Default value prevents crash when lazy-loaded children render before provider mounts
@@ -13,13 +14,22 @@ export const AdminAuthContext = createContext({
   logout: async () => {},
 })
 
-const REMEMBER_KEY = 'admin_remember'
-
 export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const isAuthenticated = Boolean(user)
+
+  // Register the 401 handler so any Unauthorized response clears the user
+  // WITHOUT a hard reload. This breaks the login <-> dashboard redirect loop
+  // caused by a stale truthy user surviving a failed authenticated request.
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      setUser(null)
+      setLoading(false)
+    })
+    return () => setOnUnauthorized(null)
+  }, [])
 
   useEffect(() => {
     // Try to get user from session cookie (httpOnly)
@@ -32,11 +42,6 @@ export function AdminAuthProvider({ children }) {
   const login = useCallback(async (email, password, remember = false) => {
     const data = await adminAuth.login(email, password, remember)
     setUser(data.user)
-    if (remember) {
-      localStorage.setItem(REMEMBER_KEY, 'true')
-    } else {
-      localStorage.removeItem(REMEMBER_KEY)
-    }
     return data
   }, [])
 
@@ -44,7 +49,6 @@ export function AdminAuthProvider({ children }) {
     try {
       await adminAuth.logout()
     } finally {
-      localStorage.removeItem(REMEMBER_KEY)
       setUser(null)
     }
   }, [])
@@ -73,7 +77,7 @@ export function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />
+    return <Navigate to={ADMIN_LOGIN_PATH} state={{ from: location }} replace />
   }
 
   return children

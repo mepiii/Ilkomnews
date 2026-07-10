@@ -52,11 +52,11 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500',
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500', // 500KB max
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500', // 500KB max
         ]);
 
         $compressor = new ImageCompressionService();
@@ -131,6 +131,8 @@ class NewsController extends Controller
     {
         $news = News::findOrFail($id);
 
+        $compressor = new ImageCompressionService();
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -139,11 +141,11 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500',
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240',
             'remove_image' => 'nullable|boolean',
             'remove_author_image' => 'nullable|boolean',
         ]);

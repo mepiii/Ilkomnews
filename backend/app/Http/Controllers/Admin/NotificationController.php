@@ -35,6 +35,34 @@ class NotificationController extends Controller
     }
 
     /**
+     * Create a notification (used by admin actions such as admin account changes).
+     * tracking_id is intentionally nullable for system/admin notifications.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'type' => 'required|string|in:submitted,accepted,rejected,admin,info',
+            'title' => 'required|string|max:255',
+            'message' => 'nullable|string',
+            'project_id' => 'nullable|exists:project_submissions,id',
+        ]);
+
+        $notification = Notification::create([
+            'tracking_id' => null,
+            'type' => $validated['type'],
+            'title' => $validated['title'],
+            'message' => $validated['message'] ?? '',
+            'project_id' => $validated['project_id'] ?? null,
+            'read' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Notification created',
+            'data' => $notification,
+        ], 201);
+    }
+
+    /**
      * Get unread notification count
      */
     public function unreadCount(): JsonResponse
@@ -99,6 +127,8 @@ class NotificationController extends Controller
             ->firstOrFail();
 
         $notification->update(['read' => true]);
+
+        Cache::forget("public-notifications:{$trackingId}");
 
         return response()->json(['message' => 'Notification marked as read']);
     }

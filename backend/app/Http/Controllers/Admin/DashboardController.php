@@ -21,6 +21,7 @@ class DashboardController extends Controller
             'rejected_projects' => ProjectSubmission::rejected()->count(),
         ];
 
+        // Both "Tayang" (published) and "Draft" news are intentionally included.
         $recent_news = News::latest('date')->take(5)->get();
         $recent_projects = ProjectSubmission::latest()->take(5)->get();
 
@@ -44,6 +45,7 @@ class DashboardController extends Controller
                 'accepted_projects' => ProjectSubmission::accepted()->count(),
                 'rejected_projects' => ProjectSubmission::rejected()->count(),
             ],
+            // Both "Tayang" (published) and "Draft" news are intentionally included.
             'recent_news' => News::latest('date')->take(5)->get(),
             'recent_projects' => ProjectSubmission::latest()->take(5)->get(),
         ]);

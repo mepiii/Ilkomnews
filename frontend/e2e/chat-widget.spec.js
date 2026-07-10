@@ -4,18 +4,24 @@ test.describe('Chat Widget', () => {
   test('opens and closes chat', async ({ page }) => {
     await page.goto('/')
 
-    // Click the chat FAB button (has aria-label="Chat dengan Wolfy")
-    const fab = page.locator('[aria-label*="Chat"]')
+    // Open the floating Wolfy button (img alt="Wolfy" — the FAB has no
+    // aria-label, so target the image inside it, as chatbot.spec does).
+    const fab = page.locator('img[alt="Wolfy"]')
+    await expect(fab).toBeVisible({ timeout: 10000 })
     await fab.click()
 
-    // FAQ section should be visible - check for the heading instead of specific FAQ text
-    await expect(page.locator('text=Halo! 👋')).toBeVisible({ timeout: 5000 })
+    // The widget opens into the FAQ view (no greeting text is shown here).
+    // The AI Chat entry button is a stable, visible marker of the open panel.
+    const faqEntry = page.getByRole('button', { name: /Tanya ke AI Chat/i })
+    await expect(faqEntry).toBeVisible({ timeout: 10000 })
 
-    // Close button
-    const closeBtn = page.locator('[aria-label="Tutup"]')
+    // Close the panel. The close (X) button has no aria-label, so we target
+    // the first button containing a lucide "x" icon inside the panel.
+    const closeBtn = page.locator('button:has(svg.lucide-x)').first()
+    await expect(closeBtn).toBeVisible()
     await closeBtn.click()
 
-    // FAQ should be hidden
-    await expect(page.locator('text=Halo! 👋')).not.toBeVisible()
+    // FAQ panel should be hidden again.
+    await expect(faqEntry).not.toBeVisible()
   })
 })

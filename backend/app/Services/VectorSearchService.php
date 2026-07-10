@@ -108,10 +108,13 @@ class VectorSearchService
         // Vector search results
         $vectorResults = $this->search($query, $topK);
 
-        // SQL LIKE search for keyword matching
+        // SQL LIKE search for keyword matching.
+        // Escape LIKE wildcards (% and _) so a user-supplied query cannot
+        // act as a wildcard and match unrelated chunks.
+        $escapedQuery = addcslashes($query, '%_');
         $keywordResults = DB::table('knowledge_chunks')
-            ->where('chunk_text', 'LIKE', "%{$query}%")
-            ->orWhere('summary', 'LIKE', "%{$query}%")
+            ->where('chunk_text', 'LIKE', "%{$escapedQuery}%")
+            ->orWhere('summary', 'LIKE', "%{$escapedQuery}%")
             ->limit($topK * 2)
             ->get();
 

@@ -1,0 +1,87 @@
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+
+const ToastContext = createContext(null)
+
+const TYPE_STYLES = {
+  success: {
+    border: 'border-l-[var(--accent)]',
+    icon: '✓',
+    iconColor: 'text-[var(--accent)]',
+  },
+  error: {
+    border: 'border-l-red-500',
+    icon: '✕',
+    iconColor: 'text-red-500',
+  },
+  info: {
+    border: 'border-l-[var(--accent)]',
+    icon: 'ℹ',
+    iconColor: 'text-[var(--accent)]',
+  },
+}
+
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([])
+  const idRef = useRef(0)
+  const prefersReducedMotion = useReducedMotion()
+
+  const dismiss = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  const showToast = useCallback((message, opts = {}) => {
+    const { type = 'success', duration = 2500 } = opts
+    const id = ++idRef.current
+    setToasts((prev) => [...prev, { id, message, type }])
+    if (duration > 0) {
+      setTimeout(() => dismiss(id), duration)
+    }
+    return id
+  }, [dismiss])
+
+  const value = useMemo(() => ({ showToast }), [showToast])
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-none fixed top-4 left-1/2 z-[100] flex -translate-x-1/2 flex-col items-center gap-2"
+      >
+        <AnimatePresence initial={false}>
+          {toasts.map((t) => {
+            const style = TYPE_STYLES[t.type] || TYPE_STYLES.success
+            return (
+              <motion.div
+                key={t.id}
+                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={`pointer-events-auto flex items-center gap-2 rounded-lg border border-[var(--border-color)] border-l-4 ${style.border} bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] shadow-lg backdrop-blur-md`}
+              >
+                <span className={`shrink-0 text-base leading-none ${style.iconColor}`} aria-hidden="true">
+                  {style.icon}
+                </span>
+                <span>{t.message}</span>
+              </motion.div>
+            )
+          })}
+        </AnimatePresence>
+      </div>
+    </ToastContext.Provider>
+  )
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useToast() {
+  const ctx = useContext(ToastContext)
+  if (!ctx) {
+    throw new Error('useToast must be used within a ToastProvider')
+  }
+  return ctx
+}
+
+export default ToastProvider

@@ -11,14 +11,14 @@ import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { PageBackground } from '../components/ui/PageBackground'
 import { api } from '../services/api'
 import { parseTags } from '../utils/parsers'
-import { Newspaper, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Newspaper, Hammer, Trophy, GraduationCap, Presentation, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
-  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
-  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
-  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
-  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
+  { id: 'Workshop', label: 'Workshop', icon: Hammer },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Trophy },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: GraduationCap },
+  { id: 'Seminar', label: 'Seminar', icon: Presentation },
 ]
 
 const SORT_OPTIONS = ['Terbaru', 'Terlama', 'Terpopuler']
@@ -41,7 +41,10 @@ const NewsPage = () => {
     setLoading(true)
     setError('')
     api.news.getAll({ signal: controller.signal })
-      .then(res => setAllNews(Array.isArray(res) ? res : (res.data || [])))
+      .then(res => {
+        setError('')
+        setAllNews(Array.isArray(res) ? res : (res.data || []))
+      })
       .catch(err => {
         if (err.name !== 'AbortError') {
           setError(err.message || 'Gagal memuat berita')
@@ -94,7 +97,7 @@ const NewsPage = () => {
               </div>
             }
             title="Berita Terkini"
-            subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
+            subtitle="Informasi terbaru seputar kegiatan mahasiswa dan perkembangan teknologi di Fakultas Ilmu Komputer"
             textStyle="gradient"
           />
 

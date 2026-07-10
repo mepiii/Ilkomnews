@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test": "echo \"Backend tests run via php artisan test\""
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

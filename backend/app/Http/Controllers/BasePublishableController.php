@@ -80,7 +80,11 @@ abstract class BasePublishableController extends Controller
             if ($request->has('search')) {
                 $this->applySearch($query, $request->search);
             }
-            return $query->paginate(12);
+            // Cache the plain array, NEVER the paginator instance.
+            // A LengthAwarePaginator holds an internal DB query/connection that
+            // cannot be safely serialized by the database cache store — caching
+            // it produces corrupted "__PHP_Incomplete_Class" responses.
+            return $query->paginate(12)->toArray();
         };
 
         $payload = $key ? Cache::remember($key, $this->cacheTtl, $run) : $run();
@@ -100,7 +104,7 @@ abstract class BasePublishableController extends Controller
         $payload = Cache::remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
             return $modelClass::published()
                 ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
-                ->firstOrFail();
+                ->firstOrFail()->toArray();
         });
 
         return response()->json($payload)
@@ -120,7 +124,7 @@ abstract class BasePublishableController extends Controller
             return $modelClass::published()
                 ->latest($this->getSortColumn())
                 ->take($limit)
-                ->get();
+                ->get()->toArray();
         });
 
         return response()->json($payload);

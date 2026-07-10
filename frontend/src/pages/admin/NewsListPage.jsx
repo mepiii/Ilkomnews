@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Search, Plus, Edit, Trash2, Newspaper, GripVertical, RefreshCw } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
 import ErrorState from '../../components/admin/ui/ErrorState'
+import { ADMIN_BASE } from '../../config/admin'
+import { springPreset, useReducedMotionSafe } from '../../lib/animations'
+
+const ADMIN_NEWS = `/${ADMIN_BASE}/news`
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -29,6 +34,7 @@ export default function NewsListPage() {
   const abortRef = useRef(null)
   const isFirstLoad = useRef(true)
   const debounceRef = useRef(null)
+  const reduce = useReducedMotionSafe()
 
   const handleDragStart = (e, index) => {
     setDraggedIndex(index)
@@ -97,14 +103,6 @@ export default function NewsListPage() {
    
   useEffect(() => { fetchNews(); return () => abortRef.current?.abort() }, [fetchNews])
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    const next = new URLSearchParams(searchParams)
-    next.set('search', searchInput)
-    next.set('page', '1')
-    setSearchParams(next)
-  }
-
   const handleStatusFilter = (value) => {
     const next = new URLSearchParams(searchParams)
     if (value) next.set('status', value)
@@ -143,21 +141,31 @@ export default function NewsListPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Berita</h1>
         <Link
-          to="/admin/news/create"
+          to={`${ADMIN_NEWS}/create`}
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium rounded-lg transition-colors"        >
           <Plus size={16} />
           Tambah Berita
         </Link>
-      </div>
+      </motion.div>
 
       {/* Background loading */}
       {backgroundLoading && (
-        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <div className="w-3 h-3 border border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin" />
           Memperbarui...
         </div>
@@ -179,7 +187,7 @@ export default function NewsListPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             value={searchInput}
@@ -195,7 +203,7 @@ export default function NewsListPage() {
               }, 500)
             }}
             placeholder="Cari berita..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-[#262626] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
           />
         </div>
         <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1">
@@ -221,9 +229,9 @@ export default function NewsListPage() {
       )}
 
       {/* Table */}
-      <div className="bg-gray-50 dark:bg-[#141414] rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] overflow-hidden">
+      <div className="bg-gray-50 dark:bg-[#141414] rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat...</div>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">Memuat...</div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
             <Newspaper size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3 opacity-40" />
@@ -234,9 +242,10 @@ export default function NewsListPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                <tr className="border-b border-gray-200 dark:border-[#262626] text-left text-gray-500 dark:text-gray-400">
+                <tr className="border-b border-gray-200 dark:border-neutral-800 text-left text-gray-500 dark:text-gray-400">
                     <th className="px-2 py-3 w-10"></th>
                     <th className="px-5 py-3 font-medium">Judul</th>
+                    <th className="px-5 py-3 font-medium hidden md:table-cell">Pembuat</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Kategori</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell">Tanggal</th>
                     <th className="px-5 py-3 font-medium hidden lg:table-cell text-right">Views</th>
@@ -253,11 +262,42 @@ export default function NewsListPage() {
                       onDragEnd={handleDragEnd}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      <td className="px-2 py-3 text-gray-400 dark:text-gray-500 cursor-grab">
+                      <td className="px-2 py-3 text-gray-500 dark:text-gray-400 cursor-grab">
                         <GripVertical size={16} />
                       </td>
                       <td className="px-5 py-3 max-w-[250px]">
-                        <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{item.title}</span>
+                        {(() => {
+                          const thumb = item.image_url || (item.image ? (item.image.startsWith('http') ? item.image : '/storage/' + item.image) : null)
+                          return (
+                            <div className="flex items-center gap-3">
+                              {thumb ? (
+                                <img src={thumb} alt={item.title} className="w-16 h-10 rounded-lg object-cover bg-gray-200 dark:bg-neutral-800 shrink-0" />
+                              ) : (
+                                <div className="w-16 h-10 rounded-lg bg-gray-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                                  <Newspaper size={16} className="text-gray-300 dark:text-gray-600" />
+                                </div>
+                              )}
+                              <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{item.title}</span>
+                            </div>
+                          )
+                        })()}
+                      </td>
+                      <td className="px-5 py-3 hidden md:table-cell">
+                        {(() => {
+                          const authorAvatar = item.author_image_url || (item.author_image ? (item.author_image.startsWith('http') ? item.author_image : '/storage/' + item.author_image) : null)
+                          return (
+                            <div className="flex items-center gap-2">
+                              {authorAvatar ? (
+                                <img src={authorAvatar} alt={item.author || 'Penulis'} className="w-8 h-8 rounded-full object-cover bg-gray-200 dark:bg-neutral-800" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs font-semibold">
+                                  {(item.author || '?').charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <span className="text-gray-700 dark:text-gray-300 truncate">{item.author || '—'}</span>
+                            </div>
+                          )
+                        })()}
                       </td>
                       <td className="px-5 py-3 hidden md:table-cell text-gray-500 dark:text-gray-400">{item.category || '-'}</td>
                       <td className="px-5 py-3 hidden lg:table-cell text-gray-500 dark:text-gray-400">
@@ -279,14 +319,14 @@ export default function NewsListPage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Link
-                            to={`/admin/news/${item.id}/edit`}
-                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
+                            to={`${ADMIN_NEWS}/${item.id}/edit`}
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
                           >
                             <Edit size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -300,22 +340,22 @@ export default function NewsListPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-[#262626]">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-neutral-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Halaman {page} dari {totalPages}
                 </p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page <= 1}
-                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Sebelumnya
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Berikutnya
                   </button>
@@ -325,6 +365,6 @@ export default function NewsListPage() {
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

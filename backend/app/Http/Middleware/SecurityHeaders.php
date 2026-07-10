@@ -22,7 +22,7 @@ class SecurityHeaders
         // CSP — single source of truth (removed frontend meta tag)
         $connectSrc = config('app.env') === 'local'
             ? "'self' http://localhost:5173 http://localhost:8000"
-            : "'self' https://ilkomnews.fasilkom.unsri.ac.id";
+            : env('CSP_CONNECT_SRC', "'self' https://bemfasilkomunsri.org https://www.bemfasilkomunsri.org https://ilkomnews.bemfasilkomunsri.org");
 
         $response->headers->set('Content-Security-Policy',
             "default-src 'self'; " .

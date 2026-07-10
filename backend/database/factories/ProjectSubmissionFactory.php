@@ -28,6 +28,8 @@ class ProjectSubmissionFactory extends Factory
             'creator_name' => fake()->name(),
             'creator_type' => fake()->randomElement(['mahasiswa', 'dosen']),
             'creator_nim' => '0903128' . fake()->numerify('#######'),
+            'creator_nidn' => '000' . fake()->numerify('######'),
+            'creator_jabatan' => fake()->randomElement([null, 'Dosen Pengajar', 'Dosen Peneliti']),
             'creator_major' => fake()->randomElement(['S1 Teknik Informatika', 'S1 Sistem Informasi']),
             'creator_year' => fake()->numberBetween(2020, 2024),
             'collaborators' => fake()->boolean(50) ? [fake()->name(), fake()->name()] : null,

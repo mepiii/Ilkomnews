@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, User, MessageCircle, Sparkles, Info, Upload, Search, Newspaper, Image, Calendar, Bot, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { X, Send, User, Info, Upload, Search, Newspaper, Image, Bot, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useVisitorId } from '@/hooks/useVisitorId'
 import { useThemeMode } from '@/hooks/useThemeMode'
@@ -13,7 +13,6 @@ const CATEGORY_ICONS = {
   tracking: Search,
   news: Newspaper,
   gallery: Image,
-  events: Calendar,
 }
 
 // Comprehensive FAQ categories
@@ -22,7 +21,7 @@ const FAQ_CATEGORIES = [
     id: 'general',
     name: 'Umum',
     questions: [
-      { q: 'Apa itu ILKOM NEWS?', a: 'ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM Sriwijaya University. Platform ini menampilkan berita kampus, artikel ilmiah, pengumuman event, dan karya proyek mahasiswa.' },
+      { q: 'Apa itu ILKOM NEWS?', a: 'ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM Sriwijaya University. Platform ini menampilkan berita kampus, artikel ilmiah, dan karya proyek mahasiswa.' },
       { q: 'Siapa yang mengelola ILKOM NEWS?', a: 'ILKOM NEWS dikelola oleh tim admin FASILKOM Unsri dengan dukungan dari mahasiswa dan dosen.' },
       { q: 'Apakah ILKOM NEWS gratis?', a: 'Ya, semua konten di ILKOM NEWS dapat diakses secara gratis oleh mahasiswa, dosen, dan masyarakat umum.' },
     ]
@@ -66,15 +65,6 @@ const FAQ_CATEGORIES = [
       { q: 'Apakah bisa save proyek?', a: 'Ya, klik ikon bookmark pada proyek untuk menyimpannya ke koleksi pribadi Anda.' },
     ]
   },
-  {
-    id: 'events',
-    name: 'Event',
-    questions: [
-      { q: 'Event apa saja yang ada di ILKOM NEWS?', a: 'Event meliputi workshop, seminar, hackathon, bootcamp, dan kegiatan akademik lainnya yang diadakan oleh FASILKOM atau partner.' },
-      { q: 'Bagaimana cara mendaftar event?', a: 'Klik pada event yang diinginkan untuk melihat detail dan informasi pendaftaran. Ikuti petunjuk yang diberikan.' },
-      { q: 'Apakah event gratis?', a: 'Sebagian event gratis, beberapa ada yang berbayar dengan harga terjangkau. Informasi harga tersedia di detail event.' },
-    ]
-  },
 ]
 
 // Text animation variants
@@ -98,6 +88,7 @@ const WolfyWidget = () => {
   const inputRef = useRef(null)
   const visitorId = useVisitorId()
   const isDark = useThemeMode()
+  const reduce = useReducedMotion()
 
   const isOpen = view !== 'closed'
   const showChat = view === 'chat'
@@ -106,6 +97,8 @@ const WolfyWidget = () => {
   const accentLight = 'rgba(124, 58, 237, 0.15)'
   const textPrimary = isDark ? '#e8e8e8' : '#111827'
   const textSecondary = isDark ? '#a0a0a0' : '#374151'
+  const darkBorder = 'rgba(125, 125, 125, 0.25)'
+  const darkSurface = 'rgba(255, 255, 255, 0.04)'
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -156,13 +149,13 @@ const WolfyWidget = () => {
     background: isDark ? 'rgba(15, 15, 15, 0.92)' : 'rgba(255, 255, 255, 0.92)',
     backdropFilter: 'blur(20px) saturate(180%)',
     WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-    boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.12)',
+    border: '1px solid transparent',
+    boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.45)' : '0 20px 60px rgba(0,0,0,0.18)',
   }
 
   const glassInput = {
     background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
+    border: `1px solid ${isDark ? darkBorder : 'rgba(0,0,0,0.04)'}`,
   }
 
   return (
@@ -170,10 +163,11 @@ const WolfyWidget = () => {
       {/* Floating Button - Circular, no square */}
       <motion.button
         onClick={() => setView('faq')}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={reduce ? undefined : { scale: 1.08 }}
+        whileTap={reduce ? undefined : { scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-300",
+          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:shadow-[0_10px_40px_rgba(124,58,237,0.35)] transition-all duration-300",
           isOpen && "opacity-0 pointer-events-none scale-90"
         )}
         style={{ background: `linear-gradient(135deg, ${accent}, #6d28d9)` }}
@@ -202,7 +196,7 @@ const WolfyWidget = () => {
             style={glassPanel}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: isDark ? darkBorder : 'rgba(0,0,0,0.06)' }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-purple-500/20 flex items-center justify-center">
                   <img 
@@ -220,6 +214,8 @@ const WolfyWidget = () => {
                   <motion.h3 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
+                    whileHover={reduce ? undefined : { scale: 1.02 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="font-semibold text-sm font-heading"
                     style={{ color: textPrimary }}
                   >
@@ -264,9 +260,9 @@ const WolfyWidget = () => {
                               key={cat.id}
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: catIndex * 0.05 }}
-                              whileHover={{ scale: 1.01, x: 4 }}
-                              whileTap={{ scale: 0.99 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 25, delay: catIndex * 0.05 }}
+                              whileHover={reduce ? undefined : { scale: 1.06 }}
+                              whileTap={reduce ? undefined : { scale: 0.94 }}
                               onClick={() => setSelectedCategory(cat.id)}
                               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors group"
                               style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}
@@ -277,7 +273,7 @@ const WolfyWidget = () => {
                               <span className="text-sm font-medium flex-1 text-left font-body" style={{ color: textPrimary }}>
                                 {cat.name}
                               </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', color: textSecondary }}>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: isDark ? darkBorder : 'rgba(0,0,0,0.05)', color: textSecondary }}>
                                 {cat.questions.length}
                               </span>
                               <ChevronRight size={14} style={{ color: textSecondary }} className="opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -287,14 +283,14 @@ const WolfyWidget = () => {
                       </div>
                       
                       {/* Chat with AI button */}
-                      <div className="mt-4 pt-3 border-t" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
+                      <div className="mt-4 pt-3 border-t" style={{ borderColor: isDark ? darkBorder : 'rgba(0,0,0,0.06)' }}>
                         <motion.button
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.3 }}
                           onClick={startChat}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={reduce ? undefined : { scale: 1.06 }}
+                          whileTap={reduce ? undefined : { scale: 0.94 }}
                           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-medium transition-all"
                           style={{ background: `linear-gradient(135deg, ${accent}, #6d28d9)` }}
                         >
@@ -336,9 +332,9 @@ const WolfyWidget = () => {
                             key={idx}
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            whileHover={{ scale: 1.01, x: 4 }}
-                            whileTap={{ scale: 0.99 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25, delay: idx * 0.05 }}
+                            whileHover={reduce ? undefined : { scale: 1.06 }}
+                            whileTap={reduce ? undefined : { scale: 0.94 }}
                             onClick={() => handleFaqClick(item)}
                             className="w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors"
                             style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', color: textPrimary }}
@@ -363,7 +359,7 @@ const WolfyWidget = () => {
                   style={{ height: 440 }}
                 >
                   {/* Back to FAQ */}
-                  <div className="px-4 py-2 border-b" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
+                  <div className="px-4 py-2 border-b" style={{ borderColor: isDark ? darkBorder : 'rgba(0,0,0,0.06)' }}>
                     <button
                       onClick={() => { setView('faq'); setSelectedCategory(null); }}
                       className="flex items-center gap-1 text-xs hover:underline"
@@ -394,10 +390,10 @@ const WolfyWidget = () => {
                           style={{
                             background: msg.role === 'user'
                               ? `linear-gradient(135deg, ${accent}, #6d28d9)`
-                              : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
+                              : isDark ? darkSurface : 'rgba(255,255,255,0.7)',
                             color: msg.role === 'user' ? '#fff' : textPrimary,
                             borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                            border: msg.role === 'user' ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
+                            border: msg.role === 'user' ? 'none' : `1px solid ${isDark ? darkBorder : 'rgba(0,0,0,0.04)'}`,
                           }}
                         >
                           {msg.content.split('').map((char, charIndex) => (
@@ -426,7 +422,7 @@ const WolfyWidget = () => {
                           <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
                           <Bot size={14} className="hidden text-purple-500" />
                         </div>
-                        <div className="px-4 py-3 rounded-2xl" style={{ background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)', borderRadius: '16px 16px 16px 4px' }}>
+                        <div className="px-4 py-3 rounded-2xl" style={{ background: isDark ? darkSurface : 'rgba(255,255,255,0.7)', borderRadius: '16px 16px 16px 4px' }}>
                           <div className="flex gap-1.5 items-center h-4">
                             {[0, 0.2, 0.4].map((delay, i) => (
                               <motion.span key={i} animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity, delay, ease: 'easeInOut' }}
@@ -440,7 +436,7 @@ const WolfyWidget = () => {
                   </div>
 
                   {/* Input */}
-                  <div className="px-4 py-3 shrink-0" style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}` }}>
+                  <div className="px-4 py-3 shrink-0" style={{ borderTop: `1px solid ${isDark ? darkBorder : 'rgba(0,0,0,0.04)'}` }}>
                     <div className="flex gap-2 items-end">
                       <input
                         ref={inputRef}
@@ -454,8 +450,9 @@ const WolfyWidget = () => {
                         style={{ ...glassInput, color: textPrimary }}
                       />
                       <motion.button
-                        whileHover={{ scale: 1.08, boxShadow: '0 4px 20px rgba(124,58,237,0.3)' }}
-                        whileTap={{ scale: 0.9 }}
+                        whileHover={reduce ? undefined : { scale: 1.06 }}
+                        whileTap={reduce ? undefined : { scale: 0.94 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         onClick={sendMessage}
                         disabled={!input.trim() || loading}
                         className="w-10 h-10 text-white rounded-full flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-30 disabled:scale-90"

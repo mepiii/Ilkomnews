@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useThemeMode } from '../../hooks/useThemeMode'
 
 const GLOW_COLORS = {
@@ -6,6 +7,14 @@ const GLOW_COLORS = {
   green: 'rgba(34,197,94,0.1)',
   red: 'rgba(239,68,68,0.1)',
   blue: 'rgba(59,130,246,0.1)',
+}
+
+// Stronger variant used for the pointer-tracked sheen overlay.
+const SHEEN_COLORS = {
+  purple: 'rgba(124,58,237,0.22)',
+  green: 'rgba(34,197,94,0.22)',
+  red: 'rgba(239,68,68,0.22)',
+  blue: 'rgba(59,130,246,0.22)',
 }
 
 const GlowCard = ({
@@ -18,6 +27,7 @@ const GlowCard = ({
   const cardRef = useRef(null)
   const isDark = useThemeMode()
   const glow = GLOW_COLORS[glowColor] || GLOW_COLORS.purple
+  const sheen = SHEEN_COLORS[glowColor] || SHEEN_COLORS.purple
 
   const handleMouseMove = useCallback((e) => {
     if (!cardRef.current) return
@@ -47,11 +57,11 @@ const GlowCard = ({
   }, [handleMouseMove, handleMouseLeave])
 
   const hoverShadow = isDark
-    ? `0 12px 36px rgba(0,0,0,0.34), 0 0 22px ${glow}`
-    : `0 8px 24px rgba(0,0,0,0.06), 0 0 16px ${glow}`
+    ? `0 16px 42px rgba(0,0,0,0.42), 0 0 26px ${glow}`
+    : `0 12px 30px rgba(0,0,0,0.08), 0 0 18px ${glow}`
 
   return (
-    <div
+    <motion.div
       ref={cardRef}
       style={{
         '--glow-x': '50%',
@@ -68,21 +78,45 @@ const GlowCard = ({
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         boxShadow: 'var(--shadow-glass)',
         willChange: 'transform',
-        transition: 'transform 0.2s ease, box-shadow 0.3s ease',
         overflow: 'hidden',
       }}
       className={`group ${className}`}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-3px)'
-        e.currentTarget.style.boxShadow = hoverShadow
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'var(--shadow-glass)'
-      }}
+      whileHover={{ y: -4, scale: 1.01, boxShadow: hoverShadow }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24, mass: 0.6 }}
     >
-      {children}
-    </div>
+      {/* Glassmorphic top highlight — subtle gradient border treatment */}
+      <div
+        aria-hidden="true"
+        style={{
+          pointerEvents: 'none',
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '16px',
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 32%)',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Pointer-tracked sheen — appears softly on hover */}
+      <div
+        aria-hidden="true"
+        className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          pointerEvents: 'none',
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '16px',
+          background: `radial-gradient(420px circle at var(--glow-x) var(--glow-y), ${sheen}, transparent 45%)`,
+          zIndex: 1,
+        }}
+      />
+
+      {/* Content sits above the decorative overlays */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {children}
+      </div>
+    </motion.div>
   )
 }
 

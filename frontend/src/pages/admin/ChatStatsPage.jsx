@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { MessageSquare, CheckCircle, XCircle, Clock, Zap, AlertCircle } from 'lucide-react'
 import { adminChatStats } from '../../services/adminApi'
 import StatCard from '../../components/admin/ui/StatCard'
 import SkeletonCard from '../../components/admin/ui/SkeletonCard'
+import { springPreset, useReducedMotionSafe } from '../../lib/animations'
 
 export default function ChatStatsPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const reduce = useReducedMotionSafe()
 
   useEffect(() => {
     adminChatStats
@@ -18,25 +21,35 @@ export default function ChatStatsPage() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
-            <MessageSquare size={24} className="text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistik Chat</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Statistik penggunaan chatbot Wolfy</p>
-          </div>
+  return (
+    <motion.div
+      className="space-y-6"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="flex items-center gap-4"
+      >
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
+          <MessageSquare size={24} className="text-blue-400" />
         </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistik Chat</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Statistik penggunaar chatbot Wolfy</p>
+        </div>
+      </motion.div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <SkeletonCard key={i} />
           ))}
-        </div>
       </div>
-    )
-  }
+    </motion.div>
+  )
+}
 
   if (error) {
     return (
@@ -51,29 +64,44 @@ export default function ChatStatsPage() {
   const maxDaily = Math.max(...dailyBreakdown.map((d) => d.total || 0), 1)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
+    <motion.div
+      className="space-y-6"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="flex items-center gap-4"
+      >
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
           <MessageSquare size={24} className="text-blue-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistik Chat</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Statistik penggunaan chatbot Wolfy</p>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <StatCard icon={MessageSquare} label="Total Query" value={data?.total_queries} color="bg-blue-500/10" iconColor="text-blue-500" />
         <StatCard icon={CheckCircle} label="Berhasil" value={data?.successful} color="bg-emerald-500/10" iconColor="text-emerald-500" />
         <StatCard icon={XCircle} label="Ditolak (Topik)" value={data?.rejected} color="bg-red-500/10" iconColor="text-red-500" />
         <StatCard icon={AlertCircle} label="Tanpa Konteks" value={data?.no_context} color="bg-amber-500/10" iconColor="text-amber-500" />
-        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-gray-900 dark:bg-white/10" iconColor="text-gray-900 dark:text-gray-100" />
+        <StatCard icon={Zap} label="Dibatasi Rate Limit" value={data?.rate_limited} color="bg-gray-900 dark:bg-white/10" iconColor="text-white dark:text-gray-100" />
         <StatCard icon={Clock} label="Hari Ini" value={data?.today} color="bg-pink-500/10" iconColor="text-pink-500" />
-      </div>
+      </motion.div>
 
       {dailyBreakdown.length > 0 && (
-        <div className="rounded-xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
-          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-[#262626] px-5 py-4">
+        <div className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-neutral-800 px-5 py-4">
             <MessageSquare size={16} className="text-blue-400" />
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Aktivitas Harian</h2>
           </div>
@@ -135,15 +163,15 @@ export default function ChatStatsPage() {
       )}
 
       {topIPs.length > 0 && (
-        <div className="rounded-xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
-          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-[#262626] px-5 py-4">
+        <div className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-neutral-800 px-5 py-4">
             <Zap size={16} style={{ color: 'currentColor' }} />
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">IP Address Teratas</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-[#262626] text-left text-gray-500 dark:text-gray-400">
+                <tr className="border-b border-gray-200 dark:border-neutral-800 text-left text-gray-500 dark:text-gray-400">
                   <th className="px-5 py-3 font-medium">IP Address</th>
                   <th className="px-5 py-3 font-medium text-right">Total Query</th>
                 </tr>
@@ -164,6 +192,6 @@ export default function ChatStatsPage() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

@@ -27,4 +27,27 @@ class Event extends Model
     {
         return $query->published()->where('date', '>=', now())->orderBy('date');
     }
+
+    protected static function booted(): void
+    {
+        // F3: Keep knowledge embeddings fresh when source content changes.
+        static::saved(function (Event $event) {
+            try {
+                $text = ($event->title ?? '') . "\n\n" . ($event->content ?? '');
+                app(\App\Services\KnowledgeIndexer::class)
+                    ->indexContent('event', $event->id, $event->title ?? '', $text);
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to reindex event embedding: ' . $e->getMessage());
+            }
+        });
+
+        static::deleted(function (Event $event) {
+            try {
+                app(\App\Services\VectorSearchService::class)
+                    ->deleteEmbeddings('event', $event->id);
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to delete event embedding: ' . $e->getMessage());
+            }
+        });
+    }
 }

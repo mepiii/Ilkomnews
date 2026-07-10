@@ -33,12 +33,13 @@ class KnowledgeIndexer
             'articles' => 0,
             'events' => 0,
             'projects' => 0,
+            'faq' => 0,
             'chunks' => 0,
             'errors' => [],
         ];
 
         // Index news
-        $news = News::where('status', 'published')->get();
+        $news = News::where('published', true)->get();
         foreach ($news as $item) {
             $result = $this->indexContent('news', $item->id, $item->title, $item->content);
             if ($result['success']) {
@@ -50,7 +51,7 @@ class KnowledgeIndexer
         }
 
         // Index articles
-        $articles = Article::where('status', 'published')->get();
+        $articles = Article::where('published', true)->get();
         foreach ($articles as $item) {
             $result = $this->indexContent('article', $item->id, $item->title, $item->content);
             if ($result['success']) {
@@ -62,9 +63,9 @@ class KnowledgeIndexer
         }
 
         // Index events
-        $events = Event::where('status', 'published')->get();
+        $events = Event::where('published', true)->get();
         foreach ($events as $item) {
-            $text = $item->title . "\n\n" . $item->description;
+            $text = $item->title . "\n\n" . ($item->content ?? '');
             $result = $this->indexContent('event', $item->id, $item->title, $text);
             if ($result['success']) {
                 $stats['events']++;
@@ -74,8 +75,13 @@ class KnowledgeIndexer
             }
         }
 
+        // Index FAQ (frequently asked questions) so the chatbot can answer
+        // common questions such as "bagaimana cara submit proyek".
+        $faqCount = $this->indexFaq();
+        $stats['faq'] += $faqCount;
+
         // Index project submissions
-        $projects = ProjectSubmission::where('status', 'approved')->get();
+        $projects = ProjectSubmission::whereIn('status', ['accepted', 'pending'])->get();
         foreach ($projects as $item) {
             $text = $item->title . "\n\n" . $item->description . "\n\nTech: " . implode(', ', $item->tech_stack ?? []);
             $result = $this->indexContent('project', $item->id, $item->title, $text);
@@ -90,6 +96,28 @@ class KnowledgeIndexer
         Log::info('Knowledge reindex completed', $stats);
 
         return $stats;
+    }
+
+    /**
+     * Index the FAQ knowledge base into the RAG corpus.
+     */
+    public function indexFaq(): int
+    {
+        $faqs = require database_path('faq_data.php');
+
+        // Clear existing FAQ chunks before re-indexing.
+        DB::table('knowledge_chunks')->where('source_type', 'faq')->delete();
+
+        $chunkCount = 0;
+        foreach ($faqs as $index => $faq) {
+            $text = "Kategori: {$faq['category']}\nPertanyaan: {$faq['question']}\nJawaban: {$faq['answer']}";
+            $result = $this->indexContent('faq', $index + 1, $faq['question'], $text);
+            if ($result['success']) {
+                $chunkCount += $result['chunks'];
+            }
+        }
+
+        return $chunkCount;
     }
 
     /**

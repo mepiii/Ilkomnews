@@ -15,7 +15,7 @@
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h1 class="text-xl font-bold text-zinc-900">{{ $submission->title }}</h1>
-                        <p class="mt-1 text-sm text-zinc-500">oleh {{ $submission->creator_name }} ({{ $submission->creator_nim }})</p>
+                        <p class="mt-1 text-sm text-zinc-500">oleh {{ $submission->creator_name }} ({{ $submission->creator_type === 'dosen' ? $submission->creator_nidn : $submission->creator_nim }})</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
@@ -78,6 +78,16 @@
                             <p class="text-xs text-zinc-400">Kategori</p>
                             <p class="text-sm font-medium text-zinc-900 uppercase">{{ $submission->category }}</p>
                         </div>
+                        <div>
+                            <p class="text-xs text-zinc-400">{{ $submission->creator_type === 'dosen' ? 'NIDN/NIDK' : 'NIM' }}</p>
+                            <p class="text-sm text-zinc-700">{{ $submission->creator_type === 'dosen' ? $submission->creator_nidn : $submission->creator_nim }}</p>
+                        </div>
+                        @if($submission->creator_jabatan)
+                        <div>
+                            <p class="text-xs text-zinc-400">Jabatan</p>
+                            <p class="text-sm text-zinc-700">{{ $submission->creator_jabatan }}</p>
+                        </div>
+                        @endif
                         <div>
                             <p class="text-xs text-zinc-400">Jurusan</p>
                             <p class="text-sm text-zinc-700">{{ $submission->creator_major }}</p>
