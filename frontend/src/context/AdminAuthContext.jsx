@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { adminAuth } from '../services/adminApi'
+import { ADMIN_LOGIN_PATH } from '../config/admin'
 
 // Export the context so it can be imported directly
 // Default value prevents crash when lazy-loaded children render before provider mounts
@@ -12,8 +13,6 @@ export const AdminAuthContext = createContext({
   login: async () => {},
   logout: async () => {},
 })
-
-const REMEMBER_KEY = 'admin_remember'
 
 export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -32,11 +31,6 @@ export function AdminAuthProvider({ children }) {
   const login = useCallback(async (email, password, remember = false) => {
     const data = await adminAuth.login(email, password, remember)
     setUser(data.user)
-    if (remember) {
-      localStorage.setItem(REMEMBER_KEY, 'true')
-    } else {
-      localStorage.removeItem(REMEMBER_KEY)
-    }
     return data
   }, [])
 
@@ -44,7 +38,6 @@ export function AdminAuthProvider({ children }) {
     try {
       await adminAuth.logout()
     } finally {
-      localStorage.removeItem(REMEMBER_KEY)
       setUser(null)
     }
   }, [])
@@ -73,7 +66,7 @@ export function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />
+    return <Navigate to={ADMIN_LOGIN_PATH} state={{ from: location }} replace />
   }
 
   return children

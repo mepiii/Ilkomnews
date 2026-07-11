@@ -48,7 +48,7 @@ class AuthController extends Controller
             return $this->loginError($request, $email, "Too many failed attempts. Account locked for " . ceil($seconds / 60) . " minutes.");
         }
 
-        if (!Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
+        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             RateLimiter::hit($throttleKey, self::LOCKOUT_MINUTES * 60);
 
             $this->logAttempt($email, $ip, false, 'invalid_credentials');

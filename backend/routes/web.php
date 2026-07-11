@@ -44,6 +44,7 @@ Route::middleware(['auth', 'admin', 'throttle:admin'])->prefix('api/admin')->gro
     // Notifications
     Route::get('/notifications', [Admin\NotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [Admin\NotificationController::class, 'unreadCount']);
+    Route::post('/notifications', [Admin\NotificationController::class, 'store']);
     Route::post('/notifications/{id}/read', [Admin\NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [Admin\NotificationController::class, 'markAllRead']);
 
@@ -66,6 +67,7 @@ Route::middleware(['auth', 'admin', 'throttle:admin'])->prefix('api/admin')->gro
     Route::post('/chatbot-api', [Admin\ChatbotApiController::class, 'store']);
     Route::put('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'update']);
     Route::delete('/chatbot-api/{id}', [Admin\ChatbotApiController::class, 'destroy']);
+    Route::post('/chatbot-api/test', [Admin\ChatbotApiController::class, 'testConnection']);
 
     // Admin profile
     Route::get('/admins', [AdminProfileController::class, 'index']);

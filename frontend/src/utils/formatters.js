@@ -85,7 +85,7 @@ export const generateSlug = (title) => {
  * @param {string} slug
  * @returns {number|null}
  */
-const getIdFromSlug = (slug) => {
+export const getIdFromSlug = (slug) => {
   if (!slug) return null
   const parts = slug.split('-')
   const id = parseInt(parts[parts.length - 1])
@@ -107,7 +107,7 @@ export const getTitleFromSlug = (slug) => {
  * @param {string} slug
  * @returns {boolean}
  */
-const hasIdInSlug = (slug) => {
+export const hasIdInSlug = (slug) => {
   if (!slug) return false
   const parts = slug.split('-')
   const id = parseInt(parts[parts.length - 1])

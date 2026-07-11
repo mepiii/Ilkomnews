@@ -29,7 +29,6 @@ export function useThemeMode() {
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains('dark'))
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     check()
     return subscribe(check)
   }, [])

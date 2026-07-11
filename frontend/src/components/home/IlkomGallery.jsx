@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Globe, Smartphone, Palette, Gamepad2, Sparkles, RefreshCw } from 'lucide-react'
 import { Text_03 } from '../ui/Text03'
 import { FlowButton } from '../ui/FlowButton'
@@ -20,6 +20,7 @@ const TABS = [
 ]
 
 const IlkomGallery = () => {
+  const reduce = useReducedMotion()
   const [activeTab, setActiveTab] = useState('all')
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
@@ -64,16 +65,18 @@ const IlkomGallery = () => {
   useEffect(() => {
     fetchProjects(activeTab)
     return () => abortRef.current?.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
-  const items = projects.slice(0, 4)
+  const sortedProjects = [...projects].sort((a, b) =>
+    new Date(b.created_at || b.date || 0) - new Date(a.created_at || a.date || 0)
+  )
+  const items = sortedProjects.slice(0, 4)
 
   return (
     <section className="py-20 md:py-24 relative z-0 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-16 group"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -85,9 +88,16 @@ const IlkomGallery = () => {
             </div>
             <p className="pr-3 text-xs text-theme-muted">Proyek Mahasiswa</p>
           </div>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
+          <motion.h2
+            className="heading-hover text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header group-hover:scale-[1.01] transition-transform duration-200"
+            whileHover={reduce ? undefined : { scale: 1.02 }}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
             <Text_03 text="ILKOM Gallery" className="section-gradient-text" />
-          </h2>
+          </motion.h2>
           <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Galeri karya dan proyek mahasiswa Fakultas Ilmu Komputer</p>
         </motion.div>

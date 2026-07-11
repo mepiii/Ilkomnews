@@ -136,6 +136,7 @@ export function Tiles({ className, tileSize = 'md' }) {
               style={{
                 width: size,
                 height: size,
+                borderColor: 'transparent',
                 borderRight: '1px solid var(--tile-border)',
                 borderBottom: '1px solid var(--tile-border)',
                 transition: 'background-color 0.15s ease, opacity 0.2s ease',

@@ -23,8 +23,12 @@ class NewsController extends BasePublishableController
     public function show($id)
     {
         $news = News::published()
-            ->where('id', $id)
-            ->orWhere('slug', $id)
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)->orWhere('slug', $id);
+            })
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
             ->firstOrFail();
 
         $news->incrementViews();

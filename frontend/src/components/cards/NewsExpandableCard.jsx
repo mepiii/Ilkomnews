@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom'
 import { ExpandableCard } from '../ui/ExpandableCard'
+import ImageWithFallback from '../../components/ui/ImageWithFallback'
 import { generateSlug, formatDate } from '../../utils/formatters'
-import { parseTags } from '../../utils/parsers'
 import { ArrowRight } from 'lucide-react'
+
+const AuthorFallback = ({ name }) => (
+  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold bg-purple-600 shrink-0">
+    {(name || 'A').charAt(0)}
+  </div>
+)
 
 const categoryThemes = {
   Workshop: '220 60% 35%',
@@ -18,7 +24,7 @@ const NewsExpandableCard = ({ article }) => {
   return (
     <ExpandableCard
       title={article.title}
-      src={article.image_url || article.image || 'https://placehold.co/600x800/8B5CF6/white?text=No+Image'}
+      src={article.thumbnail_url || article.image_url || article.image || article.thumbnail || ''}
       description={article.summary || article.title}
       itemType="news"
       itemId={article.id}
@@ -31,15 +37,13 @@ const NewsExpandableCard = ({ article }) => {
         ) : null
       }
       meta={
-        <div className="flex items-center gap-1.5 text-xs overflow-hidden" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex items-center gap-1.5 text-xs overflow-hidden min-w-0" style={{ color: 'var(--text-muted)' }}>
           {(article.author || article.author_image) && (
             <div className="flex items-center gap-1 min-w-0">
               {article.author_image ? (
-                <img src={article.author_image_url || article.author_image} alt={article.author} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                <ImageWithFallback src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" fallback={<AuthorFallback name={article.author} />} />
               ) : (
-                <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold bg-purple-600 shrink-0">
-                  {(article.author || 'A').charAt(0)}
-                </div>
+                <AuthorFallback name={article.author} />
               )}
               <span className="truncate max-w-[80px]">{article.author || 'Penulis'}</span>
             </div>
@@ -49,6 +53,24 @@ const NewsExpandableCard = ({ article }) => {
       }
     >
       <div className="w-full space-y-3 overflow-hidden">
+        {(article.author || article.author_image) && (
+          <div className="overflow-hidden">
+            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-2">Penulis</h4>
+            <div className="flex items-center gap-3">
+              {article.author_image ? (
+                <ImageWithFallback src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" fallback={<AuthorFallback name={article.author} />} />
+              ) : (
+                <AuthorFallback name={article.author} />
+              )}
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{article.author || 'Penulis'}</span>
+                {article.author_institution && (
+                  <p className="text-xs text-[var(--text-muted)] truncate">{article.author_institution}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         {article.content && (
           <div className="overflow-hidden">
             <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-1.5">Konten</h4>

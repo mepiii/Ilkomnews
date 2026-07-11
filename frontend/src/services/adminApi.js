@@ -1,12 +1,29 @@
 import { API_BASE } from './api'
+import { ADMIN_LOGIN_PATH } from '../config/admin'
 
 // ponytail: httpOnly cookie auth — no localStorage token, credentials:'include' on all requests
 // Implements retry with exponential backoff for 429 and network errors (max 3 retries)
-export async function fetchAdmin(endpoint, options = {}, isFormData = false, retryOptions = {}) {
+// Shared list normalization so admin views never silently render
+// empty due to an envelope mismatch.
+// Handles: raw array, { data: [] }, { admins: [] }, { projects: [] },
+// { news: [] }, { items: [] }, etc.
+export function normalizeList(res) {
+  if (Array.isArray(res)) return res
+  if (res && typeof res === 'object') {
+    if (Array.isArray(res.data)) return res.data
+    if (Array.isArray(res.admins)) return res.admins
+    if (Array.isArray(res.projects)) return res.projects
+    if (Array.isArray(res.news)) return res.news
+    if (Array.isArray(res.items)) return res.items
+  }
+  return []
+}
+
+export async function fetchAdmin(endpoint, options = {}, isFormData = false, retryOptions = {}, isBackground = false) {
   const { maxRetries = 3, baseDelay = 600 } = retryOptions
   const headers = { ...options.headers }
 
-  const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
+  const xsrf = typeof document !== 'undefined' ? document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] : undefined
   if (xsrf) headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf)
 
   if (!isFormData && !headers['Content-Type']) {
@@ -43,8 +60,10 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
       }
 
       if (response.status === 401) {
-        if (!window.location.pathname.includes('/admin/login')) {
-          window.location.href = '/admin/login'
+        if (!isBackground) {
+          if (!window.location.pathname.startsWith(ADMIN_LOGIN_PATH)) {
+            window.location.href = ADMIN_LOGIN_PATH
+          }
         }
         throw new Error('Unauthorized')
       }
@@ -62,8 +81,11 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
       if (error.name === 'AbortError') {
         throw new Error('Request timeout', { cause: error })
       }
-      // Retry on network errors if budget allows
-      if (n < maxRetries && !options.signal?.aborted) {
+      // Only retry genuine network failures (fetch rejected before producing a
+      // response). Errors thrown after a response was received — including
+      // processed HTTP 4xx/5xx status errors thrown just above — must NOT be
+      // retried, otherwise every error triggers redundant server round-trips.
+      if (n < maxRetries && !options.signal?.aborted && error.name === 'TypeError') {
         const delay = baseDelay * Math.pow(2, n) + Math.random() * 200
         await new Promise(r => setTimeout(r, delay))
         return attempt(n + 1)
@@ -76,7 +98,11 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
 
 export const adminAuth = {
   async login(email, password, remember = false) {
-    await fetch('/sanctum/csrf-cookie', { credentials: 'include' })
+    // Prime the XSRF-TOKEN + session cookies from a reachable web-middleware
+    // endpoint. The default sanctum/csrf-cookie route is unreachable under the
+    // /api subfolder deploy, but any web route (e.g. /admin/user) sets the
+    // XSRF-TOKEN cookie on its response even when it returns 401.
+    await fetch(`${API_BASE}/admin/user`, { credentials: 'include' }).catch(() => {})
     return fetchAdmin('/admin/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, remember }),
@@ -88,7 +114,7 @@ export const adminAuth = {
   },
 
   getUser() {
-    return fetchAdmin('/admin/user')
+    return fetchAdmin('/admin/user', {}, false, {}, true)
   },
 }
 
@@ -168,6 +194,10 @@ export const adminProjects = {
       body: JSON.stringify({ rejection_reason: reason }),
     })
   },
+
+  delete(id) {
+    return fetchAdmin(`/admin/projects/${id}`, { method: 'DELETE' })
+  },
 }
 
 export const adminAudit = {
@@ -227,6 +257,23 @@ export const adminSecurity = {
   getLoginAttempts(params = {}) {
     const qs = new URLSearchParams(params).toString()
     return fetchAdmin(`/admin/security/login-attempts${qs ? `?${qs}` : ''}`)
+  },
+}
+
+export const adminApiKeys = {
+  getStatus() {
+    return fetchAdmin('/admin/api-keys')
+  },
+
+  updateGemini(data) {
+    return fetchAdmin('/admin/api-keys/gemini', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
+  testGemini() {
+    return fetchAdmin('/admin/api-keys/test-gemini', { method: 'POST' })
   },
 }
 

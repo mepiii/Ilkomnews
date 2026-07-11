@@ -26,8 +26,10 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(600)->by($request->user()?->id ?: $request->ip()),
         ]);
 
+        // ponytail: 10/min (not 5) so the controller's own 5-attempt lockout
+        // returns its friendly 422 "locked" message before this raw 429 fires.
         RateLimiter::for('login', fn (Request $request) => [
-            Limit::perMinute(10)->by($request->input('email').$request->ip()),
+            Limit::perMinute(10)->by($request->ip()),
         ]);
 
         RateLimiter::for('chatbot', fn (Request $request) => [

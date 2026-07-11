@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 import { 
   Play, X, Download, ExternalLink, GitFork,
   User, Calendar, Code2, Award, Users,
-  Mail, ArrowLeft, Globe, Tag, ChevronRight, Home
+  ArrowLeft, Globe, Tag, ChevronRight, Home,
+  Eye, Heart, Bookmark, Share2
 } from 'lucide-react'
+import { useEngagement } from '../../context/EngagementContext'
+import { GradientPlaceholder } from '../ui/ExpandableCard'
+import ImageWithFallback from '../../components/ui/ImageWithFallback'
+import { formatNumber } from '../../utils/formatters'
 
 /**
  * Shared layout for gallery detail pages.
@@ -15,11 +21,22 @@ export default function ProjectDetailLayout({
   project, 
   categoryLabel,
   categoryIcon: CategoryIcon,
-  backPath = '/ilkomgallery',
-  accentColor = 'orange'
+  backPath = '/ilkomgallery'
 }) {
   const [showTrailer, setShowTrailer] = useState(false)
   const navigate = useNavigate()
+  const reduce = useReducedMotion()
+  const { get, ensure, toggleLike, toggleSave, recordShare, recordView } = useEngagement()
+  const eng = project?.id
+    ? get('project', project.id)
+    : { liked: false, saved: false, views: 0, likes: 0, saves: 0, shares: 0 }
+
+  useEffect(() => {
+    if (project?.id) {
+      ensure('project', project.id)
+      recordView('project', project.id, project)
+    }
+  }, [project, ensure, recordView])
 
   if (!project) {
     return (
@@ -51,22 +68,30 @@ export default function ProjectDetailLayout({
     <div className="min-h-screen">
       {/* Hero Banner */}
       <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-        <img 
-          src={project.banner || project.thumbnail} 
-          alt={project.title}
-          className="w-full h-full object-cover"
-        />
+        {(project.banner || project.thumbnail) ? (
+          <ImageWithFallback
+            src={project.banner || project.thumbnail}
+            alt={project.title}
+            className="w-full h-full object-cover"
+            fallback={<GradientPlaceholder themeColor="270 50% 40%" title={project.title} className="w-full h-full" />}
+          />
+        ) : (
+          <GradientPlaceholder themeColor="270 50% 40%" title={project.title} className="w-full h-full" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
         
         {/* Back Button */}
         <div className="absolute top-4 left-4 z-10">
-          <button
+          <motion.button
             onClick={() => navigate(backPath)}
-            className="flex items-center gap-2 px-4 py-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition backdrop-blur-sm text-sm font-medium"
+            whileHover={reduce ? undefined : { scale: 1.06 }}
+            whileTap={reduce ? undefined : { scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            className="flex items-center gap-2 px-4 py-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors duration-200 backdrop-blur-sm text-sm font-medium"
           >
             <ArrowLeft size={18} />
             <span>Kembali</span>
-          </button>
+          </motion.button>
         </div>
         
         {/* Title & Actions Overlay */}
@@ -81,20 +106,43 @@ export default function ProjectDetailLayout({
             </div>
             
             {/* Title */}
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-5 leading-tight max-w-4xl">
+            <motion.h1
+              whileHover={reduce ? undefined : { scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="text-3xl md:text-5xl font-bold text-white mb-3 leading-tight max-w-4xl"
+            >
               {project.title}
-            </h1>
+            </motion.h1>
+
+            {/* Metrics Row */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-white/80 mb-5">
+              {eng.views > 0 && (
+                <span className="flex items-center gap-1.5"><Eye size={14} /> {formatNumber(eng.views)}</span>
+              )}
+              {eng.likes > 0 && (
+                <span className="flex items-center gap-1.5"><Heart size={14} /> {formatNumber(eng.likes)}</span>
+              )}
+              {eng.saves > 0 && (
+                <span className="flex items-center gap-1.5"><Bookmark size={14} /> {formatNumber(eng.saves)}</span>
+              )}
+              {eng.shares > 0 && (
+                <span className="flex items-center gap-1.5"><Share2 size={14} /> {formatNumber(eng.shares)}</span>
+              )}
+            </div>
             
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {videoUrl && (
-                <button
+                <motion.button
                   onClick={() => setShowTrailer(true)}
+                  whileHover={reduce ? undefined : { scale: 1.06 }}
+                  whileTap={reduce ? undefined : { scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   className="flex items-center gap-2 px-5 py-2.5 bg-[var(--accent)] text-white rounded-lg font-medium hover:brightness-110 transition"
                 >
                   <Play size={18} />
                   <span>Tonton Trailer</span>
-                </button>
+                </motion.button>
               )}
               
               {project.downloadLink && (
@@ -108,6 +156,38 @@ export default function ProjectDetailLayout({
                   <span>Download</span>
                 </a>
               )}
+
+              <motion.button
+                onClick={() => project?.id && toggleLike('project', project.id)}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors duration-200 backdrop-blur-sm border border-white/20"
+                style={{ color: eng.liked ? '#ef4444' : 'white', background: eng.liked ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.1)' }}
+              >
+                <Heart size={18} fill={eng.liked ? 'currentColor' : 'none'} />
+              </motion.button>
+
+              <motion.button
+                onClick={() => project?.id && toggleSave('project', project.id)}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors duration-200 backdrop-blur-sm border border-white/20"
+                style={{ color: eng.saved ? 'var(--accent)' : 'white', background: eng.saved ? 'var(--accent)' : 'rgba(255,255,255,0.1)' }}
+              >
+                <Bookmark size={18} fill={eng.saved ? 'currentColor' : 'none'} />
+              </motion.button>
+
+              <motion.button
+                onClick={() => project?.id && recordShare('project', project.id)}
+                whileHover={reduce ? undefined : { scale: 1.06 }}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors duration-200 backdrop-blur-sm border border-white/20 bg-white/10 text-white"
+              >
+                <Share2 size={18} />
+              </motion.button>
             </div>
           </div>
         </div>
@@ -202,13 +282,14 @@ export default function ProjectDetailLayout({
               
               <div className="flex items-center gap-4">
                 {creatorAvatar ? (
-                  <img 
-                    src={creatorAvatar} 
+                  <ImageWithFallback
+                    src={creatorAvatar}
                     alt={project.creator || project.creator_name}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-[var(--accent)]/20"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-[var(--accent)]/20"
+                    fallback={<div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold">{(project.creator || project.creator_name || '?').charAt(0).toUpperCase()}</div>}
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold">
                     {(project.creator || project.creator_name || '?').charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -249,9 +330,9 @@ export default function ProjectDetailLayout({
                     return (
                       <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition">
                         {avatar ? (
-                          <img src={avatar} alt={name} className="w-10 h-10 rounded-full object-cover" />
+                          <ImageWithFallback src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" fallback={<div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold">{name.charAt(0)}</div>} />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-sm font-bold">
+                          <div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold">
                             {name.charAt(0)}
                           </div>
                         )}

@@ -100,7 +100,7 @@ const KoleksiPage = () => {
           </motion.div>
 
           {/* Status tabs */}
-          <div className="flex justify-start sm:justify-center gap-2 mb-4 overflow-x-auto tabs-scroll pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex justify-center gap-2 mb-4 overflow-x-auto tabs-scroll pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
             {TABS.map(tab => {
               const Icon = tab.icon
               return (
@@ -128,7 +128,7 @@ const KoleksiPage = () => {
           </div>
 
           {/* Type filter */}
-          <div className="flex justify-start sm:justify-center gap-2 mb-8 overflow-x-auto tabs-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex justify-center gap-2 mb-8 overflow-x-auto tabs-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
             {TYPE_TABS.map(tab => (
               <button
                 key={tab.id}

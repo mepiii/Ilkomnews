@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\ProjectSubmission;
 use App\Services\ImageCompressionService;
 use App\Services\UploadQuotaService;
@@ -31,9 +32,15 @@ class ProjectSubmissionController extends Controller
             'screenshots.*' => 'image|mimes:jpeg,jpg,png,webp|max:5120',
             'creator_name' => 'required|string|max:255',
             'creator_nim' => 'nullable|string|max:50',
+            'creator_nidn' => 'nullable|string|max:50',
+            'creator_jabatan' => 'nullable|string|max:255',
             'creator_major' => 'nullable|string|max:255',
             'creator_year' => 'nullable|integer|min:2000|max:2030',
-            'collaborators' => 'nullable|array|max:20',
+            'collaborators' => 'nullable|array',
+            'collaborators.*.name' => 'required_with:collaborators|string|max:100',
+            'collaborators.*.type' => 'nullable|string|in:mahasiswa,dosen',
+            'collaborators.*.avatar' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:500',
+            'collaborators.*.avatar_url' => 'nullable|string|max:500',
             'creator_type' => 'nullable|string|in:mahasiswa,dosen,staf,alumni,lainnya',
         ]);
         $validated['creator_type'] = $request->input('creator_type', 'mahasiswa');
@@ -64,6 +71,20 @@ class ProjectSubmissionController extends Controller
             if (!preg_match('/^https?:\/\//i', $url)) {
                 $validated['thumbnail_url'] = 'https://' . $url;
             }
+        }
+
+        // Validate external image URLs (anti-SSRF / anti-abuse): only http(s)
+        // schemes and non-private, non-localhost hosts are allowed.
+        if (!empty($validated['thumbnail_url']) && !$this->isSafeImageUrl($validated['thumbnail_url'])) {
+            return response()->json([
+                'error' => 'Invalid or unsafe thumbnail URL provided.',
+            ], 422);
+        }
+
+        if (!empty($validated['creator_avatar_url']) && !$this->isSafeImageUrl($validated['creator_avatar_url'])) {
+            return response()->json([
+                'error' => 'Invalid or unsafe avatar URL provided.',
+            ], 422);
         }
 
         // Handle thumbnail - file upload takes precedence over URL
@@ -102,29 +123,50 @@ class ProjectSubmissionController extends Controller
             }
         }
 
-        // Handle collaborators - ensure it's an array of strings
+        // Handle collaborators - ensure it's an array, reading uploaded avatar files by index
         if ($request->has('collaborators')) {
             $collaborators = $request->input('collaborators');
             if (is_array($collaborators)) {
-                $validated['collaborators'] = array_values(array_filter(array_map(function($item) {
-                    if (is_string($item)) return trim($item);
+                $normalized = [];
+                foreach (array_values($collaborators) as $i => $item) {
+                    if (is_string($item)) {
+                        $normalized[] = trim($item);
+                        continue;
+                    }
                     if (is_array($item) && !empty($item['name'])) {
-                        return [
+                        $avatar = $item['avatar'] ?? null;
+                        if ($request->hasFile("collaborators.$i.avatar")) {
+                            $avatar = $compressor->compress($request->file("collaborators.$i.avatar"), 'projects/avatars');
+                        } elseif (!empty($item['avatar_url'])) {
+                            $avatar = $item['avatar_url'];
+                        }
+                        $normalized[] = [
                             'name' => trim($item['name']),
                             'type' => $item['type'] ?? 'mahasiswa',
                             'nim' => $item['nim'] ?? null,
+                            'nidn' => $item['nidn'] ?? null,
+                            'jabatan' => $item['jabatan'] ?? null,
                             'major' => $item['major'] ?? null,
                             'year' => $item['year'] ?? null,
-                            'avatar' => $item['avatar'] ?? null,
+                            'avatar' => $avatar,
                         ];
                     }
-                    return null;
-                }, $collaborators)));
-                $validated['collaborators'] = array_slice($validated['collaborators'], 0, 20);
+                }
+                $validated['collaborators'] = array_slice(array_values($normalized), 0, 20);
             }
         }
 
         $submission = ProjectSubmission::create($validated);
+
+        // Notify the user that their project was submitted
+        Notification::create([
+            'tracking_id' => $submission->tracking_id,
+            'project_id'  => $submission->id,
+            'type'        => 'submitted',
+            'title'       => 'Proyek Berhasil Dikirim',
+            'message'     => 'Proyek Anda telah berhasil dikirim! ID Pelacakan: ' . $submission->tracking_id,
+            'read'        => false,
+        ]);
 
         // Record upload quota usage
         if ($totalBytes > 0) {
@@ -178,7 +220,7 @@ class ProjectSubmissionController extends Controller
                 });
             }
 
-            return $query->latest()->paginate(12);
+            return $query->latest()->paginate(12)->toArray();
         });
 
         return response()->json($payload);
@@ -190,7 +232,8 @@ class ProjectSubmissionController extends Controller
         $payload = Cache::remember("public-projects:show:{$id}", 120, function () use ($id) {
             return ProjectSubmission::where('id', $id)
                 ->where('status', 'accepted')
-                ->firstOrFail();
+                ->firstOrFail()
+                ->toArray();
         });
 
         return response()->json($payload);
@@ -206,5 +249,52 @@ class ProjectSubmissionController extends Controller
         } catch (\Throwable $e) {
             // cache store doesn't support tags — short TTL covers it
         }
+    }
+
+    /**
+     * Validate that a user-supplied image URL is safe to reference in markup.
+     *
+     * Rejects anything that is not an http(s) URL or whose host resolves to a
+     * private / localhost / link-local address (SSRF / internal disclosure guard).
+     */
+    private function isSafeImageUrl(?string $url): bool
+    {
+        if (empty($url) || !is_string($url)) {
+            return false;
+        }
+
+        if (!preg_match('/^https?:\/\//i', $url)) {
+            return false;
+        }
+
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
+        $host = (string) parse_url($url, PHP_URL_HOST);
+        if ($host === '') {
+            return false;
+        }
+
+        $host = strtolower($host);
+
+        if ($host === 'localhost' || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
+            return false;
+        }
+
+        // Resolve to an IP address (handles both literals and hostnames).
+        // Resolution is best-effort: if it fails (e.g. sandboxed env with no
+        // DNS), we do NOT reject the URL so the normal submission flow keeps
+        // working. Private IP literals and localhost are still blocked above.
+        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : @gethostbyname($host);
+        if (!is_string($ip) || $ip === $host) {
+            return true;
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        return true;
     }
 }

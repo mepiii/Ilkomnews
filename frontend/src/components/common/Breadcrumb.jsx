@@ -9,7 +9,7 @@ const Breadcrumb = () => {
   const pathnames = location.pathname.split('/').filter(x => x)
   const lastPath = pathnames[pathnames.length - 1]
   const isDetailPage = pathnames.length >= 2 &&
-    ['news', 'articles', 'events', 'career'].includes(pathnames[pathnames.length - 2])
+    ['news', 'articles'].includes(pathnames[pathnames.length - 2])
 
   // ponytail: derived from pathname — no state/effect needed
   const detailTitle = isDetailPage && lastPath
@@ -18,7 +18,7 @@ const Breadcrumb = () => {
 
   const getPathName = (path, isLast = false) => {
     if (isLast && detailTitle) return detailTitle
-    const names = { 'news': 'Berita', 'articles': 'Artikel', 'events': 'Event', 'career': 'Karir', 'ilkom-gallery': 'ILKOM Gallery', 'ilkomgallery': 'ILKOM Gallery', 'about': 'Tentang', 'detail': 'Detail' }
+    const names = { 'news': 'Berita', 'articles': 'Artikel', 'ilkom-gallery': 'ILKOM Gallery', 'ilkomgallery': 'ILKOM Gallery', 'about': 'Tentang', 'detail': 'Detail' }
     if (path.includes('-') && !isLast) return getTitleFromSlug(path)
     return names[path] || path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
   }
@@ -26,8 +26,8 @@ const Breadcrumb = () => {
   if (pathnames.length === 0) return null
 
   return (
-    <nav className="mb-8">
-      <div className="flex items-center gap-2 flex-wrap">
+    <nav className="mb-8 min-h-[20px]">
+      <div className="flex items-center gap-2 flex-wrap min-h-[20px]">
         <Link to="/" className="flex items-center gap-1.5 text-theme-muted hover:text-theme-primary transition-colors text-sm">
           <Home size={14} />
           <span className="font-medium">Beranda</span>

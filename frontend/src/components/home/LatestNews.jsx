@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
 import NewsExpandableCard from '../cards/NewsExpandableCard'
 import { FlowButton } from '../ui/FlowButton'
@@ -9,19 +9,21 @@ import { Text_03 } from '../ui/Text03'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import { newsService } from '../../services/api'
 import { parseTags } from '../../utils/parsers'
+import { isNotExpired } from '../../utils/expiry'
 import AnimatedFilterDropdown from '../shared/AnimatedFilterDropdown'
-import { Newspaper, Tag } from 'lucide-react'
+import { Newspaper, Hammer, Trophy, GraduationCap, Presentation, Tag } from 'lucide-react'
 import { container, itemVariant } from '../../lib/animations'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
-  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
-  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
-  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
-  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
+  { id: 'Workshop', label: 'Workshop', icon: Hammer },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Trophy },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: GraduationCap },
+  { id: 'Seminar', label: 'Seminar', icon: Presentation },
 ]
 
 const LatestNews = () => {
+  const reduce = useReducedMotion()
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [backgroundLoading, setBackgroundLoading] = useState(false)
@@ -65,14 +67,20 @@ const LatestNews = () => {
 
   useEffect(() => {
     fetchNews()
-    return () => abortRef.current?.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Realtime: re-fetch so TTL-expired berita disappears without a manual reload.
+    const id = setInterval(fetchNews, 30000)
+    return () => { clearInterval(id); abortRef.current?.abort() }
   }, [])
 
   const uniqueTags = [...new Set(news.flatMap(n => parseTags(n.tags)))]
   const TAG_OPTIONS = ['Semua', ...uniqueTags]
 
-  const filtered = news
+  const sortedNews = [...news].sort((a, b) =>
+    new Date(b.created_at || b.date || 0) - new Date(a.created_at || a.date || 0)
+  )
+
+  const filtered = sortedNews
+    .filter(isNotExpired)
     .filter(n => activeTab === 'all' || n.category === activeTab)
     .filter(n => selectedTag === 'Semua' || parseTags(n.tags).includes(selectedTag))
 
@@ -82,21 +90,29 @@ const LatestNews = () => {
     <section className="py-20 md:py-24 relative z-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-16 group"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
-            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1">
+            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1 flex items-center gap-1.5">
+              <Newspaper size={14} className="text-[var(--accent)]" />
               <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
             </div>
             <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
           </div>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
+          <motion.h2
+            className="heading-hover text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header group-hover:scale-[1.01] transition-transform duration-200"
+            whileHover={reduce ? undefined : { scale: 1.02 }}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
             <Text_03 text="Berita Terkini" className="section-gradient-text" />
-          </h2>
+          </motion.h2>
           <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Informasi terbaru seputar kegiatan mahasiswa dan kampus</p>
         </motion.div>

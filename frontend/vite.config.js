@@ -11,8 +11,10 @@ export default defineConfig({
     port: 5173,
     open: true,
     proxy: {
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
-      '/sanctum': { target: 'http://localhost:8000', changeOrigin: true },
+      // Use 127.0.0.1 (IPv4) — `php artisan serve` binds IPv4 only, and
+      // `localhost` can resolve to ::1 (IPv6) and get ECONNREFUSED.
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/sanctum': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
   resolve: {

@@ -18,6 +18,8 @@ class ProjectSubmissionApiTest extends TestCase
             'description' => 'A web project description with enough detail.',
             'creator_name' => 'Andi Pratama',
             'creator_nim' => '09031282306001',
+            'creator_nidn' => '0008123456',
+            'creator_jabatan' => 'Dosen Pengajar',
             'creator_major' => 'S1 Teknik Informatika',
             'creator_year' => 2023,
             'tech_stack' => ['React', 'Laravel'],

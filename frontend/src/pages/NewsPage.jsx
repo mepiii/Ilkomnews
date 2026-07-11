@@ -11,14 +11,15 @@ import AnimatedFilterDropdown from '../components/shared/AnimatedFilterDropdown'
 import { PageBackground } from '../components/ui/PageBackground'
 import { api } from '../services/api'
 import { parseTags } from '../utils/parsers'
-import { Newspaper, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { isNotExpired } from '../utils/expiry'
+import { Newspaper, Hammer, Trophy, GraduationCap, Presentation, Filter, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
-  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
-  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
-  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
-  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
+  { id: 'Workshop', label: 'Workshop', icon: Hammer },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Trophy },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: GraduationCap },
+  { id: 'Seminar', label: 'Seminar', icon: Presentation },
 ]
 
 const SORT_OPTIONS = ['Terbaru', 'Terlama', 'Terpopuler']
@@ -38,18 +39,26 @@ const NewsPage = () => {
 
   useEffect(() => {
     const controller = new AbortController()
-    setLoading(true)
-    setError('')
-    api.news.getAll({ signal: controller.signal })
-      .then(res => setAllNews(Array.isArray(res) ? res : (res.data || [])))
-      .catch(err => {
-        if (err.name !== 'AbortError') {
-          setError(err.message || 'Gagal memuat berita')
-          setAllNews([])
-        }
-      })
-      .finally(() => setLoading(false))
-    return () => controller.abort()
+    const load = () => {
+      setLoading(true)
+      setError('')
+      api.news.getAll({ signal: controller.signal })
+        .then(res => {
+          setError('')
+          setAllNews(Array.isArray(res) ? res : (res.data || []))
+        })
+        .catch(err => {
+          if (err.name !== 'AbortError') {
+            setError(err.message || 'Gagal memuat berita')
+            setAllNews([])
+          }
+        })
+        .finally(() => setLoading(false))
+    }
+    load()
+    // Realtime: re-fetch so auto-removed berita disappears without a manual reload.
+    const id = setInterval(load, 30000)
+    return () => { clearInterval(id); controller.abort() }
   }, [])
 
   const uniqueTags = useMemo(() => [...new Set(allNews.flatMap(item => parseTags(item.tags)))], [allNews])
@@ -57,6 +66,7 @@ const NewsPage = () => {
   const TAG_OPTIONS = useMemo(() => ['Semua', ...uniqueTags], [uniqueTags])
 
   const filtered = useMemo(() => allNews
+    .filter(isNotExpired)
     .filter(n => activeTab === 'all' || n.category === activeTab)
     .filter(n => selectedTag === 'Semua' || parseTags(n.tags).includes(selectedTag))
     .filter(n => {
@@ -94,7 +104,7 @@ const NewsPage = () => {
               </div>
             }
             title="Berita Terkini"
-            subtitle="Informasi terbaru seputar kegiatan mahasiswa, event, dan perkembangan teknologi di Fakultas Ilmu Komputer"
+            subtitle="Informasi terbaru seputar kegiatan mahasiswa dan perkembangan teknologi di Fakultas Ilmu Komputer"
             textStyle="gradient"
           />
 

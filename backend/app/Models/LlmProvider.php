@@ -26,4 +26,10 @@ class LlmProvider extends Model
         'priority' => 'integer',
         'api_key' => 'encrypted',
     ];
+
+    /**
+     * The attributes that should be hidden from JSON serialization.
+     * Prevents the (encrypted) API key from leaking in admin API responses.
+     */
+    protected $hidden = ['api_key'];
 }

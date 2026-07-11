@@ -1,5 +1,5 @@
-import React, { forwardRef, useMemo, useRef, useState, useEffect, useImperativeHandle } from 'react'
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { forwardRef, useMemo, useRef, useState, useEffect, useImperativeHandle } from 'react'
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion'
 import { Check, Loader2, SendHorizontal, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -47,13 +47,14 @@ const StatusIcon = ({ status }) => {
  * - disabled: disable dragging
  * - ref: exposes .reset() to reset button state
  */
-const SlideButton = forwardRef(({ className, onSubmit, children, disabled, completed: controlledCompleted, status: controlledStatus, ...props }, ref) => {
+const SlideButton = forwardRef(({ className, onSubmit, children, disabled, completed: controlledCompleted, status: controlledStatus }, ref) => {
   const [isDragging, setIsDragging] = useState(false)
   const [internalStatus, setInternalStatus] = useState('idle')
   const [internalCompleted, setInternalCompleted] = useState(false)
   const containerRef = useRef(null)
-  const dragHandleRef = useRef(null)
   const dragRightRef = useRef(200)
+
+  const reduce = useReducedMotion()
 
   const isControlled = controlledCompleted !== undefined
   const completed = isControlled ? controlledCompleted : internalCompleted
@@ -98,7 +99,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, disabled, compl
       springX.set(0)
       if (!isControlled) setInternalStatus('idle')
     }
-  }, [completed])
+  }, [completed, dragX, isControlled, springX])
   
   // Also reset when status changes back to idle (for controlled mode)
   useEffect(() => {
@@ -106,7 +107,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, disabled, compl
       dragX.set(0)
       springX.set(0)
     }
-  }, [status, completed])
+  }, [status, completed, dragX, springX])
 
   const handleDragStart = () => {
     if (completed || disabled) return
@@ -132,14 +133,6 @@ const SlideButton = forwardRef(({ className, onSubmit, children, disabled, compl
       dragX.set(0)
       springX.set(0)
     }
-  }
-  
-  // Handle drag cancel (when user releases without completing)
-  const handleDragCancel = () => {
-    if (completed || disabled) return
-    setIsDragging(false)
-    dragX.set(0)
-    springX.set(0)
   }
 
   const handleDrag = (_event, info) => {
@@ -179,29 +172,28 @@ const SlideButton = forwardRef(({ className, onSubmit, children, disabled, compl
       <AnimatePresence>
         {!completed && (
           <motion.div
-            ref={dragHandleRef}
             drag="x"
             dragConstraints={{ left: 0, right: dragRight }}
             dragElastic={0.05}
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
             onDrag={handleDrag}
             style={{ x: springX, touchAction: 'none' }}
             className="absolute -left-4 z-10 flex cursor-grab items-center justify-start active:cursor-grabbing"
           >
-            <div
-              ref={ref}
+            <motion.div
+              whileHover={reduce ? undefined : { scale: 1.06 }}
+              whileTap={reduce ? undefined : { scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               className={cn(
                 'flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)] shadow-lg',
-                isDragging && 'scale-105 transition-transform',
+                isDragging && 'scale-105',
                 className
               )}
-              {...props}
             >
               <SendHorizontal className="w-4 h-4 text-white" />
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

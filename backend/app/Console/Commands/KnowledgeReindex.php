@@ -61,6 +61,7 @@ class KnowledgeReindex extends Command
             $this->info("Articles indexed: {$stats['articles']}");
             $this->info("Events indexed: {$stats['events']}");
             $this->info("Projects indexed: {$stats['projects']}");
+            $this->info("FAQ items indexed: {$stats['faq']}");
             $this->info("Total chunks created: {$stats['chunks']}");
             $this->info("Errors: " . count($stats['errors']));
             $this->info("Time elapsed: {$elapsed}s");

@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '../../lib/utils'
 import { useThemeMode } from '../../hooks/useThemeMode'
 
+// ponytail: all tabs always render in the scroll strip (icon-only below lg),
+// no mobile dropdown — fits every tab on small screens without hiding any.
+
 const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -23,16 +26,22 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
     const el = tabRefs.current[activeIndex]
     if (el) {
       setActiveStyle({ left: `${el.offsetLeft}px`, width: `${el.offsetWidth}px` })
+    } else {
+      setActiveStyle({ left: '0px', width: '0px' })
     }
   }, [activeIndex])
 
   useEffect(() => {
     const idx = tabs.findIndex(t => t.id === activeTab)
     if (idx >= 0 && idx !== activeIndex) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveIndex(idx)
     }
-  }, [activeTab, tabs])
+  }, [activeTab, tabs, activeIndex])
+
+  const handleSelect = (index, id) => {
+    setActiveIndex(index)
+    onTabChange?.(id)
+  }
 
   return (
     <div className={cn('relative', className)}>
@@ -66,14 +75,11 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
               }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              onClick={() => {
-                setActiveIndex(index)
-                onTabChange?.(tab.id)
-              }}
+              onClick={() => handleSelect(index, tab.id)}
             >
               <div className="text-sm leading-5 whitespace-nowrap flex items-center justify-center h-full gap-2">
                 {tab.icon && <tab.icon size={14} />}
-                <span className="hidden md:inline">{tab.label}</span>
+                <span className="hidden lg:inline">{tab.label}</span>
               </div>
             </div>
           ))}

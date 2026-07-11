@@ -5,106 +5,147 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
-// Mock import.meta.env
+// These flags are ignored by the real implementation, but kept for parity with
+// the sibling test files. They must not break anything.
 vi.stubEnv('VITE_USE_REAL_API', '')
 vi.stubEnv('DEV', true)
+// Align the API base to the documented `/api` default so fetch is called with
+// the relative path the assertions below expect (real .env overrides to the
+// absolute backend URL; tests exercise the default contract).
+vi.stubEnv('VITE_API_URL', '/api')
 
-const { newsService, articlesService, eventsService, careersService, viewTracker, api } = await import('./api.js')
+const { newsService, articlesService, careersService, projectsService, viewTracker, api, fetchAPI } = await import('./api.js')
 
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe('newsService', () => {
-  it('getAll returns mock data in dev mode', async () => {
+  it('getAll returns the normalized data array from a paginated response', async () => {
+    const data = [{ id: 1, title: 'News One' }, { id: 2, title: 'News Two' }]
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data }),
+    })
+
     const result = await newsService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThan(0)
-    expect(result[0]).toHaveProperty('title')
-    expect(result[0]).toHaveProperty('id')
+    expect(result).toEqual(data)
+    expect(mockFetch).toHaveBeenCalledWith('/api/news', expect.any(Object))
   })
 
-  it('getLatest limits results', async () => {
-    const result = await newsService.getLatest(2)
-    expect(result.length).toBeLessThanOrEqual(2)
-  })
+  it('getById returns the raw object from the fetched json', async () => {
+    const item = { id: 1, title: 'News One' }
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(item),
+    })
 
-  it('getById returns a single item', async () => {
     const result = await newsService.getById(1)
-    expect(result).toBeTruthy()
-    expect(result.id).toBe(1)
+    expect(result).toEqual(item)
+    expect(mockFetch).toHaveBeenCalledWith('/api/news/1', expect.any(Object))
   })
 
-  it('getById returns null for missing id', async () => {
-    const result = await newsService.getById(9999)
-    expect(result).toBeNull()
+  it('getLatest builds a URL containing limit', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: [] }),
+    })
+
+    await newsService.getLatest(2)
+    const url = mockFetch.mock.calls[0][0]
+    expect(url).toContain('limit=2')
   })
 
-  it('search filters by query', async () => {
-    const result = await newsService.search('AI')
-    expect(result.length).toBeGreaterThan(0)
-    expect(result.every(item =>
-      item.title.toLowerCase().includes('ai') ||
-      item.summary.toLowerCase().includes('ai')
-    )).toBe(true)
+  it('search builds a URL containing the query', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve([]),
+    })
+
+    await newsService.search('AI')
+    const url = mockFetch.mock.calls[0][0]
+    expect(url).toContain('q=AI')
   })
 
-  it('getCategories returns unique categories', async () => {
+  it('getCategories returns whatever the mocked json returns', async () => {
+    const categories = ['Engineering', 'Design', 'Company']
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(categories),
+    })
+
     const result = await newsService.getCategories()
     expect(Array.isArray(result)).toBe(true)
-    expect(new Set(result).size).toBe(result.length)
-  })
-})
-
-describe('eventsService', () => {
-  it('getAll returns mock events', async () => {
-    const result = await eventsService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThan(0)
-    expect(result[0]).toHaveProperty('title')
-  })
-
-  it('getById returns a single event', async () => {
-    const result = await eventsService.getById(1)
-    expect(result).toBeTruthy()
-    expect(result.id).toBe(1)
-  })
-
-  it('register returns success', async () => {
-    const result = await eventsService.register(1, { name: 'Test User' })
-    expect(result.success).toBe(true)
-    expect(result).toHaveProperty('registrationId')
-  })
-
-  it('getCategories returns categories', async () => {
-    const result = await eventsService.getCategories()
-    expect(Array.isArray(result)).toBe(true)
+    expect(result).toEqual(categories)
+    expect(mockFetch).toHaveBeenCalledWith('/api/news/categories', expect.any(Object))
   })
 })
 
 describe('careersService', () => {
-  it('getAll returns mock careers', async () => {
+  it('getAll returns the mocked array', async () => {
+    const careers = [{ id: 1, company: 'Acme' }]
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(careers),
+    })
+
     const result = await careersService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result[0]).toHaveProperty('company')
+    expect(result).toEqual(careers)
   })
 
-  it('apply returns success', async () => {
-    const result = await careersService.apply(1, { name: 'Test' })
-    expect(result.success).toBe(true)
+  it('apply sends a POST with a JSON body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: 1, success: true }),
+    })
+
+    await careersService.apply(1, { name: 'X' })
+    const [, options] = mockFetch.mock.calls[0]
+    expect(options.method).toBe('POST')
+    expect(JSON.parse(options.body)).toEqual({ name: 'X' })
+    expect(mockFetch).toHaveBeenCalledWith('/api/careers/1/apply', expect.any(Object))
   })
 })
 
 describe('articlesService', () => {
-  it('getAll returns mock articles', async () => {
+  it('getAll returns the mocked json', async () => {
+    const articles = [{ id: 1, readTime: 5 }]
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(articles),
+    })
+
     const result = await articlesService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result[0]).toHaveProperty('readTime')
+    expect(result).toEqual(articles)
   })
 
-  it('getById returns article', async () => {
+  it('getById returns the mocked json', async () => {
+    const article = { id: 1, title: 'Article One' }
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(article),
+    })
+
     const result = await articlesService.getById(1)
-    expect(result).toBeTruthy()
+    expect(result).toEqual(article)
+    expect(mockFetch).toHaveBeenCalledWith('/api/articles/1', expect.any(Object))
+  })
+})
+
+describe('projectsService', () => {
+  it('getCategories resolves to the static list without fetching', async () => {
+    const result = await projectsService.getCategories()
+    expect(result).toEqual(['web', 'mobile', 'uiux', 'game', 'ai'])
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })
 
@@ -112,7 +153,6 @@ describe('api aggregate', () => {
   it('exports all service namespaces', () => {
     expect(api).toHaveProperty('news')
     expect(api).toHaveProperty('articles')
-    expect(api).toHaveProperty('events')
     expect(api).toHaveProperty('careers')
     expect(api).toHaveProperty('projects')
   })
@@ -129,5 +169,17 @@ describe('viewTracker', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
     const result = await viewTracker.get('news', 1, 10)
     expect(result).toBe(10)
+  })
+})
+
+describe('fetchAPI', () => {
+  it('throws on a non-ok response with the server message', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: 'Server exploded' }),
+    })
+
+    await expect(fetchAPI('/news')).rejects.toThrow('Server exploded')
   })
 })

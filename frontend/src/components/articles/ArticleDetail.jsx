@@ -1,33 +1,44 @@
 // src/components/articles/ArticleDetail.js
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { pageContainer, pageItem, useReducedMotionSafe } from '../../lib/animations'
 import {
   Calendar, User, Eye, Share2, Bookmark, Heart,
   ChevronRight, Link as LinkIcon, Check, Clock, Tag,
-  ArrowLeft, Zap, Globe, Shield, Code, Cpu, Sparkles
+  ArrowLeft, Zap, Globe, Shield, Code, Sparkles
 } from 'lucide-react'
 import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { formatDate, formatRelativeTime, formatNumber, formatReadTime } from '../../utils/formatters'
-import { viewTracker } from '../../services/api'
+import { useEngagement } from '../../context/EngagementContext'
+import { GradientPlaceholder } from '../ui/ExpandableCard'
+import { shareItem } from '../../lib/share'
+import { useToast } from '../../components/ui/Toast'
 
-const ArticleDetail = ({ article, relatedArticles = [] }) => {
+  const ArticleDetail = ({ article, relatedArticles = [] }) => {
   const navigate = useNavigate()
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
+  const reduce = useReducedMotionSafe()
+  const containerVariants = reduce
+    ? { hidden: {}, show: {} }
+    : pageContainer
+  const itemVariants = reduce
+    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0 } } }
+    : pageItem
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [realViews, setRealViews] = useState(0)
+  const { get, ensure, toggleLike, toggleSave, recordView, recordShare } = useEngagement()
+  const { showToast } = useToast()
+  const eng = article?.id
+    ? get('article', article.id)
+    : { liked: false, saved: false, views: 0, likes: 0, saves: 0, shares: 0 }
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    viewTracker.increment('article', article?.id, article?.views || 0).then(setRealViews)
-  }, [article?.id, article?.views])
-
-  useEffect(() => {
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsBookmarked(bookmarks.includes(article?.id))
-  }, [article?.id])
+    if (article?.id) {
+      ensure('article', article.id)
+      recordView('article', article.id, article)
+    }
+  }, [article, ensure, recordView])
 
   if (!article) {
     return (
@@ -47,6 +58,7 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
   }
 
   const handleShare = async (platform) => {
+    if (article?.id) recordShare('article', article.id)
     const url = window.location.href
     const title = article.title
 
@@ -59,9 +71,10 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
 
     if (platform === 'copy') {
       try {
-        await navigator.clipboard.writeText(url)
+        await shareItem({ title, url })
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
+        showToast('Tautan berhasil disalin', { type: 'success' })
       } catch (err) {
         console.error('Failed to copy:', err)
       }
@@ -73,23 +86,20 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
   }
 
   const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked)
-    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]')
-    if (!isBookmarked) {
-      bookmarks.push(article.id)
-      localStorage.setItem('bookmarks', JSON.stringify(bookmarks))
-    } else {
-      const updated = bookmarks.filter(id => id !== article.id)
-      localStorage.setItem('bookmarks', JSON.stringify(updated))
-    }
+    if (article?.id) toggleSave('article', article.id)
   }
 
   const handleLike = () => {
-    setIsLiked(!isLiked)
+    if (article?.id) toggleLike('article', article.id)
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <motion.div
+      className="max-w-5xl mx-auto"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -100,35 +110,44 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
         </button>
 
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
             onClick={handleLike}
+            whileHover={reduce ? undefined : { scale: 1.06 }}
+            whileTap={reduce ? undefined : { scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className={`p-2.5 rounded-xl transition-all duration-300 ${
-              isLiked
-                ? 'text-red-500 bg-red-50 scale-110'
+              eng.liked
+                ? 'text-red-500 bg-red-50'
                 : 'text-theme-muted hover:text-red-500 hover:bg-red-50'
             }`}
           >
-            <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} />
-          </button>
+            <Heart size={20} fill={eng.liked ? 'currentColor' : 'none'} />
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={handleBookmark}
+            whileHover={reduce ? undefined : { scale: 1.06 }}
+            whileTap={reduce ? undefined : { scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className={`p-2.5 rounded-xl transition-all duration-300 ${
-              isBookmarked
+              eng.saved
                 ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                 : 'text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/10'
             }`}
           >
-            <Bookmark size={20} fill={isBookmarked ? 'currentColor' : 'none'} />
-          </button>
+            <Bookmark size={20} fill={eng.saved ? 'currentColor' : 'none'} />
+          </motion.button>
 
           <div className="relative">
-            <button
+            <motion.button
               onClick={() => setShowShareMenu(!showShareMenu)}
+              whileHover={reduce ? undefined : { scale: 1.06 }}
+              whileTap={reduce ? undefined : { scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               className="p-2.5 rounded-xl text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all duration-300"
             >
               <Share2 size={20} />
-            </button>
+            </motion.button>
 
             {showShareMenu && (
               <>
@@ -158,6 +177,7 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
         </div>
       </div>
 
+      <motion.div variants={itemVariants}>
       <article className="bg-theme rounded-2xl shadow-xl overflow-hidden border border-border">
         <div className="relative h-[400px] md:h-[500px] overflow-hidden" style={{ background: 'linear-gradient(135deg, rgb(48,11,85), rgb(20,10,50))' }}>
           {article.image ? (
@@ -165,10 +185,8 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
               <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
             </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Cpu size={80} style={{ color: 'rgba(122,71,166,0.5)' }} />
-            </div>
+           ) : (
+            <GradientPlaceholder themeColor="270 50% 40%" title={article.title} className="w-full h-full" />
           )}
 
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
@@ -181,13 +199,29 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
                 <span key={idx} className="bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium">#{tag}</span>
               ))}
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">{article.title}</h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              whileHover={reduce ? undefined : { scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight"
+            >{article.title}</motion.h1>
             <div className="flex flex-wrap items-center gap-4 text-sm text-white/80">
               <div className="flex items-center gap-2"><Calendar size={14} /><span>{formatDate(article.date)}</span></div>
               <div className="flex items-center gap-2"><Clock size={14} /><span>{formatRelativeTime(article.date)}</span></div>
               <div className="flex items-center gap-2"><User size={14} /><span>{article.author || 'Tim Penulis'}</span></div>
-              <div className="flex items-center gap-2"><Eye size={14} /><span>{formatNumber(realViews)} dilihat</span></div>
-              <div className="flex items-center gap-2"><Code size={14} /><span>{formatReadTime(article.content)}</span></div>
+                <div className="flex items-center gap-2"><Eye size={14} /><span>{formatNumber(eng.views)}</span></div>
+               {eng.likes > 0 && (
+                 <div className="flex items-center gap-2"><Heart size={14} /><span>{formatNumber(eng.likes)}</span></div>
+               )}
+               {eng.saves > 0 && (
+                 <div className="flex items-center gap-2"><Bookmark size={14} /><span>{formatNumber(eng.saves)}</span></div>
+               )}
+               {eng.shares > 0 && (
+                 <div className="flex items-center gap-2"><Share2 size={14} /><span>{formatNumber(eng.shares)}</span></div>
+               )}
+               <div className="flex items-center gap-2"><Code size={14} /><span>{formatReadTime(article.content)}</span></div>
             </div>
           </div>
         </div>
@@ -245,9 +279,10 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
           </div>
         </div>
       </article>
+      </motion.div>
 
       {relatedArticles && relatedArticles.length > 0 && (
-        <div className="mt-12">
+        <motion.div variants={itemVariants} className="mt-12">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <Globe size={20} style={{ color: 'var(--accent)' }} />
@@ -272,9 +307,9 @@ const ArticleDetail = ({ article, relatedArticles = [] }) => {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

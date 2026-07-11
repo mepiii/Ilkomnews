@@ -61,7 +61,7 @@ const ProjectExpandableCard = ({ project }) => {
   const themeColor = categoryThemes[project.category] || '270 50% 40%'
 
   const creatorAvatarUrl = project.creator_avatar_url || project.creator_avatar || null
-  const thumbnailUrl = project.thumbnail_url || project.thumbnail || 'https://placehold.co/600x800/8B5CF6/white?text=Tidak+Ada+Gambar'
+  const thumbnailUrl = project.thumbnail_url || project.thumbnail || ''
 
   const creatorObj = project.creator_name
     ? { name: project.creator_name, avatar: creatorAvatarUrl }
@@ -90,11 +90,11 @@ const ProjectExpandableCard = ({ project }) => {
                   <img
                     src={creatorAvatarUrl}
                     alt={project.creator_name}
-                    className="w-5 h-5 rounded-full object-cover shrink-0"
+                    className="w-7 h-7 rounded-full object-cover shrink-0"
                     onError={(e) => { e.target.style.display = 'none' }}
                   />
                 ) : (
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold bg-[var(--accent)] shrink-0">
+                  <div                     className="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold bg-[var(--accent)] shrink-0">
                     {project.creator_name.charAt(0)}
                   </div>
                 )}
@@ -128,7 +128,7 @@ const ProjectExpandableCard = ({ project }) => {
                     />
                   ) : null}
                   <div
-                    className={`w-6 h-6 rounded-full items-center justify-center text-white text-[9px] font-bold bg-[var(--accent)] shrink-0 ${creatorAvatarUrl ? 'hidden' : 'flex'}`}
+                      className={`w-7 h-7 rounded-full items-center justify-center text-white text-sm font-bold bg-[var(--accent)] shrink-0 ${creatorAvatarUrl ? 'hidden' : 'flex'}`}
                   >
                     {project.creator_name.charAt(0)}
                   </div>
@@ -151,12 +151,12 @@ const ProjectExpandableCard = ({ project }) => {
                       <img
                         src={collabAvatar}
                         alt={collabName}
-                        className="w-6 h-6 rounded-full object-cover shrink-0"
+                        className="w-7 h-7 rounded-full object-cover shrink-0"
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display = 'flex') }}
                       />
                     ) : null}
                     <div
-                      className={`w-6 h-6 rounded-full items-center justify-center text-white text-[9px] font-bold bg-[var(--accent)]/60 shrink-0 ${collabAvatar ? 'hidden' : 'flex'}`}
+                      className={`w-7 h-7 rounded-full items-center justify-center text-white text-sm font-bold bg-[var(--accent)]/60 shrink-0 ${collabAvatar ? 'hidden' : 'flex'}`}
                     >
                       {collabName.charAt(0)}
                     </div>

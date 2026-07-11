@@ -28,6 +28,10 @@ class EmbeddingService
         $result = $this->llmRouter->embeddings($text);
 
         if (!$result) {
+            // F4: No embedding-capable provider is configured (or the provider
+            // failed). Return null gracefully and warn — callers must not treat
+            // this as success nor silently fall back to non-vector retrieval.
+            Log::warning('Embedding generation failed: no embedding-capable provider available or provider error.');
             return null;
         }
 

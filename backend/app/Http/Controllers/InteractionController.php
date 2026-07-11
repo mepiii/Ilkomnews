@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EngagementInteraction;
 use App\Models\Interaction;
-use Illuminate\Http\Request;
 
 class InteractionController extends Controller
 {
@@ -12,72 +12,151 @@ class InteractionController extends Controller
      */
     public function stats(string $type, $id)
     {
-        $stats = Interaction::firstOrCreate(
-            ['item_type' => $type, 'item_id' => $id],
-            ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
-        );
+        try {
+            $interaction = Interaction::firstOrCreate(
+                ['item_type' => $type, 'item_id' => (string) $id],
+                ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
+            );
 
-        return response()->json([
-            'views' => $stats->views,
-            'likes' => $stats->likes,
-            'saves' => $stats->saves,
-            'shares' => $stats->shares,
-        ]);
+            $visitorId = $this->resolveVisitorId();
+
+            $isLiked = EngagementInteraction::forItem($type, $id)
+                ->where('visitor_id', $visitorId)
+                ->where('type', 'love')
+                ->exists();
+
+            $isSaved = EngagementInteraction::forItem($type, $id)
+                ->where('visitor_id', $visitorId)
+                ->where('type', 'save')
+                ->exists();
+
+            return response()->json([
+                'views' => $interaction->views ?? 0,
+                'likes' => $interaction->likes ?? 0,
+                'saves' => $interaction->saves ?? 0,
+                'shares' => $interaction->shares ?? 0,
+                'isLiked' => $isLiked,
+                'isSaved' => $isSaved,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Unable to fetch interaction stats.'], 500);
+        }
     }
 
     /**
-     * Increment view count
+     * Increment view count (once per visitor)
      */
     public function incrementView(string $type, $id)
     {
-        $stats = Interaction::firstOrCreate(
-            ['item_type' => $type, 'item_id' => $id],
-            ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
-        );
+        try {
+            $visitorId = $this->resolveVisitorId();
 
-        $stats->increment('views');
+            $seen = EngagementInteraction::firstOrCreate([
+                'visitor_id' => $visitorId,
+                'interactable_type' => $type,
+                'interactable_id' => (int) $id,
+                'type' => 'seen',
+            ]);
 
-        return response()->json(['views' => $stats->views]);
+            $isNew = $seen->wasRecentlyCreated;
+
+            $interaction = Interaction::firstOrCreate(
+                ['item_type' => $type, 'item_id' => (string) $id],
+                ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
+            );
+
+            if ($isNew) {
+                $interaction->increment('views');
+            }
+
+            return response()->json(['views' => $interaction->views ?? 0]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Unable to record view.'], 500);
+        }
     }
 
     /**
-     * Toggle like (increment or decrement)
+     * Toggle like for the current visitor
      */
     public function toggleLike(string $type, $id)
     {
-        $stats = Interaction::firstOrCreate(
-            ['item_type' => $type, 'item_id' => $id],
-            ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
-        );
+        try {
+            $visitorId = $this->resolveVisitorId();
 
-        // Note: This just increments the aggregate count
-        // The actual like state is tracked in localStorage on the frontend
-        $stats->increment('likes');
+            $existing = EngagementInteraction::forItem($type, $id)
+                ->where('visitor_id', $visitorId)
+                ->where('type', 'love')
+                ->first();
 
-        return response()->json([
-            'liked' => true,
-            'likes' => $stats->likes,
-        ]);
+            if ($existing) {
+                $existing->delete();
+                $liked = false;
+            } else {
+                EngagementInteraction::create([
+                    'visitor_id' => $visitorId,
+                    'interactable_type' => $type,
+                    'interactable_id' => (int) $id,
+                    'type' => 'love',
+                ]);
+                $liked = true;
+            }
+
+            $this->syncAggregate($type, $id);
+
+            $interaction = Interaction::firstOrCreate(
+                ['item_type' => $type, 'item_id' => (string) $id],
+                ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
+            );
+
+            return response()->json([
+                'liked' => $liked,
+                'likes' => $interaction->likes ?? 0,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Unable to toggle like.'], 500);
+        }
     }
 
     /**
-     * Toggle save (increment or decrement)
+     * Toggle save for the current visitor
      */
     public function toggleSave(string $type, $id)
     {
-        $stats = Interaction::firstOrCreate(
-            ['item_type' => $type, 'item_id' => $id],
-            ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
-        );
+        try {
+            $visitorId = $this->resolveVisitorId();
 
-        // Note: This just increments the aggregate count
-        // The actual save state is tracked in localStorage on the frontend
-        $stats->increment('saves');
+            $existing = EngagementInteraction::forItem($type, $id)
+                ->where('visitor_id', $visitorId)
+                ->where('type', 'save')
+                ->first();
 
-        return response()->json([
-            'saved' => true,
-            'saves' => $stats->saves,
-        ]);
+            if ($existing) {
+                $existing->delete();
+                $saved = false;
+            } else {
+                EngagementInteraction::create([
+                    'visitor_id' => $visitorId,
+                    'interactable_type' => $type,
+                    'interactable_id' => (int) $id,
+                    'type' => 'save',
+                ]);
+                $saved = true;
+            }
+
+            $this->syncAggregate($type, $id);
+
+            $interaction = Interaction::firstOrCreate(
+                ['item_type' => $type, 'item_id' => (string) $id],
+                ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
+            );
+
+            return response()->json([
+                'saved' => $saved,
+                'saves' => $interaction->saves ?? 0,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Unable to toggle save.'], 500);
+        }
     }
 
     /**
@@ -85,13 +164,43 @@ class InteractionController extends Controller
      */
     public function incrementShare(string $type, $id)
     {
-        $stats = Interaction::firstOrCreate(
-            ['item_type' => $type, 'item_id' => $id],
+        try {
+            $interaction = Interaction::firstOrCreate(
+                ['item_type' => $type, 'item_id' => (string) $id],
+                ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
+            );
+
+            $interaction->increment('shares');
+
+            return response()->json(['shares' => $interaction->shares ?? 0]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Unable to record share.'], 500);
+        }
+    }
+
+    /**
+     * Recompute likes/saves aggregates from engagement_interactions.
+     */
+    private function syncAggregate(string $type, $id): void
+    {
+        $interaction = Interaction::firstOrCreate(
+            ['item_type' => $type, 'item_id' => (string) $id],
             ['views' => 0, 'likes' => 0, 'saves' => 0, 'shares' => 0]
         );
 
-        $stats->increment('shares');
+        $likes = EngagementInteraction::countForItem($type, $id, 'love');
+        $saves = EngagementInteraction::countForItem($type, $id, 'save');
 
-        return response()->json(['shares' => $stats->shares]);
+        $interaction->likes = $likes;
+        $interaction->saves = $saves;
+        $interaction->save();
+    }
+
+    /**
+     * Resolve the stable visitor id from request body or header.
+     */
+    private function resolveVisitorId(): string
+    {
+        return (string) (request('visitor_id') ?? request()->header('X-Visitor-Id') ?? 'anon');
     }
 }

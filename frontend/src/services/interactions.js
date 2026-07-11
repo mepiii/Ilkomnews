@@ -1,3 +1,7 @@
+// Route global interaction counters through the shared fetchAPI helper so they
+// get timeout + AbortController support (request cancellation) and credentials.
+import { fetchAPI } from './api'
+
 const STORAGE_KEY = 'ilkom_interactions'
 
 /**
@@ -146,120 +150,128 @@ export function getAllItems() {
   })
 }
 
-/**
- * Get all liked items
- * @returns {Array} - Array of liked items
- */
-function getLikedItems() {
-  return getAllItems().filter(item => item.liked)
-}
-
-/**
- * Get all saved items
- * @returns {Array} - Array of saved items
- */
-function getSavedItems() {
-  return getAllItems().filter(item => item.saved)
-}
-
-/**
- * Get all viewed items
- * @returns {Array} - Array of viewed items
- */
-function getViewedItems() {
-  return getAllItems().filter(item => item.viewed)
-}
-
-/**
- * Get global stats from database API
- * This function fetches global interaction counts from the backend
- * @param {string} type - Item type (project, news, event)
- * @param {string|number} id - Item ID
- * @returns {Promise<object>} - Global stats { views, likes, saves, shares }
- */
-async function getGlobalStats(type, id) {
-  try {
-    const response = await fetch(`/api/interactions/${type}/${id}/stats`)
-    if (!response.ok) throw new Error('Failed to fetch stats')
-    const data = await response.json()
-    return {
-      views: data.views || 0,
-      likes: data.likes || 0,
-      saves: data.saves || 0,
-      shares: data.shares || 0,
-    }
-  } catch {
-    return {
-      views: 0,
-      likes: 0,
-      saves: 0,
-      shares: 0,
-    }
-  }
-}
-
-/**
- * Increment global view count in database
- * @param {string} type - Item type
- * @param {string|number} id - Item ID
- * @returns {Promise<number>} - New view count
- */
-async function incrementGlobalView(type, id) {
-  try {
-    const response = await fetch(`/api/interactions/${type}/${id}/view`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (!response.ok) throw new Error('Failed to increment view')
-    const data = await response.json()
-    return data.views || 0
-  } catch {
-    return 0
-  }
-}
 
 /**
  * Toggle global like in database
- * @param {string} type - Item type
+ * @param {string} type - Item type (news, project, ...)
  * @param {string|number} id - Item ID
- * @returns {Promise<object>} - { isLiked, likes }
+ * @param {string} visitorId - Stable visitor id (sent in POST body)
+ * @param {AbortSignal} [signal] - Optional signal to cancel the request
+ * @returns {Promise<object>} - { liked, likes }
  */
-export async function toggleGlobalLike(type, id) {
+export async function toggleGlobalLike(type, id, visitorId, signal) {
   try {
-    const response = await fetch(`/api/interactions/${type}/${id}/like`, {
+    const data = await fetchAPI(`/interactions/${type}/${id}/like`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId }),
+      ...(signal ? { signal } : {}),
     })
-    if (!response.ok) throw new Error('Failed to toggle like')
-    const data = await response.json()
     return {
-      isLiked: data.liked || false,
+      liked: data.liked || false,
       likes: data.likes || 0,
     }
-  } catch {
-    return { isLiked: false, likes: 0 }
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn(`[interactions] toggleGlobalLike failed for ${type}/${id}:`, err.message)
+    return { liked: false, likes: 0 }
   }
 }
 
 /**
  * Toggle global save in database
- * @param {string} type - Item type
+ * @param {string} type - Item type (news, project, ...)
  * @param {string|number} id - Item ID
- * @returns {Promise<object>} - { isSaved, saves }
+ * @param {string} visitorId - Stable visitor id (sent in POST body)
+ * @param {AbortSignal} [signal] - Optional signal to cancel the request
+ * @returns {Promise<object>} - { saved, saves }
  */
-export async function toggleGlobalSave(type, id) {
+export async function toggleGlobalSave(type, id, visitorId, signal) {
   try {
-    const response = await fetch(`/api/interactions/${type}/${id}/save`, {
+    const data = await fetchAPI(`/interactions/${type}/${id}/save`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId }),
+      ...(signal ? { signal } : {}),
     })
-    if (!response.ok) throw new Error('Failed to toggle save')
-    const data = await response.json()
     return {
-      isSaved: data.saved || false,
+      saved: data.saved || false,
       saves: data.saves || 0,
     }
-  } catch {
-    return { isSaved: false, saves: 0 }
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn(`[interactions] toggleGlobalSave failed for ${type}/${id}:`, err.message)
+    return { saved: false, saves: 0 }
+  }
+}
+
+/**
+ * Fetch global interaction stats for an item.
+ * @param {string} type - Item type (news, project, ...)
+ * @param {string|number} id - Item ID
+ * @param {string} visitorId - Stable visitor id (sent as query param)
+ * @returns {Promise<object>} - { views, likes, saves, shares, isLiked, isSaved }
+ */
+export async function getGlobalStats(type, id, visitorId) {
+  try {
+    const data = await fetchAPI(
+      `/interactions/${type}/${id}/stats?visitor_id=${encodeURIComponent(visitorId)}`,
+      { credentials: 'include' }
+    )
+    return {
+      views: data.views || 0,
+      likes: data.likes || 0,
+      saves: data.saves || 0,
+      shares: data.shares || 0,
+      isLiked: !!data.isLiked,
+      isSaved: !!data.isSaved,
+    }
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn(`[interactions] getGlobalStats failed for ${type}/${id}:`, err.message)
+    return { views: 0, likes: 0, saves: 0, shares: 0, isLiked: false, isSaved: false }
+  }
+}
+
+/**
+ * Record a global view for an item.
+ * @param {string} type - Item type (news, project, ...)
+ * @param {string|number} id - Item ID
+ * @param {string} visitorId - Stable visitor id (sent in POST body)
+ * @returns {Promise<number|undefined>} - server views count
+ */
+export async function recordGlobalView(type, id, visitorId) {
+  try {
+    const data = await fetchAPI(`/interactions/${type}/${id}/view`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId }),
+    })
+    return data.views
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn(`[interactions] recordGlobalView failed for ${type}/${id}:`, err.message)
+    return undefined
+  }
+}
+
+/**
+ * Record a global share for an item.
+ * @param {string} type - Item type (news, project, ...)
+ * @param {string|number} id - Item ID
+ * @param {string} visitorId - Stable visitor id (sent in POST body)
+ * @returns {Promise<number|undefined>} - server shares count
+ */
+export async function recordGlobalShare(type, id, visitorId) {
+  try {
+    const data = await fetchAPI(`/interactions/${type}/${id}/share`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId }),
+    })
+    return data.shares
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn(`[interactions] recordGlobalShare failed for ${type}/${id}:`, err.message)
+    return undefined
   }
 }

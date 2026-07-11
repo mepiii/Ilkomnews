@@ -9,6 +9,8 @@ use App\Models\ProjectSubmission;
 use App\Models\ChatLog;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Services\GeminiService;
+use App\Services\SafeUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -20,7 +22,7 @@ class ChatController extends Controller
     private const MAX_INPUT_CHARS = 200;
     private const MAX_INPUT_WORDS = 40;
     private const MAX_OUTPUT_CHARS = 800;
-    private const MAX_OUTPUT_TOKENS = 250;
+    private const MAX_OUTPUT_TOKENS = 512;
     private const MAX_CONTEXT_CHARS = 600;
     private const MAX_RETRIEVED_CHUNKS = 3;
     private const MAX_CONCURRENT = 20;
@@ -46,7 +48,7 @@ IDENTITY:
 - Language: Indonesian (Bahasa Indonesia), respond in the same language the user uses
 
 KNOWLEDGE SCOPE — ONLY discuss:
-- ILKOM NEWS website features (news, articles, events, gallery, project submissions)
+- ILKOM NEWS website features (Berita/news and Galeri Proyek/student project gallery)
 - Faculty of Computer Science (FASILKOM) Sriwijaya University information
 - Website navigation and how to use features
 - Student project gallery and submission process
@@ -92,6 +94,7 @@ PROMPT;
             'message' => 'required|string|max:' . self::MAX_INPUT_CHARS,
             'session_id' => 'nullable|string|max:64',
             'device_id' => 'nullable|string|max:128',
+            'model' => 'nullable|string|max:200',
         ]);
 
         $ip = $request->ip();
@@ -153,7 +156,26 @@ PROMPT;
             // Retrieve context (RAG)
             // RAG pipeline (vector search) with keyword LIKE fallback
             $rag = app(\App\Services\RAGPipeline::class);
-            $context = $rag->retrieveOnly($userMessage) ?? $this->retrieveContext($userMessage);
+            $vectorContext = $rag->retrieveOnly($userMessage);
+
+            // F4: If vector retrieval is unavailable (no embedding-capable
+            // provider configured, or no vector match), we silently fall back
+            // to keyword search below — log a warning so it isn't treated as a
+            // healthy vector path.
+            if ($vectorContext === null) {
+                \Log::warning('Chatbot vector retrieval unavailable; falling back to keyword search.');
+            }
+
+            // F8: Apply the topic/off-topic guard BEFORE using the keyword LIKE
+            // fallback context, so an off-topic query that coincidentally
+            // matches a DB keyword is never answered.
+            $topicBlock = $this->topicGuard($userMessage);
+            $context = $vectorContext ?? ($topicBlock ? '' : $this->retrieveContext($userMessage));
+
+            // Always ground with the site/faculty baseline so in-scope FAQ
+            // (e.g. "FASILKOM kepanjangannya apa") can be answered even when
+            // the DB has no matching item.
+            $context = $this->baseContext() . ($context !== '' ? "\n\n" . $context : '');
 
             // Zero-hallucination check
             if (empty(trim($context))) {
@@ -196,24 +218,83 @@ PROMPT;
                 $messages[] = ['role' => $msg->role, 'content' => $msg->content];
             }
 
-            // Fetch active LLM Providers ordered by priority
-            $providers = \App\Models\LlmProvider::where('is_active', true)
-                ->orderBy('priority', 'asc')
-                ->get();
-
-            if ($providers->isEmpty()) {
-                return response()->json([
-                    'error' => false,
-                    'message' => 'Layanan chatbot sedang tidak tersedia (Tidak ada LLM Provider yang aktif).',
-                    'session_id' => $sessionId,
-                ], 503);
-            }
-
+            // --- Native Gemini (env GEMINI_API_KEY) — preferred single provider ---
             $reply = null;
             $success = false;
             $lastErrorStatus = 503;
 
-            foreach ($providers as $provider) {
+            $geminiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
+            if (!empty($geminiKey)) {
+                try {
+                    $gemini = new \App\Services\GeminiService();
+                    $geminiPrompt = $systemPrompt . "\n\nRIWAYAT PERCAKAPAN:\n";
+                    foreach ($messages as $m) {
+                        if ($m['role'] === 'system') {
+                            continue;
+                        }
+                        $speaker = $m['role'] === 'assistant' ? 'Wolfy' : 'Pengguna';
+                        $geminiPrompt .= "{$speaker}: {$m['content']}\n";
+                    }
+                    $geminiResult = $gemini->chat($geminiPrompt, [
+                        'temperature' => 0.3,
+                        'max_tokens'  => self::MAX_OUTPUT_TOKENS,
+                    ]);
+                    if (!empty($geminiResult['content'])) {
+                        $reply = $geminiResult['content'];
+                        $success = true;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Chatbot native Gemini failed: ' . $e->getMessage());
+                }
+            }
+
+            // --- Fallback: legacy LlmProvider table (kept for backward compatibility) ---
+            if (!$success) {
+                $providers = \App\Models\LlmProvider::where('is_active', true)
+                    ->orderBy('priority', 'asc')
+                    ->get();
+
+                if ($providers->isEmpty()) {
+                    return response()->json([
+                        'error' => false,
+                        'message' => 'Layanan chatbot sedang tidak tersedia (Tidak ada LLM Provider yang aktif).',
+                        'session_id' => $sessionId,
+                    ], 503);
+                }
+
+                // E: Prefix-based model routing (e.g. "gemini/gemini-3.1-pro-preview").
+                // When the incoming request names a model with a "prefix/model" shape,
+                // resolve the matching active provider and route to it directly,
+                // rewriting the outgoing model to the part after the prefix.
+                $resolvedUrl = null;
+                $resolvedModel = null;
+                $requestedModel = $validated['model'] ?? null;
+                if (is_string($requestedModel) && str_contains($requestedModel, '/')) {
+                    [$reqPrefix, $reqModel] = explode('/', $requestedModel, 2) + [null, null];
+                    $reqPrefix = strtolower(trim((string) $reqPrefix));
+                    $reqModel = trim((string) ($reqModel ?? ''));
+                    if ($reqPrefix !== '' && $reqModel !== '') {
+                        $matched = $providers->first(function ($p) use ($reqPrefix) {
+                            return strtolower((string) ($p->prefix ?? '')) === $reqPrefix;
+                        });
+                        if ($matched) {
+                            $base = rtrim($matched->base_url, '/');
+                            $resolvedUrl = $matched->api_type === 'raw' ? $base : $base . '/chat/completions';
+                            $resolvedModel = $reqModel;
+                            $providers = collect([$matched]);
+                        }
+                    }
+                }
+
+                foreach ($providers as $provider) {
+                // SSRF guard: never send the provider's API key to a private /
+                // internal / metadata address. base_url is admin-supplied; if it
+                // resolves to a non-public target, skip this provider entirely.
+                if (!SafeUrl::isSafe((string) $provider->base_url)) {
+                    \Log::warning("Chatbot LLM: skipping provider {$provider->name} — base_url failed SSRF safety check.");
+                    continue;
+                }
+
                 try {
                     $payload = [];
                     $headers = [
@@ -234,7 +315,7 @@ PROMPT;
                         }
 
                         $payload = [
-                            'model' => $provider->model_id,
+                            'model' => $resolvedModel ?? $provider->model_id,
                             'max_tokens' => self::MAX_OUTPUT_TOKENS,
                             'temperature' => 0.3,
                             'system' => $systemPrompt,
@@ -246,7 +327,7 @@ PROMPT;
                             $headers['Accept'] = 'application/vnd.github+json';
                         }
                         $payload = [
-                            'model' => $provider->model_id,
+                            'model' => $resolvedModel ?? $provider->model_id,
                             'messages' => $messages,
                             'max_tokens' => self::MAX_OUTPUT_TOKENS,
                             'temperature' => 0.3,
@@ -256,7 +337,7 @@ PROMPT;
 
                     $response = Http::timeout(15)
                         ->withHeaders($headers)
-                        ->post($provider->base_url, $payload);
+                        ->post($resolvedUrl ?? $provider->base_url, $payload);
 
                     if ($response->successful()) {
                         $data = $response->json();
@@ -280,6 +361,7 @@ PROMPT;
                     continue; // Try next provider
                 }
             }
+            }
 
             if (!$success || !$reply) {
                 if ($lastErrorStatus === 429) {
@@ -294,6 +376,20 @@ PROMPT;
                     'message' => 'Maaf, terjadi kesalahan pada semua penyedia layanan. Silakan coba lagi.',
                     'session_id' => $sessionId,
                 ], 503);
+            }
+
+            // F1: Groundedness check — the answer must be grounded in the
+            // retrieved context. If not, do NOT return a possibly-hallucinated
+            // answer; return a site-scoped fallback instead.
+            if (!$this->isAnswerGrounded($reply, $context)) {
+                $noGrounding = 'Maaf, saya hanya bisa menjawab seputar konten ILKOM News. Coba tanyakan mengenai berita, artikel, event, atau galeri proyek di website ini.';
+                $this->logChat($sessionId, $userMessage, $noGrounding, 'not_grounded', $ip);
+                return response()->json([
+                    'error' => false,
+                    'message' => $noGrounding,
+                    'session_id' => $sessionId,
+                    'source' => null,
+                ]);
             }
 
             // Output limits
@@ -339,15 +435,15 @@ PROMPT;
     private function checkRateLimits(string $ip, ?string $deviceId): ?array
     {
         $limits = [
-            ["chat:min:ip:{$ip}", 5, 60, 'Terlalu cepat! Tunggu {s} detik.'],
-            ["chat:hr:ip:{$ip}", 20, 3600, 'Batas per jam tercapai ({s} detik).'],
-            ["chat:day:ip:{$ip}", 50, 86400, 'Batas harian tercapai (50 pesan/hari). Coba lagi besok!'],
+            ["chat:min:ip:{$ip}", 20, 60, 'Terlalu cepat! Tunggu {s} detik.'],
+            ["chat:hr:ip:{$ip}", 120, 3600, 'Batas per jam tercapai ({s} detik).'],
+            ["chat:day:ip:{$ip}", 400, 86400, 'Batas harian tercapai. Coba lagi besok!'],
         ];
 
         if ($deviceId) {
-            $limits[] = ["chat:min:dev:{$deviceId}", 2, 60, 'Terlalu cepat! Tunggu {s} detik.'];
-            $limits[] = ["chat:hr:dev:{$deviceId}", 10, 3600, 'Batas per jam tercapai.'];
-            $limits[] = ["chat:day:dev:{$deviceId}", 20, 86400, 'Batas harian tercapai.'];
+            $limits[] = ["chat:min:dev:{$deviceId}", 10, 60, 'Terlalu cepat! Tunggu {s} detik.'];
+            $limits[] = ["chat:hr:dev:{$deviceId}", 60, 3600, 'Batas per jam tercapai.'];
+            $limits[] = ["chat:day:dev:{$deviceId}", 200, 86400, 'Batas harian tercapai.'];
         }
 
         foreach ($limits as [$key, $max, $ttl, $msg]) {
@@ -494,7 +590,10 @@ PROMPT;
         }
 
         if (empty($chunks)) {
-            return '';
+            $fallback = $this->recentContext();
+            if ($fallback !== '') {
+                $chunks[] = $fallback;
+            }
         }
 
         // Limit to MAX_RETRIEVED_CHUNKS non-empty chunks
@@ -613,17 +712,22 @@ PROMPT;
 
     private function searchProjects(array $keywords): string
     {
-        $results = ProjectSubmission::where(function ($q) use ($keywords) {
-            foreach ($keywords as $keyword) {
-                $escaped = addcslashes($keyword, '%_');
-                $q->orWhere('title', 'LIKE', "%{$escaped}%");
-                $q->orWhere('description', 'LIKE', "%{$escaped}%");
-                $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
-            }
-        })
+        // H1: Expose ACCEPTED and PENDING submissions via public chat (per
+        // product decision); rejected submissions remain hidden. Drop
+        // tracking_id from the result set so the internal tracking identifier
+        // never leaks to anonymous users.
+        $results = ProjectSubmission::whereIn('status', ['accepted', 'pending'])
+            ->where(function ($q) use ($keywords) {
+                foreach ($keywords as $keyword) {
+                    $escaped = addcslashes($keyword, '%_');
+                    $q->orWhere('title', 'LIKE', "%{$escaped}%");
+                    $q->orWhere('description', 'LIKE', "%{$escaped}%");
+                    $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
+                }
+            })
             ->latest()
             ->limit(3)
-            ->get(['title', 'category', 'status', 'creator_name', 'description', 'tech_stack', 'tracking_id']);
+            ->get(['title', 'category', 'status', 'creator_name', 'description', 'tech_stack']);
 
         if ($results->isEmpty()) {
             return '';
@@ -633,8 +737,7 @@ PROMPT;
         foreach ($results as $project) {
             $desc = $project->description ? Str::limit($project->description, 100) : '';
             $tech = is_array($project->tech_stack) ? implode(', ', array_slice($project->tech_stack, 0, 3)) : '';
-            $status = $project->status === 'pending' ? 'Menunggu Review' :
-                     ($project->status === 'accepted' ? 'Diterima' : 'Ditolak');
+            $status = match ($project->status) { 'accepted' => 'Diterima', 'pending' => 'Pending (menunggu review)', default => 'Ditolak' };
 
             $line = "- {$project->title} [{$project->category}] - Status: {$status}";
             if ($tech) {
@@ -643,15 +746,58 @@ PROMPT;
             if ($desc) {
                 $line .= " | Deskripsi: {$desc}";
             }
-            if ($project->tracking_id) {
-                $line .= " | ID Tracking: {$project->tracking_id}";
-            }
             $line .= " | Oleh: {$project->creator_name}";
 
             $lines[] = $line;
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Static baseline context about ILKOM NEWS / FASILKOM so in-scope FAQ
+     * (faculty abbreviation, what content exists) can be answered without
+     * a DB hit, and the groundedness check always has something to match.
+     */
+    private function baseContext(): string
+    {
+        return "[Tentang ILKOM NEWS & FASILKOM]\n"
+            . "- ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM, Universitas Sriwijaya (Unsri).\n"
+            . "- FASILKOM = Fakultas Ilmu Komputer, Universitas Sriwijaya.\n"
+            . "- ILKOM = Ilmu Komputer (program studi di FASILKOM).\n"
+            . "- Konten website saat ini: Berita dan Galeri Proyek mahasiswa. (Belum ada Artikel atau Event.)";
+    }
+
+    /**
+     * Fallback context: the most recent published news and accepted projects,
+     * so generic "list what's available" questions get a real answer.
+     */
+    private function recentContext(): string
+    {
+        $news = \App\Models\News::published()
+            ->latest('date')
+            ->limit(3)
+            ->get(['title', 'summary', 'category', 'date']);
+
+        $projects = \App\Models\ProjectSubmission::where('status', 'accepted')
+            ->latest()
+            ->limit(3)
+            ->get(['title', 'category', 'creator_name']);
+
+        $lines = [];
+        foreach ($news as $n) {
+            $date = $n->date?->format('d M Y') ?? '';
+            $lines[] = "- Berita terbaru: {$n->title} [{$n->category}] ({$date})";
+        }
+        foreach ($projects as $p) {
+            $lines[] = "- Proyek terbaru: {$p->title} [{$p->category}] oleh {$p->creator_name}";
+        }
+
+        if (empty($lines)) {
+            return '';
+        }
+
+        return "[Konten Terbaru di Website]\n" . implode("\n", $lines);
     }
 
     private function logChat(string $sessionId, string $userMessage, string $response, string $status, string $ip): void
@@ -667,5 +813,49 @@ PROMPT;
         } catch (\Exception $e) {
             \Log::warning('Chat logging failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * F1: Lightweight groundedness check.
+     * Returns true when the answer shares enough content words with the
+     * retrieved context to be considered grounded (not hallucinated).
+     */
+    private function isAnswerGrounded(string $answer, string $context): bool
+    {
+        $contextWords = $this->groundingWords($context);
+        $answerWords = $this->groundingWords($answer);
+
+        if (empty($answerWords) || empty($contextWords)) {
+            return false;
+        }
+
+        $common = array_intersect($answerWords, $contextWords);
+
+        // At least ~15% of the answer's content words must appear in context
+        // (min 1), so short in-scope answers grounded in the baseline aren't
+        // wrongly rejected as hallucinations.
+        $threshold = max(1, (int) ceil(count($answerWords) * 0.15));
+
+        return count($common) >= $threshold;
+    }
+
+    private function groundingWords(string $text): array
+    {
+        $lower = mb_strtolower($text);
+        $clean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $lower);
+        $words = preg_split('/\s+/', $clean);
+
+        $result = [];
+        foreach ($words as $word) {
+            if (strlen($word) < 3) {
+                continue;
+            }
+            if (in_array($word, self::STOPWORDS, true)) {
+                continue;
+            }
+            $result[] = $word;
+        }
+
+        return array_unique($result);
     }
 }

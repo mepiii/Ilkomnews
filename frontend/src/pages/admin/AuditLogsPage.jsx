@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { FileText, Activity, Users, Clock } from 'lucide-react'
-import { adminAudit } from '../../services/adminApi'
+import { adminAudit, normalizeList } from '../../services/adminApi'
 import { formatDateTime } from '../../utils/formatters'
 import StatCard from '../../components/admin/ui/StatCard'
+import { springPreset, useReducedMotionSafe } from '../../lib/animations'
 
 const ACTION_OPTIONS = [
   { value: '', label: 'Semua Aksi' },
@@ -43,6 +45,7 @@ export default function AuditLogsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [actionFilter, setActionFilter] = useState('')
   const [entityFilter, setEntityFilter] = useState('')
+  const reduce = useReducedMotionSafe()
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -52,7 +55,7 @@ export default function AuditLogsPage() {
       if (actionFilter) params.action = actionFilter
       if (entityFilter) params.entity_type = entityFilter
       const res = await adminAudit.getLogs(params)
-      setLogs(res.data || [])
+      setLogs(normalizeList(res))
       setTotalPages(res.last_page || 1)
     } catch (err) {
       setError(err.message)
@@ -66,7 +69,6 @@ export default function AuditLogsPage() {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs()
   }, [fetchLogs])
 
@@ -81,28 +83,38 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
+    <motion.div
+      className="space-y-6"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="flex items-center gap-4"
+      >
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
           <FileText size={24} className="text-emerald-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Log Audit</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Riwayat aktivitas sistem dan perubahan data</p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={Activity} label="Total Log" value={summary?.total} color="bg-emerald-500/20" iconColor="text-emerald-400" />
         <StatCard icon={Clock} label="Hari Ini" value={summary?.today} color="bg-blue-500/20" iconColor="text-blue-400" />
-        <StatCard icon={Users} label="Minggu Ini" value={summary?.this_week} color="bg-gray-900 dark:bg-white/20" iconColor="text-gray-900 dark:text-gray-100" />
+        <StatCard icon={Users} label="Minggu Ini" value={summary?.this_week} color="bg-gray-900 dark:bg-white/20" iconColor="text-white dark:text-gray-100" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <select
           value={actionFilter}
           onChange={(e) => handleActionChange(e.target.value)}
-          className="px-4 py-2 border border-gray-200 dark:border-[#262626] rounded-lg text-sm bg-gray-50 dark:bg-[#141414] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+          className="px-4 py-2 border border-gray-200 dark:border-neutral-800 rounded-lg text-sm bg-gray-50 dark:bg-[#141414] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
         >
           {ACTION_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -113,7 +125,7 @@ export default function AuditLogsPage() {
         <select
           value={entityFilter}
           onChange={(e) => handleEntityChange(e.target.value)}
-          className="px-4 py-2 border border-gray-200 dark:border-[#262626] rounded-lg text-sm bg-gray-50 dark:bg-[#141414] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+          className="px-4 py-2 border border-gray-200 dark:border-neutral-800 rounded-lg text-sm bg-gray-50 dark:bg-[#141414] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
         >
           {ENTITY_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -130,25 +142,25 @@ export default function AuditLogsPage() {
       )}
 
       <div
-        className="rounded-xl border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]"
+        className="rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]"
       >
-        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-[#262626] px-5 py-4">
+        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-neutral-800 px-5 py-4">
           <FileText size={16} className="text-emerald-400" />
           <h2 className="font-semibold text-gray-900 dark:text-gray-100">Riwayat Aktivitas</h2>
         </div>
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat...</div>
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">Memuat...</div>
           ) : logs.length === 0 ? (
             <div className="p-12 text-center">
-              <FileText size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-3" />
-              <p className="text-gray-400 dark:text-gray-500 text-sm">Tidak ada log ditemukan</p>
+              <FileText size={48} className="mx-auto text-gray-500 dark:text-gray-400 mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Tidak ada log ditemukan</p>
             </div>
           ) : (
             <>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-[#262626] text-left text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-gray-200 dark:border-neutral-800 text-left text-gray-500 dark:text-gray-400">
                     <th className="px-5 py-3 font-medium">Aksi</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Pengguna</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Entitas</th>
@@ -158,7 +170,7 @@ export default function AuditLogsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
                   {logs.map((log) => (
-                    <tr key={log.id} className="transition-colors hover:bg-gray-50 dark:bg-[#141414]">
+                    <tr key={log.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-[#141414]">
                       <td className="px-5 py-3">
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -169,7 +181,7 @@ export default function AuditLogsPage() {
                                 : log.action === 'delete'
                                   ? 'bg-red-500/20 text-red-400'
                                   : log.action === 'login'
-                                    ? 'bg-gray-900 dark:bg-white/20 text-gray-900 dark:text-gray-100'
+                                    ? 'bg-gray-900 dark:bg-white/20 text-white dark:text-gray-100'
                                     : 'bg-gray-50 dark:bg-[#141414] text-gray-500 dark:text-gray-400'
                           }`}
                         >
@@ -194,7 +206,7 @@ export default function AuditLogsPage() {
               </table>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-[#262626]">
+                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-neutral-800">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Halaman {page} dari {totalPages}
                   </p>
@@ -202,14 +214,14 @@ export default function AuditLogsPage() {
                     <button
                       onClick={() => setPage((p) => p - 1)}
                       disabled={page <= 1}
-                      className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] rounded-md disabled:opacity-40 hover:bg-gray-50 dark:bg-[#141414] transition-colors text-gray-500 dark:text-gray-400"
+                      className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:bg-[#141414] transition-colors text-gray-500 dark:text-gray-400"
                     >
                       Sebelumnya
                     </button>
                     <button
                       onClick={() => setPage((p) => p + 1)}
                       disabled={page >= totalPages}
-                      className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] rounded-md disabled:opacity-40 hover:bg-gray-50 dark:bg-[#141414] transition-colors text-gray-500 dark:text-gray-400"
+                      className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:bg-[#141414] transition-colors text-gray-500 dark:text-gray-400"
                     >
                       Berikutnya
                     </button>
@@ -220,6 +232,6 @@ export default function AuditLogsPage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

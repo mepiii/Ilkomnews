@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ApiKeyController extends Controller
@@ -101,9 +101,13 @@ class ApiKeyController extends Controller
                 'message' => $isHealthy ? 'Azure AI connection successful' : 'Failed to connect to Azure AI',
             ]);
         } catch (\Exception $e) {
+            Log::channel('daily')->error('Azure connection test failed', [
+                'exception' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Azure connection test failed: ' . $e->getMessage(),
+                'message' => 'Azure connection test failed. Check the configuration and try again.',
             ], 500);
         }
     }
@@ -122,15 +126,25 @@ class ApiKeyController extends Controller
                 'message' => $isHealthy ? 'Gemini API connection successful' : 'Failed to connect to Gemini API',
             ]);
         } catch (\Exception $e) {
+            Log::channel('daily')->error('Gemini connection test failed', [
+                'exception' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gemini connection test failed: ' . $e->getMessage(),
+                'message' => 'Gemini connection test failed. Check the configuration and try again.',
             ], 500);
         }
     }
 
     /**
-     * Update .env file with encrypted values
+     * Update .env file with values.
+     *
+     * Keys are stored in plaintext because the consumer services
+     * (GeminiService / AzureOpenAIService) read them via config('services.*')
+     * without decrypting. Values are quoted and escaped so that characters
+     * such as #, =, ", $ and backslashes cannot corrupt the .env file or be
+     * interpreted as comments/variable expansion.
      */
     protected function updateEnv(array $data)
     {
@@ -143,18 +157,19 @@ class ApiKeyController extends Controller
         $envContent = file_get_contents($envPath);
 
         foreach ($data as $key => $value) {
-            // Encrypt sensitive keys before storing
-            if (str_contains($key, 'API_KEY')) {
-                $value = Crypt::encryptString($value);
-            }
+            $value = is_string($value) ? $value : (string) $value;
+            // Strip newlines/control characters that would break a single .env line.
+            $value = str_replace(["\r", "\n"], '', $value);
+            // Escape characters that are special inside a double-quoted .env value.
+            $escaped = str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value);
+            $replacement = "{$key}=\"{$escaped}\"";
 
             $pattern = "/^{$key}=.*$/m";
-            $replacement = "{$key}={$value}";
 
             if (preg_match($pattern, $envContent)) {
                 $envContent = preg_replace($pattern, $replacement, $envContent);
             } else {
-                $envContent .= "\n{$key}={$value}";
+                $envContent .= "\n{$replacement}";
             }
         }
 

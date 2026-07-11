@@ -39,18 +39,38 @@ class GeminiService
             'generationConfig' => [
                 'temperature' => $temperature,
                 'maxOutputTokens' => $maxTokens,
+                'thinkingConfig' => ['thinkingBudget' => 0],
             ]
         ];
 
         try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->chatModel}:generateContent?key={$this->apiKey}";
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->chatModel}:generateContent";
 
             $response = Http::timeout($this->timeout)
+                ->withHeaders(['x-goog-api-key' => $this->apiKey])
                 ->post($url, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                // Defensive handling: Gemini returns a `candidates` array.
+                // If empty (e.g. blocked/filtered) or missing parts, return null
+                // instead of throwing an undefined-index error.
+                $candidates = $data['candidates'] ?? [];
+                $finishReason = $candidates[0]['finishReason'] ?? 'STOP';
+                if (empty($candidates) || $finishReason === 'SAFETY') {
+                    Log::warning('Gemini chat returned no usable candidate', [
+                        'finishReason' => $finishReason,
+                        'promptFeedback' => $data['promptFeedback'] ?? null,
+                    ]);
+                    return null;
+                }
+
+                $text = $candidates[0]['content']['parts'][0]['text'] ?? '';
+
+                if ($text === '') {
+                    return null;
+                }
 
                 return [
                     'content' => $text,
@@ -78,9 +98,10 @@ class GeminiService
     public function embeddings(string $text): ?array
     {
         try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->embeddingModel}:embedContent?key={$this->apiKey}";
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->embeddingModel}:embedContent";
 
             $response = Http::timeout($this->timeout)
+                ->withHeaders(['x-goog-api-key' => $this->apiKey])
                 ->post($url, [
                     'model' => "models/{$this->embeddingModel}",
                     'content' => [
@@ -144,9 +165,9 @@ class GeminiService
     {
         return Cache::remember('gemini_health', 300, function () {
             try {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models?key={$this->apiKey}";
+                $url = "https://generativelanguage.googleapis.com/v1beta/models";
 
-                $response = Http::timeout(5)->get($url);
+                $response = Http::timeout(5)->withHeaders(['x-goog-api-key' => $this->apiKey])->get($url);
 
                 return $response->successful();
             } catch (\Exception $e) {

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { ADMIN_LOGIN_PATH } from './fixtures.js'
 
 test.describe('Visual Regression', () => {
   test('homepage hero section', async ({ page }) => {
@@ -10,17 +11,8 @@ test.describe('Visual Regression', () => {
     })
   })
 
-  test('events page layout', async ({ page }) => {
-    await page.goto('/events')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1500)
-    await expect(page).toHaveScreenshot('events-page.png', {
-      maxDiffPixelRatio: 0.1,
-    })
-  })
-
   test('admin login page', async ({ page }) => {
-    await page.goto('/admin/login')
+    await page.goto(ADMIN_LOGIN_PATH)
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500)
     await expect(page).toHaveScreenshot('admin-login.png', {

@@ -1,12 +1,31 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+
+const DEBOUNCE_MS = 500
 
 const ExpandingSearchDock = ({ value, onChange, placeholder = 'Cari...' }) => {
   const [isExpanded, setIsExpanded] = useState(false)
+  // Local buffer keeps typing responsive while emitting onChange after a 500ms pause
+  const [inputValue, setInputValue] = useState(value || '')
+  const timerRef = useRef(null)
+
+  useEffect(() => () => clearTimeout(timerRef.current), [])
+
+  const emitChange = (next) => {
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => onChange(next), DEBOUNCE_MS)
+  }
+
+  const handleInputChange = (next) => {
+    setInputValue(next)
+    emitChange(next)
+  }
 
   const handleCollapse = () => {
     setIsExpanded(false)
+    setInputValue('')
+    clearTimeout(timerRef.current)
     onChange('')
   }
 
@@ -43,8 +62,8 @@ const ExpandingSearchDock = ({ value, onChange, placeholder = 'Cari...' }) => {
               </div>
               <input
                 type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
+                value={inputValue}
+                onChange={(e) => handleInputChange(e.target.value)}
                 placeholder={placeholder}
                 autoFocus
                 className="h-10 flex-1 bg-transparent pr-3 text-sm outline-none placeholder:text-neutral-400 dark:placeholder-neutral-500 text-neutral-900 dark:text-white"

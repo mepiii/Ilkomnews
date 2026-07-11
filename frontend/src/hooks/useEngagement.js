@@ -117,28 +117,6 @@ const useProjectEngagement = (projectId) => {
 }
 
 /**
- * Get all saved projects
- */
-const getSavedProjects = () => {
-  const saves = getStoredItems(STORAGE_KEYS.SAVES)
-  return Object.keys(saves).map(id => ({
-    id: parseInt(id),
-    savedAt: saves[id].savedAt,
-  }))
-}
-
-/**
- * Get all liked projects
- */
-const getLikedProjects = () => {
-  const likes = getStoredItems(STORAGE_KEYS.LIKES)
-  return Object.keys(likes).map(id => ({
-    id: parseInt(id),
-    likedAt: likes[id].likedAt,
-  }))
-}
-
-/**
  * Check if a project is liked
  */
 export const isProjectLiked = (projectId) => {

@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Eye, Trash2, FolderOpen, RefreshCw } from 'lucide-react'
 import { adminProjects } from '../../services/adminApi'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
 import ErrorState from '../../components/admin/ui/ErrorState'
+import { ADMIN_BASE } from '../../config/admin'
+import { springPreset, useReducedMotionSafe } from '../../lib/animations'
+import { useToast } from '../../components/ui/Toast'
+import { useConfirm } from '../../hooks/useConfirm'
+
+const ADMIN_PROJECTS = `/${ADMIN_BASE}/projects`
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -33,7 +40,11 @@ export default function ProjectsListPage() {
   const [backgroundLoading, setBackgroundLoading] = useState(false)
   const [error, setError] = useState('')
   const abortRef = useRef(null)
-  const isFirstLoad = useRef(true)
+  const isFirstLoadRef = useRef(true)
+  const [isFirstLoad, setIsFirstLoad] = useState(true)
+  const reduce = useReducedMotionSafe()
+  const { showToast } = useToast()
+  const { confirm, dialog } = useConfirm()
 
   const page = parseInt(searchParams.get('page') || '1', 10)
   const search = searchParams.get('search') || ''
@@ -57,7 +68,7 @@ export default function ProjectsListPage() {
     const controller = new AbortController()
     abortRef.current = controller
 
-    if (isFirstLoad.current) {
+    if (isFirstLoadRef.current) {
       setLoading(true)
     } else {
       setBackgroundLoading(true)
@@ -75,7 +86,8 @@ export default function ProjectsListPage() {
         const data = res.data || res.projects || res || []
         setItems(Array.isArray(data) ? data : [])
         setTotal(res.total || (Array.isArray(data) ? data.length : 0))
-        isFirstLoad.current = false
+        setIsFirstLoad(false)
+        isFirstLoadRef.current = false
       })
       .catch(err => {
         if (err.name === 'AbortError') return
@@ -105,12 +117,15 @@ export default function ProjectsListPage() {
   }
 
   const handleDelete = async (id, title) => {
-    if (!window.confirm(`Hapus proyek "${title}"?`)) return
+    if (!(await confirm({ message: `Hapus proyek "${title}"?` }))) return
+    const snapshot = items
+    setItems((prev) => prev.filter((it) => it.id !== id))
     try {
       await adminProjects.delete(id)
-      fetchProjects()
+      showToast('Proyek dihapus', { type: 'success' })
     } catch (err) {
-      alert('Gagal menghapus: ' + err.message)
+      setItems(snapshot)
+      showToast('Gagal menghapus: ' + err.message, { type: 'error' })
     }
   }
 
@@ -121,29 +136,41 @@ export default function ProjectsListPage() {
     setSearchParams(next)
   }
 
-  if (error && isFirstLoad.current) {
+  if (error && isFirstLoad) {
     return <ErrorState message={error} onRetry={fetchProjects} />
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ilkom Gallery</h1>
+    <motion.div
+      className="space-y-4"
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduce ? { duration: 0 } : springPreset}
+    >
+      <motion.h1
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : springPreset}
+        className="text-xl font-bold text-gray-900 dark:text-gray-100"
+      >
+        Ilkom Gallery
+      </motion.h1>
 
       {/* Filters */}
       <div className="flex flex-col gap-2">
         <div className="w-full relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             value={searchInput}
             onChange={handleSearchInputChange}
             placeholder="Cari proyek..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-[#262626] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1 overflow-x-auto">
+          <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1 overflow-x-auto justify-center lg:justify-start">
             {STATUS_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -162,7 +189,7 @@ export default function ProjectsListPage() {
           <select
             value={category}
             onChange={(e) => updateParam('category', e.target.value)}
-            className="px-2 sm:px-3 py-2 border border-gray-200 dark:border-[#262626] bg-white dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
+            className="px-2 sm:px-3 py-2 border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
           >
             {CATEGORY_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -172,7 +199,7 @@ export default function ProjectsListPage() {
       </div>
 
       {/* Error banner (non-fatal) */}
-      {error && !isFirstLoad.current && (
+      {error && !isFirstLoad && (
         <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-between gap-2">
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
           <button
@@ -186,19 +213,19 @@ export default function ProjectsListPage() {
 
       {/* Background loading */}
       {backgroundLoading && (
-        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <div className="w-3 h-3 border border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin" />
           Memperbarui...
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-[#262626] overflow-hidden">
+      <div className="bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-neutral-800 overflow-hidden">
         {loading ? (
           <div className="p-8 flex justify-center">
             <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-gray-900 dark:border-t-gray-100 rounded-full animate-spin" />
           </div>
         ) : items.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
             <FolderOpen size={32} className="mx-auto mb-2 opacity-40" />
             Tidak ada proyek ditemukan
           </div>
@@ -206,7 +233,7 @@ export default function ProjectsListPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="border-b border-gray-200 dark:border-[#262626] text-gray-400 dark:text-gray-500">
+                <thead className="border-b border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400">
                   <tr>
                     <th className="px-5 py-3 font-medium">Proyek</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Pembuat</th>
@@ -217,20 +244,29 @@ export default function ProjectsListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
+                  <AnimatePresence initial={false}>
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
+                    <motion.tr
+                      key={item.id}
+                      layout={!reduce}
+                      initial={reduce ? false : { opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reduce ? { opacity: 0 } : { opacity: 0, x: -12 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a]"
+                    >
                       <td className="px-5 py-3 max-w-[250px]">
                         <div className="flex items-center gap-2">
                           {item.thumbnail_url || item.thumbnail ? (
                             <img
                               src={item.thumbnail_url || item.thumbnail}
                               alt=""
-                              className="w-10 h-10 rounded-lg object-cover shrink-0 hidden sm:block"
+                              className="w-14 h-14 rounded-xl object-cover shrink-0 hidden sm:block"
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display = 'flex') }}
                             />
                           ) : null}
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
-                            <FolderOpen size={16} className="text-gray-400 dark:text-gray-500" />
+                          <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
+                            <FolderOpen size={16} className="text-gray-500 dark:text-gray-400" />
                           </div>
                           <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">{item.title}</span>
                         </div>
@@ -241,11 +277,11 @@ export default function ProjectsListPage() {
                             <img
                               src={item.creator_avatar_url || item.creator_avatar}
                               alt={item.creator_name || ''}
-                              className="w-6 h-6 rounded-full object-cover shrink-0"
+                              className="w-[30px] h-[30px] rounded-full object-cover shrink-0"
                               onError={(e) => { e.target.style.display = 'none' }}
                             />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0">
+                            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0">
                               {(item.creator_name || item.creator || '?').charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -258,44 +294,45 @@ export default function ProjectsListPage() {
                         {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1 shrink-0">
                           <Link
-                            to={`/admin/projects/${item.id}`}
-                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
+                            to={`${ADMIN_PROJECTS}/${item.id}`}
+                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors shrink-0"
                             aria-label={`Lihat detail ${item.title}`}
                           >
                             <Eye size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
                             aria-label={`Hapus ${item.title}`}
                           >
                             <Trash2 size={15} />
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-[#262626]">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Halaman {page} dari {totalPages}</p>
+              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-neutral-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Halaman {page} dari {totalPages}</p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page <= 1}
-                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Sebelumnya
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-xs border border-gray-200 dark:border-[#262626] text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
+                    className="px-3 py-1 text-xs border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
                   >
                     Berikutnya
                   </button>
@@ -305,6 +342,7 @@ export default function ProjectsListPage() {
           </>
         )}
       </div>
-    </div>
+      {dialog}
+    </motion.div>
   )
 }

@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
-import { hoverScale } from '../../lib/animations'
 
 // Idle float duration — computed once at module load, stable across renders
 const IDLE_DURATION = 4 + Math.random() * 2

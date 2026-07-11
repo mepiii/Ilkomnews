@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\News;
 use App\Services\ImageCompressionService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,6 +15,18 @@ class NewsController extends Controller
 {
     public function index(Request $request)
     {
+        // Hard fix: physically delete TTL-expired news so it can never
+        // linger in the admin list after its time passes. The admin list is
+        // the source of truth (no visibility filter), so deletion is the
+        // only reliable way to make "already passed" news disappear.
+        // ponytail: throttled to once/minute via cache lock; public reads
+        // in BasePublishableController do the same as a fallback.
+        $lock = 'ttl:admin-prune';
+        if (!Cache::has($lock)) {
+            Cache::put($lock, true, 60);
+            News::whereNotNull('expires_at')->where('expires_at', '<=', now())->delete();
+        }
+
         $query = News::query();
 
         if ($request->has('status') && $request->status !== '') {
@@ -52,11 +65,12 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500',
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500', // 500KB max
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500', // 500KB max
+            'expires_at' => 'nullable|date|after:now',
         ]);
 
         $compressor = new ImageCompressionService();
@@ -131,6 +145,8 @@ class NewsController extends Controller
     {
         $news = News::findOrFail($id);
 
+        $compressor = new ImageCompressionService();
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -139,13 +155,14 @@ class NewsController extends Controller
             'published' => 'nullable|boolean',
             'summary' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:500',
+            'author_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500',
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240',
             'remove_image' => 'nullable|boolean',
             'remove_author_image' => 'nullable|boolean',
+            'expires_at' => 'nullable|date|after:now',
         ]);
 
         if ($request->boolean('remove_image') && $news->image) {

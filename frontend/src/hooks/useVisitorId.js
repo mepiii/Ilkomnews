@@ -17,7 +17,6 @@ export function useVisitorId() {
       storedId = generateVisitorId()
       localStorage.setItem(VISITOR_ID_KEY, storedId)
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisitorId(storedId)
   }, [])
 

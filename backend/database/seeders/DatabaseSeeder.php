@@ -19,17 +19,19 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin user
-        User::create([
+        User::updateOrCreate(['email' => 'admin@fasilkom.unsri.ac.id'], [
             'name' => 'Admin FASILKOM',
             'email' => 'admin@fasilkom.unsri.ac.id',
             'password' => bcrypt('password'),
             'is_admin' => true,
+            'email_verified_at' => now(),
         ]);
 
-        User::create([
+        User::updateOrCreate(['email' => 'user@example.com'], [
             'name' => 'User Demo',
             'email' => 'user@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         // News
@@ -45,9 +47,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($newsData as $i => $n) {
-            News::create([
+            News::updateOrCreate(['slug' => Str::slug($n['title'])], [
                 ...$n,
-                'slug' => Str::slug($n['title']),
                 'content' => $n['summary'] . "\n\nKonten lengkap akan segera tersedia. Pantau terus portal berita FASILKOM untuk informasi lebih lanjut.",
                 'date' => now()->subDays(rand(1, 30)),
                 'published' => $i !== 7,
@@ -65,9 +66,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($articleData as $a) {
-            Article::create([
+            Article::updateOrCreate(['slug' => Str::slug($a['title'])], [
                 ...$a,
-                'slug' => Str::slug($a['title']),
                 'summary' => "Ringkasan untuk {$a['title']}",
                 'content' => "Konten lengkap untuk {$a['title']}. Ini adalah artikel tutorial yang membahas secara mendalam topik yang dibahas.",
                 'date' => now()->subDays(rand(1, 14)),
@@ -83,9 +83,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($eventData as $e) {
-            Event::create([
+            Event::updateOrCreate(['slug' => Str::slug($e['title'])], [
                 ...$e,
-                'slug' => Str::slug($e['title']),
                 'summary' => "Acara {$e['title']} di FASILKOM Unsri.",
                 'content' => "Deskripsi lengkap acara {$e['title']}. Bergabunglah untuk pengalaman belajar yang berharga.",
                 'date' => now()->addDays(rand(7, 60)),
@@ -101,9 +100,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($careerData as $c) {
-            Career::create([
+            Career::updateOrCreate(['slug' => Str::slug($c['title'])], [
                 ...$c,
-                'slug' => Str::slug($c['title']),
                 'description' => "Lowongan {$c['title']} di {$c['company']}. Kami mencari kandidat terbaik untuk bergabung dengan tim kami.",
             ]);
         }
@@ -119,7 +117,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($submissions as $s) {
-            ProjectSubmission::create([
+            ProjectSubmission::firstOrCreate(['title' => $s['title']], [
                 ...$s,
                 'tracking_id' => strtoupper(Str::random(12)),
                 'reviewed_by' => $s['status'] !== 'pending' ? 1 : null,

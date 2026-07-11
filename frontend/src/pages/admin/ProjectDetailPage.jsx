@@ -5,10 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Check, X, ExternalLink, GitFork, User, Calendar, FolderOpen, Users } from 'lucide-react'
 import { adminProjects } from '../../services/adminApi'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
+import { lockScroll, unlockScroll } from '../../lib/scrollLock'
+import { useToast } from '../../components/ui/Toast'
+import { useConfirm } from '../../hooks/useConfirm'
+import ImageWithFallback from '../../components/ui/ImageWithFallback'
 
 function RejectModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Lock body scroll while the modal is open (overflow-hidden + backdrop blur)
+  useEffect(() => {
+    if (open) {
+      lockScroll()
+      return () => unlockScroll()
+    }
+  }, [open])
 
   const handleConfirm = async () => {
     setSubmitting(true)
@@ -76,21 +88,25 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState('')
   const [rejectModal, setRejectModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const { showToast } = useToast()
+  const { confirm, dialog } = useConfirm()
 
   useEffect(() => {
     adminProjects.getById(id)
-      .then((data) => setProject(data.project || data))
+      .then((data) => setProject(data.project || data.data || data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [id])
 
   const handleAccept = async () => {
+    if (!(await confirm({ title: 'Terima proyek?', message: 'Proyek akan ditandai sebagai diterima.', confirmText: 'Terima' }))) return
     setActionLoading(true)
     try {
       await adminProjects.accept(id)
       setProject((prev) => ({ ...prev, status: 'accepted' }))
+      showToast('Proyek diterima', { type: 'success' })
     } catch (err) {
-      alert('Gagal: ' + err.message)
+      showToast('Gagal: ' + err.message, { type: 'error' })
     } finally {
       setActionLoading(false)
     }
@@ -102,8 +118,9 @@ export default function ProjectDetailPage() {
       setProject((prev) => ({ ...prev, status: 'rejected', rejection_reason: reason }))
       setRejectModal(false)
       document.body.classList.remove('scroll-locked')
+      showToast('Proyek ditolak', { type: 'success' })
     } catch (err) {
-      alert('Gagal: ' + err.message)
+      showToast('Gagal: ' + err.message, { type: 'error' })
     }
   }
 
@@ -118,7 +135,7 @@ export default function ProjectDetailPage() {
   if (error) {
     return (
       <div className="space-y-3 sm:space-y-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-400 text-xs sm:text-sm">
           <ArrowLeft size={16} /> Kembali
         </button>
         <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg sm:rounded-xl text-red-600 text-xs sm:text-sm">{error}</div>
@@ -136,7 +153,7 @@ export default function ProjectDetailPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:text-gray-400 text-xs sm:text-sm w-fit">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-400 text-xs sm:text-sm w-fit">
           <ArrowLeft size={16} /> Kembali
         </button>
         <div className="flex items-center gap-2">
@@ -150,17 +167,18 @@ export default function ProjectDetailPage() {
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Thumbnail */}
           {(project.thumbnail_url || project.thumbnail) && (
-            <div className="rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 dark:border-[#262626] bg-gray-50 dark:bg-[#141414]">
-              <img 
-                src={project.thumbnail_url || project.thumbnail} 
-                alt={project.title} 
+            <div className="rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
+              <ImageWithFallback
+                src={project.thumbnail_url || project.thumbnail}
+                alt={project.title}
                 className="w-full aspect-video object-cover"
+                fallback={<div className="w-full aspect-video flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] text-sm text-gray-400">No image</div>}
               />
             </div>
           )}
 
           {/* Project Info */}
-          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
             <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">{project.title}</h1>
             
             {project.description && (
@@ -172,10 +190,10 @@ export default function ProjectDetailPage() {
             {/* Tech Stack */}
             {project.tech_stack && Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && (
               <div className="mb-4 sm:mb-6">
-                <p className="text-[10px] sm:text-xs font-medium text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wide">Tech Stack</p>
+                <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">Tech Stack</p>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {project.tech_stack.map((tech, i) => (
-                    <span key={i} className="px-2 sm:px-2.5 py-1 bg-gray-900 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-[10px] sm:text-xs rounded-full font-medium">
+                    <span key={i} className="px-2 sm:px-2.5 py-1 bg-gray-900 dark:bg-white/10 text-white dark:text-gray-100 text-[10px] sm:text-xs rounded-full font-medium">
                       {tech}
                     </span>
                   ))}
@@ -188,7 +206,7 @@ export default function ProjectDetailPage() {
               <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {project.live_demo && (
                   <a href={project.live_demo} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-900 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-900 dark:bg-white/20 transition-colors">
+                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-900 dark:bg-white/10 text-white dark:text-gray-100 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-900 dark:bg-white/20 transition-colors">
                     <ExternalLink size={12} className="sm:w-3.5 sm:h-3.5" /> Demo
                   </a>
                 )}
@@ -224,11 +242,11 @@ export default function ProjectDetailPage() {
 
           {/* Screenshots */}
           {screenshots.length > 0 && (
-            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base">Screenshot</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {screenshots.map((src, i) => (
-                  <img key={i} src={src} alt={`Screenshot ${i + 1}`} className="rounded-lg border border-gray-200 dark:border-[#262626] w-full aspect-video object-cover" />
+                  <ImageWithFallback key={i} src={src} alt={`Screenshot ${i + 1}`} className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video object-cover" fallback={<div className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] text-xs text-gray-400">No image</div>} />
                 ))}
               </div>
             </div>
@@ -239,7 +257,7 @@ export default function ProjectDetailPage() {
         <div className="space-y-4 sm:space-y-6">
           {/* Actions */}
           {isPending && (
-            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base">Aksi</h2>
               <div className="flex flex-col gap-2">
                 <button
@@ -250,7 +268,7 @@ export default function ProjectDetailPage() {
                   <Check size={14} /> Terima Proyek
                 </button>
                 <button
-                  onClick={() => { setRejectModal(true); document.body.classList.add('scroll-locked') }}
+                  onClick={() => { setRejectModal(true) }}
                   disabled={actionLoading}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
                 >
@@ -261,19 +279,20 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Creator Profile */}
-          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base flex items-center gap-2">
               <User size={14} /> Pembuat
             </h2>
             <div className="flex items-center gap-3">
               {project.creator_avatar_url || project.creator_avatar ? (
-                <img 
-                  src={project.creator_avatar_url || project.creator_avatar} 
+                <ImageWithFallback
+                  src={project.creator_avatar_url || project.creator_avatar}
                   alt={project.creator_name}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-900 dark:border-white/20"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-900 dark:border-white/20 flex-shrink-0"
+                  fallback={<div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">{(project.creator_name || '?').charAt(0).toUpperCase()}</div>}
                 />
               ) : (
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-gray-900 dark:text-gray-100 text-lg font-bold">
+                           <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">
                   {(project.creator_name || '?').charAt(0).toUpperCase()}
                 </div>
               )}
@@ -284,21 +303,24 @@ export default function ProjectDetailPage() {
                 )}
                 <div className="flex flex-wrap gap-2 mt-1">
                   {project.creator_nim && (
-                    <span className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{project.creator_type === 'dosen' ? 'NIP' : 'NIM'}: {project.creator_nim}</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{project.creator_type === 'dosen' ? 'NIP' : 'NIM'}: {project.creator_nim}</span>
                   )}
                 </div>
                 {project.creator_major && (
-                  <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">{project.creator_major}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{project.creator_major}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Metadata */}
-          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+          <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base">Informasi</h2>
             <div className="space-y-3 sm:space-y-4">
               <MetaItem icon={FolderOpen} label="Kategori" value={({ web: 'Web', mobile: 'Mobile', uiux: 'UI/UX', game: 'Game', ai: 'AI/ML' })[project.category] || project.category || '-'} />
+              {project.tracking_id && (
+                <MetaItem icon={GitFork} label="ID Pelacakan" value={<span className="font-mono">{project.tracking_id}</span>} />
+              )}
               <MetaItem icon={Calendar} label="Tanggal Submit" value={
                 project.created_at ? new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'
               } />
@@ -312,7 +334,7 @@ export default function ProjectDetailPage() {
 
           {/* Collaborators */}
           {collaborators.length > 0 && (
-            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-[#262626] p-4 sm:p-6">
+            <div className="bg-gray-50 dark:bg-[#141414] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 p-4 sm:p-6">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base flex items-center gap-2">
                 <Users size={14} /> Kolaborator
               </h2>
@@ -321,11 +343,11 @@ export default function ProjectDetailPage() {
                   const name = typeof collab === 'string' ? collab : collab.name || 'Unknown'
                   const avatar = typeof collab === 'object' ? (collab.avatar || collab.avatar_url) : null
                   return (
-                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-[#141414]">
-                      {avatar ? (
-                        <img src={avatar} alt={name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-gray-900 dark:text-gray-100 text-xs font-bold">
+                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-[#141414]">
+                       {avatar ? (
+                          <ImageWithFallback src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" fallback={<div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">{name.charAt(0)}</div>} />
+                       ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">
                           {name.charAt(0)}
                         </div>
                       )}
@@ -348,11 +370,12 @@ export default function ProjectDetailPage() {
       {createPortal(
         <RejectModal
           open={rejectModal}
-          onClose={() => { setRejectModal(false); document.body.classList.remove('scroll-locked') }}
+          onClose={() => { setRejectModal(false) }}
           onConfirm={handleReject}
         />,
         document.body
       )}
+      {dialog}
     </div>
   )
 }
@@ -361,10 +384,10 @@ function MetaItem({ icon: Icon, label, value }) {
   return (
     <div className="flex items-start gap-2 sm:gap-3">
       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-50 dark:bg-[#141414] flex items-center justify-center flex-shrink-0">
-        <Icon size={12} className="text-gray-400 dark:text-gray-500 sm:w-3.5 sm:h-3.5" />
+        <Icon size={12} className="text-gray-500 dark:text-gray-400 sm:w-3.5 sm:h-3.5" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</p>
+        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{value}</p>
       </div>
     </div>

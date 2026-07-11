@@ -84,13 +84,14 @@ class ChatApiTest extends TestCase
 
         $payload = ['message' => 'Halo'];
 
-        // First 5 should not be rate limited (may be 200 or 503 depending on API key)
-        for ($i = 0; $i < 5; $i++) {
+        // Per-IP limit is 20/min (see ChatController::checkRateLimits).
+        // First 20 must not be rate limited (may be 200/503 depending on API key).
+        for ($i = 0; $i < 20; $i++) {
             $response = $this->postJson('/api/chat', $payload);
             $this->assertNotEquals(429, $response->status(), "Request {$i} should not be rate limited");
         }
 
-        // 6th should be rate limited
+        // 21st exceeds the per-IP minute limit.
         $response = $this->postJson('/api/chat', $payload);
         $response->assertStatus(429);
     }
