@@ -10,7 +10,7 @@ return new class extends Migration
         // SQLite stores enum columns as freeform TEXT, so 'faq' is already
         // allowed there — only MySQL needs the column definition widened.
         // ponytail: without the driver guard the sqlite test DB (phpunit.xml)
-        // can't boot and every Feature test fails at RefreshDatabase.
+        // would 0/88 the whole suite on a MySQL-only MODIFY COLUMN statement.
         if (DB::connection()->getDriverName() === 'mysql') {
             DB::statement("ALTER TABLE knowledge_chunks MODIFY COLUMN source_type ENUM('news','article','event','project','faq') NOT NULL");
         }

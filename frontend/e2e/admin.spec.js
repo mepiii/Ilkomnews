@@ -1,6 +1,4 @@
-import { test, expect, isBenign, ADMIN_LOGIN_PATH, ADMIN_BASE } from './fixtures.js'
-
-const BASE = `/${ADMIN_BASE}`
+import { test, expect, isBenign } from './fixtures.js'
 
 test.describe('Admin route security (obscure prefix)', () => {
   test('guessing /admin redirects to home', async ({ page, errors }) => {
@@ -12,19 +10,19 @@ test.describe('Admin route security (obscure prefix)', () => {
     expect(real, real.join(' | ')).toEqual([])
   })
 
-  test(`${BASE}/login shows the login form`, async ({ page, errors }) => {
-    await page.goto(ADMIN_LOGIN_PATH)
-    await page.waitForSelector('#login-email', { timeout: 10000 })
+  test('/portal/login shows the login form', async ({ page, errors }) => {
+    await page.goto('/portal/login')
+    await page.waitForSelector('form', { timeout: 10000 })
     await expect(page.locator('input[type="email"], input[name="email"]')).toBeVisible()
     await expect(page.locator('input[type="password"]')).toBeVisible()
     const real = errors.filter((e) => !isBenign(e))
     expect(real, real.join(' | ')).toEqual([])
   })
 
-  test(`protected ${BASE}/dashboard redirects unauthenticated users to login`, async ({ page, errors }) => {
-    await page.goto(`${BASE}/dashboard`)
+  test('protected /portal/dashboard redirects unauthenticated users to login', async ({ page, errors }) => {
+    await page.goto('/portal/dashboard')
     await page.waitForTimeout(1000)
-    await expect(page).toHaveURL(new RegExp(`${BASE}/login`))
+    await expect(page).toHaveURL(/\/portal\/login/)
     const real = errors.filter((e) => !isBenign(e))
     expect(real, real.join(' | ')).toEqual([])
   })
@@ -32,19 +30,18 @@ test.describe('Admin route security (obscure prefix)', () => {
   test('login with seed admin reaches the dashboard', async ({ page, errors }) => {
     // Ensure a clean slate (no lingering session).
     await page.context().clearCookies()
-    await page.goto(ADMIN_LOGIN_PATH)
-    await page.waitForSelector('#login-email', { timeout: 10000 })
+    await page.goto('/portal/login')
+    await page.waitForSelector('form', { timeout: 10000 })
 
-    // Credentials match database/seeders/AdminSeeder.php (akademik.* domain).
-    await page.fill('#login-email', 'admin1@akademik.fasilkom.unsri.ac.id')
-    await page.fill('#login-password', 'AdminAkademik01!')
+    await page.fill('input[type="email"], input[name="email"]', 'admin1@sapa.fasilkom.unsri.ac.id')
+    await page.fill('input[type="password"]', 'AdminSapa01!')
     await page.locator('button[type="submit"]').first().click()
 
     // Allow auth round-trip (csrf + login + /admin/user).
     await page.waitForTimeout(4000)
 
-    const onDashboard = new RegExp(`${BASE}/dashboard`).test(page.url())
-    const onLogin = new RegExp(`${BASE}/login`).test(page.url())
+    const onDashboard = /\/portal\/dashboard/.test(page.url())
+    const onLogin = /\/portal\/login/.test(page.url())
     const hasError = await page.getByText(/email|password|login gagal|salah|invalid/i).count()
 
     // Either we made it in, or we were cleanly rejected — never a crash.

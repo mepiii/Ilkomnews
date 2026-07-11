@@ -1,14 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ExpandableCard } from '../ui/ExpandableCard'
-import ImageWithFallback from '../../components/ui/ImageWithFallback'
 import { generateSlug, formatDate } from '../../utils/formatters'
 import { ArrowRight } from 'lucide-react'
-
-const AuthorFallback = ({ name }) => (
-  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold bg-purple-600 shrink-0">
-    {(name || 'A').charAt(0)}
-  </div>
-)
 
 const categoryThemes = {
   Workshop: '220 60% 35%',
@@ -37,13 +30,15 @@ const NewsExpandableCard = ({ article }) => {
         ) : null
       }
       meta={
-        <div className="flex items-center gap-1.5 text-xs overflow-hidden min-w-0" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex items-center gap-1.5 text-xs overflow-hidden" style={{ color: 'var(--text-muted)' }}>
           {(article.author || article.author_image) && (
             <div className="flex items-center gap-1 min-w-0">
               {article.author_image ? (
-                <ImageWithFallback src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" fallback={<AuthorFallback name={article.author} />} />
+                <img src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" />
               ) : (
-                <AuthorFallback name={article.author} />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold bg-purple-600 shrink-0">
+                  {(article.author || 'A').charAt(0)}
+                </div>
               )}
               <span className="truncate max-w-[80px]">{article.author || 'Penulis'}</span>
             </div>
@@ -58,9 +53,11 @@ const NewsExpandableCard = ({ article }) => {
             <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-2">Penulis</h4>
             <div className="flex items-center gap-3">
               {article.author_image ? (
-                <ImageWithFallback src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" fallback={<AuthorFallback name={article.author} />} />
+                <img src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" />
               ) : (
-                <AuthorFallback name={article.author} />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold bg-purple-600 shrink-0">
+                  {(article.author || 'A').charAt(0)}
+                </div>
               )}
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{article.author || 'Penulis'}</span>

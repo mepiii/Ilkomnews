@@ -31,6 +31,8 @@ export function ToastProvider({ children }) {
   }, [])
 
   const showToast = useCallback((message, opts = {}) => {
+    // ponytail: duration=0 keeps the toast persistent (admin feedback that
+    // must stay until read); pass duration>0 to auto-dismiss.
     const { type = 'success', duration = 0 } = opts
     const id = ++idRef.current
     setToasts((prev) => [...prev, { id, message, type }])

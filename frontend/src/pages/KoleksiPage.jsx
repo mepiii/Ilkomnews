@@ -90,11 +90,11 @@ const KoleksiPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
+            <h1 className="text-[clamp(2.25rem,9vw,4.5rem)] leading-[1.1] font-black mb-4 font-header break-words max-w-full px-2">
               <Text_03 text="Koleksi Saya" className="section-gradient-text" />
             </h1>
             <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
-            <p className="text-theme-muted text-base max-w-2xl mx-auto">
+            <p className="text-theme-muted text-sm sm:text-base max-w-2xl mx-auto px-2">
               Artikel dan proyek yang telah Anda lihat, sukai, atau simpan
             </p>
           </motion.div>

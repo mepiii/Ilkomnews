@@ -105,13 +105,13 @@ export default function SettingsPage() {
   }
 
   const inputClass = (field) =>
-    `w-full px-4 py-3 border rounded-xl text-base bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors ${
+    `w-full px-4 py-2.5 border rounded-xl text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors ${
       errors[field] ? 'border-red-400' : 'border-gray-200 dark:border-neutral-800'
     }`
 
   return (
     <motion.div
-      className="max-w-4xl mx-auto space-y-8"
+      className="max-w-2xl mx-auto space-y-6"
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -135,22 +135,13 @@ export default function SettingsPage() {
       )}
 
       {/* Profile Section */}
-      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-8">
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-5 flex items-center gap-2 text-lg">
-          <User size={20} /> Profil
+      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-6">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <User size={18} /> Profil
         </h2>
-        <div className="flex items-center gap-4 mb-6">
-          <div className="h-[30px] w-[30px] rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm font-bold shrink-0">
-            {(profile.name || '?').charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{profile.name || '—'}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{profile.email || ''}</p>
-          </div>
-        </div>
         <form onSubmit={handleProfileSubmit} className="space-y-4">
           <div>
-            <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Nama</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5">Nama</label>
             <input
               type="text"
               value={profile.name}
@@ -161,7 +152,7 @@ export default function SettingsPage() {
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5">Email</label>
             <input
               type="email"
               value={profile.email}
@@ -185,7 +176,7 @@ export default function SettingsPage() {
       </motion.div>
 
       {/* Password Section */}
-      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-8">
+      <motion.div variants={itemVariants} className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl p-6">
         {showPasswordPrompt && (
           <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400 text-sm flex items-start justify-between gap-2">
             <span>Disarankan mengubah password setelah login pertama untuk keamanan akun.</span>
@@ -197,12 +188,12 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-5 flex items-center gap-2 text-lg">
-          <Lock size={20} /> Ubah Password
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <Lock size={18} /> Ubah Password
         </h2>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
-            <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Password Saat Ini</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5">Password Saat Ini</label>
             <div className="relative">
               <input
                 type={showPasswords.current ? 'text' : 'password'}
@@ -222,7 +213,7 @@ export default function SettingsPage() {
             {errors.current_password && <p className="text-xs text-red-500 mt-1">{errors.current_password}</p>}
           </div>
           <div>
-            <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Password Baru</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5">Password Baru</label>
             <div className="relative">
               <input
                 type={showPasswords.new ? 'text' : 'password'}
@@ -242,7 +233,7 @@ export default function SettingsPage() {
             {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
           </div>
           <div>
-            <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Konfirmasi Password Baru</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5">Konfirmasi Password Baru</label>
             <input
               type="password"
               value={passwords.password_confirmation}

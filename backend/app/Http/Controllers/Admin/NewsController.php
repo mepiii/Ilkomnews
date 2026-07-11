@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\News;
 use App\Services\ImageCompressionService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,18 +14,6 @@ class NewsController extends Controller
 {
     public function index(Request $request)
     {
-        // Hard fix: physically delete TTL-expired news so it can never
-        // linger in the admin list after its time passes. The admin list is
-        // the source of truth (no visibility filter), so deletion is the
-        // only reliable way to make "already passed" news disappear.
-        // ponytail: throttled to once/minute via cache lock; public reads
-        // in BasePublishableController do the same as a fallback.
-        $lock = 'ttl:admin-prune';
-        if (!Cache::has($lock)) {
-            Cache::put($lock, true, 60);
-            News::whereNotNull('expires_at')->where('expires_at', '<=', now())->delete();
-        }
-
         $query = News::query();
 
         if ($request->has('status') && $request->status !== '') {
@@ -162,7 +149,6 @@ class NewsController extends Controller
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240',
             'remove_image' => 'nullable|boolean',
             'remove_author_image' => 'nullable|boolean',
-            'expires_at' => 'nullable|date|after:now',
         ]);
 
         if ($request->boolean('remove_image') && $news->image) {
@@ -256,7 +242,7 @@ class NewsController extends Controller
             Storage::disk('public')->delete($news->image);
         }
 
-        $news->delete();
+        $news->forceDelete();
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Artikel berita berhasil dihapus!']);

@@ -168,6 +168,10 @@ class ProjectSubmissionController extends Controller
             'read'        => false,
         ]);
 
+        // Bust the cached public notification feed for this tracking id
+        // (mirrors GalleryController::accept cache bust on status change).
+        \Illuminate\Support\Facades\Cache::forget("public-notifications:{$submission->tracking_id}");
+
         // Record upload quota usage
         if ($totalBytes > 0) {
             $quotaService->recordUsage($request, $totalBytes);

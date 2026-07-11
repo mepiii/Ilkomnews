@@ -430,38 +430,6 @@
   .heading-hover:hover,
   .heading-hover:focus-visible { transform: translateY(-1px); }
 
-  /* ── Heading letter bounce on hover ── */
-  /* Only the inner letter spans (2nd-level .inline-block) bounce, so the
-     gradient wrapper, text-fill, and inline opacities stay intact. Uses a
-     compositor-only transform (translateY) — safe with background-clip:text.
-     The prefers-reduced-motion block above already neutralizes this. */
-  @keyframes headingLetterBounce {
-    0%, 100% { transform: translateY(0); }
-    35% { transform: translateY(-0.32em); }
-    65% { transform: translateY(0.08em); }
-    82% { transform: translateY(-0.04em); }
-  }
-
-  .font-header:hover .inline-block .inline-block,
-  h1:hover .inline-block .inline-block,
-  h2:hover .inline-block .inline-block,
-  h3:hover .inline-block .inline-block {
-    animation: headingLetterBounce 0.55s ease;
-  }
-
-  /* Organic per-letter stagger (~12 letters). Drop these for a uniform bounce. */
-  .font-header:hover .inline-block .inline-block:nth-child(2), h2:hover .inline-block .inline-block:nth-child(2), h3:hover .inline-block .inline-block:nth-child(2), h1:hover .inline-block .inline-block:nth-child(2) { animation-delay: 0.04s; }
-  .font-header:hover .inline-block .inline-block:nth-child(3), h2:hover .inline-block .inline-block:nth-child(3), h3:hover .inline-block .inline-block:nth-child(3), h1:hover .inline-block .inline-block:nth-child(3) { animation-delay: 0.08s; }
-  .font-header:hover .inline-block .inline-block:nth-child(4), h2:hover .inline-block .inline-block:nth-child(4), h3:hover .inline-block .inline-block:nth-child(4), h1:hover .inline-block .inline-block:nth-child(4) { animation-delay: 0.12s; }
-  .font-header:hover .inline-block .inline-block:nth-child(5), h2:hover .inline-block .inline-block:nth-child(5), h3:hover .inline-block .inline-block:nth-child(5), h1:hover .inline-block .inline-block:nth-child(5) { animation-delay: 0.16s; }
-  .font-header:hover .inline-block .inline-block:nth-child(6), h2:hover .inline-block .inline-block:nth-child(6), h3:hover .inline-block .inline-block:nth-child(6), h1:hover .inline-block .inline-block:nth-child(6) { animation-delay: 0.20s; }
-  .font-header:hover .inline-block .inline-block:nth-child(7), h2:hover .inline-block .inline-block:nth-child(7), h3:hover .inline-block .inline-block:nth-child(7), h1:hover .inline-block .inline-block:nth-child(7) { animation-delay: 0.24s; }
-  .font-header:hover .inline-block .inline-block:nth-child(8), h2:hover .inline-block .inline-block:nth-child(8), h3:hover .inline-block .inline-block:nth-child(8), h1:hover .inline-block .inline-block:nth-child(8) { animation-delay: 0.28s; }
-  .font-header:hover .inline-block .inline-block:nth-child(9), h2:hover .inline-block .inline-block:nth-child(9), h3:hover .inline-block .inline-block:nth-child(9), h1:hover .inline-block .inline-block:nth-child(9) { animation-delay: 0.32s; }
-  .font-header:hover .inline-block .inline-block:nth-child(10), h2:hover .inline-block .inline-block:nth-child(10), h3:hover .inline-block .inline-block:nth-child(10), h1:hover .inline-block .inline-block:nth-child(10) { animation-delay: 0.36s; }
-  .font-header:hover .inline-block .inline-block:nth-child(11), h2:hover .inline-block .inline-block:nth-child(11), h3:hover .inline-block .inline-block:nth-child(11), h1:hover .inline-block .inline-block:nth-child(11) { animation-delay: 0.40s; }
-  .font-header:hover .inline-block .inline-block:nth-child(12), h2:hover .inline-block .inline-block:nth-child(12), h3:hover .inline-block .inline-block:nth-child(12), h1:hover .inline-block .inline-block:nth-child(12) { animation-delay: 0.44s; }
-
   /* Stagger delays */
   .stagger-1 { animation-delay: 0.05s; }
   .stagger-2 { animation-delay: 0.1s; }

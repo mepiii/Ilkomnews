@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import { User, Mail, Lock, Save, Eye, EyeOff, Plus, Trash2, X, AlertCircle, CheckCircle, Users } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { adminFetch, normalizeList } from '../../services/adminApi'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import { springPreset, useReducedMotionSafe } from '../../lib/animations'
-import { useToast } from '../../components/ui/Toast'
-import { useConfirm } from '../../hooks/useConfirm'
 
 export default function AdminManagementPage() {
   const { user } = useAdminAuth()
@@ -19,8 +17,6 @@ export default function AdminManagementPage() {
   const [showPasswords, setShowPasswords] = useState({})
   const [saving, setSaving] = useState(false)
   const reduce = useReducedMotionSafe()
-  const { showToast } = useToast()
-  const { confirm, dialog } = useConfirm()
 
   const [form, setForm] = useState({
     name: '',
@@ -188,15 +184,13 @@ export default function AdminManagementPage() {
   }
 
   const handleDelete = async (admin) => {
-    if (!(await confirm({ message: `Hapus admin "${admin.name}"?` }))) return
-    const snapshot = admins
-    setAdmins((prev) => prev.filter((a) => a.id !== admin.id))
+    if (!confirm(`Hapus admin "${admin.name}"?`)) return
     try {
       const data = await adminFetch(`/admins/${admin.id}`, { method: 'DELETE' })
-      showToast(data.message || 'Admin berhasil dihapus', { type: 'success' })
+      setMessage({ type: 'success', text: data.message || 'Admin berhasil dihapus' })
+      fetchAdmins()
     } catch (err) {
-      setAdmins(snapshot)
-      showToast(err.message || 'Gagal menghapus admin', { type: 'error' })
+      setMessage({ type: 'error', text: err.message || 'Gagal menghapus admin' })
     }
   }
 
@@ -254,52 +248,38 @@ export default function AdminManagementPage() {
 
       {/* Admin List */}
       <div className="bg-gray-50 dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-neutral-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="min-w-[520px]">
-            <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-[#141414] border-b border-gray-200 dark:border-neutral-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              <div className="col-span-1">ID</div>
-              <div className="col-span-4">Nama</div>
-              <div className="col-span-5">Email</div>
-              <div className="col-span-2 text-right">Aksi</div>
-            </div>
-
-            {admins.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada admin terdaftar</div>
-            ) : (
-              <AnimatePresence initial={false}>
-              {admins.map((admin) => (
-                <motion.div
-                  key={admin.id}
-                  layout={!reduce}
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduce ? { opacity: 0 } : { opacity: 0, x: -12 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="grid grid-cols-12 gap-4 px-4 py-4 border-b border-gray-200 dark:border-neutral-800 last:border-0 items-center hover:bg-gray-50 dark:bg-[#141414]/50 transition-colors"
-                >
-                  <div className="col-span-1 text-base text-gray-500 dark:text-gray-400">#{admin.id}</div>
-                  <div className="col-span-4 text-base font-medium text-gray-900 dark:text-gray-100 truncate">{admin.name}</div>
-                  <div className="col-span-5 text-base text-gray-500 dark:text-gray-400 truncate">{admin.email}</div>
-                  <div className="col-span-2 flex justify-end gap-2 shrink-0">
-                    <button onClick={() => handleEdit(admin)} aria-label={`Edit ${admin.name}`} className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:bg-[#141414] rounded-lg transition shrink-0">
-                      <User size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(admin)} aria-label={`Hapus ${admin.name}`} className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition shrink-0">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-              </AnimatePresence>
-            )}
-          </div>
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-[#141414] border-b border-gray-200 dark:border-neutral-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <div className="col-span-1">ID</div>
+          <div className="col-span-4">Nama</div>
+          <div className="col-span-5">Email</div>
+          <div className="col-span-2 text-right">Aksi</div>
         </div>
+
+        {admins.length === 0 ? (
+          <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada admin terdaftar</div>
+        ) : (
+          admins.map((admin) => (
+            <div key={admin.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 dark:border-neutral-800 last:border-0 items-center hover:bg-gray-50 dark:bg-[#141414]/50 transition-colors">
+              <div className="col-span-1 text-sm text-gray-500 dark:text-gray-400">#{admin.id}</div>
+              <div className="col-span-4 text-sm font-medium text-gray-900 dark:text-gray-100">{admin.name}</div>
+              <div className="col-span-5 text-sm text-gray-500 dark:text-gray-400">{admin.email}</div>
+              <div className="col-span-2 flex justify-end gap-2">
+                <button onClick={() => handleEdit(admin)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:bg-[#141414] rounded-lg transition" title="Edit">
+                  <User size={14} />
+                </button>
+                <button onClick={() => handleDelete(admin)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition" title="Hapus">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Add/Edit Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-gray-50 dark:bg-[#141414] rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xl">
+          <div className="w-full max-w-md bg-gray-50 dark:bg-[#141414] rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-neutral-800">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editingAdmin ? 'Edit Admin' : 'Tambah Admin Baru'}</h2>
               <button onClick={resetForm} className="p-1.5 hover:bg-gray-50 dark:bg-[#141414] rounded-lg transition">
@@ -377,7 +357,6 @@ export default function AdminManagementPage() {
           </div>
         </div>
       )}
-      {dialog}
     </motion.div>
   )
 }

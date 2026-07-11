@@ -11,15 +11,15 @@ import { newsService } from '../../services/api'
 import { parseTags } from '../../utils/parsers'
 import { isNotExpired } from '../../utils/expiry'
 import AnimatedFilterDropdown from '../shared/AnimatedFilterDropdown'
-import { Newspaper, Hammer, Trophy, GraduationCap, Presentation, Tag } from 'lucide-react'
+import { Newspaper, Tag } from 'lucide-react'
 import { container, itemVariant } from '../../lib/animations'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
-  { id: 'Workshop', label: 'Workshop', icon: Hammer },
-  { id: 'Kompetisi', label: 'Kompetisi', icon: Trophy },
-  { id: 'Pelatihan', label: 'Pelatihan', icon: GraduationCap },
-  { id: 'Seminar', label: 'Seminar', icon: Presentation },
+  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
+  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
 ]
 
 const LatestNews = () => {
@@ -97,8 +97,7 @@ const LatestNews = () => {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
-            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1 flex items-center gap-1.5">
-              <Newspaper size={14} className="text-[var(--accent)]" />
+            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1">
               <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
             </div>
             <p className="pr-3 text-xs text-theme-muted">Terbaru</p>

@@ -1,5 +1,15 @@
 import { API_BASE } from './api'
-import { ADMIN_LOGIN_PATH } from '../config/admin'
+
+// Admin API is mounted at `${API_BASE}/admin/*` (see routes/api.php). All admin
+// endpoints below are prefixed with `/admin`, so the single API_BASE covers both
+// the public API and the admin panel.
+
+// Allows the auth context to clear state on 401 without a hard reload (prevents
+// the login <-> dashboard redirect loop caused by a stale truthy user).
+let onUnauthorized = null
+export function setOnUnauthorized(cb) {
+  onUnauthorized = cb
+}
 
 // ponytail: httpOnly cookie auth — no localStorage token, credentials:'include' on all requests
 // Implements retry with exponential backoff for 429 and network errors (max 3 retries)
@@ -19,7 +29,7 @@ export function normalizeList(res) {
   return []
 }
 
-export async function fetchAdmin(endpoint, options = {}, isFormData = false, retryOptions = {}, isBackground = false) {
+export async function fetchAdmin(endpoint, options = {}, isFormData = false, retryOptions = {}) {
   const { maxRetries = 3, baseDelay = 600 } = retryOptions
   const headers = { ...options.headers }
 
@@ -60,11 +70,9 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
       }
 
       if (response.status === 401) {
-        if (!isBackground) {
-          if (!window.location.pathname.startsWith(ADMIN_LOGIN_PATH)) {
-            window.location.href = ADMIN_LOGIN_PATH
-          }
-        }
+        // Clear auth state via the context callback (no hard reload) so a stale
+        // truthy user doesn't make LoginPage auto-redirect back to the dashboard.
+        if (typeof onUnauthorized === 'function') onUnauthorized()
         throw new Error('Unauthorized')
       }
 
@@ -114,7 +122,7 @@ export const adminAuth = {
   },
 
   getUser() {
-    return fetchAdmin('/admin/user', {}, false, {}, true)
+    return fetchAdmin('/admin/user')
   },
 }
 
@@ -193,10 +201,6 @@ export const adminProjects = {
       method: 'POST',
       body: JSON.stringify({ rejection_reason: reason }),
     })
-  },
-
-  delete(id) {
-    return fetchAdmin(`/admin/projects/${id}`, { method: 'DELETE' })
   },
 }
 

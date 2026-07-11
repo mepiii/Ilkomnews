@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 import { useEngagement } from '../../context/EngagementContext'
 import { GradientPlaceholder } from '../ui/ExpandableCard'
-import ImageWithFallback from '../../components/ui/ImageWithFallback'
 import { formatNumber } from '../../utils/formatters'
 
 /**
@@ -69,11 +68,10 @@ export default function ProjectDetailLayout({
       {/* Hero Banner */}
       <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
         {(project.banner || project.thumbnail) ? (
-          <ImageWithFallback
+          <img
             src={project.banner || project.thumbnail}
             alt={project.title}
             className="w-full h-full object-cover"
-            fallback={<GradientPlaceholder themeColor="270 50% 40%" title={project.title} className="w-full h-full" />}
           />
         ) : (
           <GradientPlaceholder themeColor="270 50% 40%" title={project.title} className="w-full h-full" />
@@ -282,11 +280,10 @@ export default function ProjectDetailLayout({
               
               <div className="flex items-center gap-4">
                 {creatorAvatar ? (
-                  <ImageWithFallback
-                    src={creatorAvatar}
+                  <img 
+                    src={creatorAvatar} 
                     alt={project.creator || project.creator_name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-[var(--accent)]/20"
-                    fallback={<div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold">{(project.creator || project.creator_name || '?').charAt(0).toUpperCase()}</div>}
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold">
@@ -330,7 +327,7 @@ export default function ProjectDetailLayout({
                     return (
                       <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition">
                         {avatar ? (
-                          <ImageWithFallback src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" fallback={<div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold">{name.charAt(0)}</div>} />
+                          <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold">
                             {name.charAt(0)}

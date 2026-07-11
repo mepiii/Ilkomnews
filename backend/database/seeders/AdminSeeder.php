@@ -30,15 +30,17 @@ class AdminSeeder extends Seeder
         User::where('is_admin', true)->whereNotIn('email', $keepEmails)->delete();
 
         foreach ($admins as $admin) {
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $admin['email']],
                 [
                     'name' => $admin['name'],
                     'password' => Hash::make($admin['password']),
-                    'is_admin' => true,
                     'email_verified_at' => now(),
                 ]
             );
+
+            // Ensure admin privilege persists regardless of $fillable state.
+            $user->forceFill(['is_admin' => true])->save();
         }
 
         $this->command->info('12 admin accounts created/updated successfully.');

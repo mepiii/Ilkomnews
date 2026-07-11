@@ -125,6 +125,9 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->call([AdminSeeder::class]);
+        $this->call([
+            AdminSeeder::class,
+            IlkomAdminSeeder::class,
+        ]);
     }
 }

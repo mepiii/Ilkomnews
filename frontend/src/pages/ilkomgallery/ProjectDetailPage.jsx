@@ -216,7 +216,7 @@ const ProjectDetailPage = () => {
             {project.creator_name && (
               <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
                 {creatorAvatarUrl ? (
-                  <ImageWithFallback src={creatorAvatarUrl} alt={project.creator_name} className="w-12 h-12 rounded-full object-cover" fallback={<div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold" style={{ background: 'var(--accent)' }}>{project.creator_name.charAt(0)}</div>} />
+                  <img src={creatorAvatarUrl} alt={project.creator_name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold" style={{ background: 'var(--accent)' }}>
                     {project.creator_name.charAt(0)}
@@ -239,7 +239,7 @@ const ProjectDetailPage = () => {
               return (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
                   {avatar ? (
-                    <ImageWithFallback src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" fallback={<div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold bg-purple-500/60">{name.charAt(0)}</div>} />
+                    <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold bg-purple-500/60">
                       {name.charAt(0)}

@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\ServiceProvider;
+
 return [
 
     /*
@@ -14,6 +17,8 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+
+    'admin_prefix' => env('ADMIN_PREFIX', 'pB8xK2mQ9vL3'),
 
     /*
     |--------------------------------------------------------------------------
@@ -122,5 +127,31 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Autoloaded Service Providers (Laravel 10)
+    |--------------------------------------------------------------------------
+    |
+    | Framework providers are supplied by ServiceProvider::defaultProviders().
+    | Package providers (Sanctum, Tinker, etc.) are auto-discovered by Composer.
+    | Only the application's own providers need to be listed here.
+    |
+    */
+
+    'providers' => ServiceProvider::defaultProviders()->merge([
+        App\Providers\AppServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
+    ])->toArray(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Class Aliases (Laravel 10)
+    |--------------------------------------------------------------------------
+    */
+
+    'aliases' => Facade::defaultAliases()->merge([
+        // 'Example' => App\Facades\Example::class,
+    ])->toArray(),
 
 ];

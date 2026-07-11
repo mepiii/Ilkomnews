@@ -10,17 +10,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverStyle, setHoverStyle] = useState({})
   const [activeStyle, setActiveStyle] = useState({ left: '0px', width: '0px' })
-  const tabRefs = useRef([])
   const isDark = useThemeMode()
-
-  useEffect(() => {
-    if (hoveredIndex !== null) {
-      const el = tabRefs.current[hoveredIndex]
-      if (el) {
-        setHoverStyle({ left: `${el.offsetLeft}px`, width: `${el.offsetWidth}px` })
-      }
-    }
-  }, [hoveredIndex])
 
   useEffect(() => {
     const el = tabRefs.current[activeIndex]
@@ -32,16 +22,29 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
   }, [activeIndex])
 
   useEffect(() => {
+    if (hoveredIndex !== null) {
+      const el = tabRefs.current[hoveredIndex]
+      if (el) {
+        setHoverStyle({ left: `${el.offsetLeft}px`, width: `${el.offsetWidth}px` })
+      }
+    }
+  }, [hoveredIndex])
+
+  useEffect(() => {
     const idx = tabs.findIndex(t => t.id === activeTab)
     if (idx >= 0 && idx !== activeIndex) {
       setActiveIndex(idx)
     }
   }, [activeTab, tabs, activeIndex])
 
+  const tabRefs = useRef([])
+
   const handleSelect = (index, id) => {
     setActiveIndex(index)
     onTabChange?.(id)
   }
+
+  const entries = tabs.map((tab, index) => ({ tab, index }))
 
   return (
     <div className={cn('relative', className)}>
@@ -62,7 +65,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
           }}
         />
         <div className="relative flex space-x-[6px] items-center overflow-x-auto scrollbar-hide pb-2 -mb-2">
-          {tabs.map((tab, index) => (
+          {entries.map(({ tab, index }) => (
             <div
               key={tab.id}
               ref={el => (tabRefs.current[index] = el)}

@@ -14,7 +14,7 @@ abstract class BasePublishableController extends Controller
      * Tight enough that updates feel live, wide enough to absorb
      * burst reads from the public site.
      */
-    protected int $cacheTtl = 30;
+    protected int $cacheTtl = 60;
 
     /**
      * Get the model class for this controller.
@@ -65,21 +65,6 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
-     * Lazily delete expired TTL rows on public reads. Throttled to once per
-     * minute via a cache lock so it costs ~nothing on normal traffic, and it
-     * physically removes rows even when no schedule worker is running (dev).
-     * ponytail: hourly scheduler in console.php is the durable path; this is
-     * the self-healing fallback. Upgrade to a queue job if delete volume grows.
-     */
-    // Token bumped whenever expired rows are physically removed. The latest()
-    // and index() cache keys fold it in, so a removal is reflected on the very
-    // next public fetch instead of up to cacheTtl later.
-    protected function pruneToken(): int
-    {
-        return (int) Cache::get('ttl:pruned:' . $this->getModelClass(), 0);
-    }
-
-    /**
      * Scope hiding expired TTL rows from public reads. Only news has expires_at;
      * returns null for models without the column so the filter is skipped.
      */
@@ -92,43 +77,19 @@ abstract class BasePublishableController extends Controller
         return fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
     }
 
-    protected function pruneExpired(): int
-    {
-        $lock = 'ttl:prune:' . $this->getModelClass();
-        if (Cache::has($lock)) {
-            return 0;
-        }
-        Cache::put($lock, true, 60);
-
-        $modelClass = $this->getModelClass();
-        if (!Schema::hasColumn((new $modelClass)->getTable(), 'expires_at')) {
-            return 0;
-        }
-        $deleted = $modelClass::whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
-            ->delete();
-
-        if ($deleted > 0) {
-            Cache::increment('ttl:pruned:' . $modelClass);
-        }
-        return $deleted;
-    }
-
     /**
      * List resources with optional filtering and pagination.
      */
     public function index(Request $request)
     {
-        $this->pruneExpired();
         $modelClass = $this->getModelClass();
-        $key = $this->cacheKey(static::class . '::index:v' . $this->pruneToken(), $request);
+        $key = $this->cacheKey(static::class . '::index', $request);
 
         // ponytail: hide expired TTL items from public reads; admin list uses News::query() directly
         $visible = $this->visibleScope();
         $run = function () use ($modelClass, $request, $visible) {
-            $query = $modelClass::published();
+            $query = $modelClass::published()->latest($this->getSortColumn());
             if ($visible) $query->where($visible);
-            $query->latest($this->getSortColumn());
             $filterParam = $this->getFilterParam();
             if ($request->has($filterParam) && $request->$filterParam !== 'all') {
                 $query->where($this->getFilterColumn(), $request->$filterParam);
@@ -172,11 +133,11 @@ abstract class BasePublishableController extends Controller
      */
     public function latest(Request $request)
     {
-        $this->pruneExpired();
         $modelClass = $this->getModelClass();
         $limit = min($request->get('limit', 6), 20);
-        $key = "latest:{$modelClass}:{$limit}:v" . $this->pruneToken();
+        $key = "latest:{$modelClass}:{$limit}";
 
+        // ponytail: hide expired TTL items from public reads
         $visible = $this->visibleScope();
         $payload = Cache::remember($key, 30, function () use ($modelClass, $request, $limit, $visible) {
             $q = $modelClass::published()->latest($this->getSortColumn())->take($limit);
@@ -192,18 +153,16 @@ abstract class BasePublishableController extends Controller
      */
     public function categories()
     {
-        $this->pruneExpired();
         $modelClass = $this->getModelClass();
         $key = "categories:{$modelClass}";
 
-        $visible = $this->visibleScope();
-        $payload = Cache::remember($key, 300, function () use ($modelClass, $visible) {
-            $q = $modelClass::published()->distinct();
-            if ($visible) $q->where($visible);
-            // ponytail: ->all() returns a plain array — the database cache store
-            // cannot serialize a Collection, which corrupts the response into a
-            // "__PHP_Incomplete_Class" blob (same class of bug as index()/show()).
-            return $q->pluck($this->getFilterColumn())->all();
+        $payload = Cache::remember($key, 300, function () use ($modelClass) {
+            // ponytail: ->all() forces a plain array; caching a Collection in the
+            // database cache store serializes badly into __PHP_Incomplete_Class.
+            return $modelClass::published()
+                ->distinct()
+                ->pluck($this->getFilterColumn())
+                ->all();
         });
 
         return response()->json($payload);

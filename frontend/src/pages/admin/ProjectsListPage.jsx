@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Search, Eye, Trash2, FolderOpen, RefreshCw } from 'lucide-react'
 import { adminProjects } from '../../services/adminApi'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
 import ErrorState from '../../components/admin/ui/ErrorState'
 import { ADMIN_BASE } from '../../config/admin'
 import { springPreset, useReducedMotionSafe } from '../../lib/animations'
-import { useToast } from '../../components/ui/Toast'
-import { useConfirm } from '../../hooks/useConfirm'
 
 const ADMIN_PROJECTS = `/${ADMIN_BASE}/projects`
 
@@ -43,8 +41,6 @@ export default function ProjectsListPage() {
   const isFirstLoadRef = useRef(true)
   const [isFirstLoad, setIsFirstLoad] = useState(true)
   const reduce = useReducedMotionSafe()
-  const { showToast } = useToast()
-  const { confirm, dialog } = useConfirm()
 
   const page = parseInt(searchParams.get('page') || '1', 10)
   const search = searchParams.get('search') || ''
@@ -117,15 +113,12 @@ export default function ProjectsListPage() {
   }
 
   const handleDelete = async (id, title) => {
-    if (!(await confirm({ message: `Hapus proyek "${title}"?` }))) return
-    const snapshot = items
-    setItems((prev) => prev.filter((it) => it.id !== id))
+    if (!window.confirm(`Hapus proyek "${title}"?`)) return
     try {
       await adminProjects.delete(id)
-      showToast('Proyek dihapus', { type: 'success' })
+      fetchProjects()
     } catch (err) {
-      setItems(snapshot)
-      showToast('Gagal menghapus: ' + err.message, { type: 'error' })
+      alert('Gagal menghapus: ' + err.message)
     }
   }
 
@@ -170,7 +163,7 @@ export default function ProjectsListPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1 overflow-x-auto justify-center lg:justify-start">
+          <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1 overflow-x-auto">
             {STATUS_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -244,28 +237,19 @@ export default function ProjectsListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
-                  <AnimatePresence initial={false}>
                   {items.map((item) => (
-                    <motion.tr
-                      key={item.id}
-                      layout={!reduce}
-                      initial={reduce ? false : { opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, x: -12 }}
-                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a]"
-                    >
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
                       <td className="px-5 py-3 max-w-[250px]">
                         <div className="flex items-center gap-2">
                           {item.thumbnail_url || item.thumbnail ? (
                             <img
                               src={item.thumbnail_url || item.thumbnail}
                               alt=""
-                              className="w-14 h-14 rounded-xl object-cover shrink-0 hidden sm:block"
+                              className="w-10 h-10 rounded-lg object-cover shrink-0 hidden sm:block"
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display = 'flex') }}
                             />
                           ) : null}
-                          <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
                             <FolderOpen size={16} className="text-gray-500 dark:text-gray-400" />
                           </div>
                           <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">{item.title}</span>
@@ -277,11 +261,11 @@ export default function ProjectsListPage() {
                             <img
                               src={item.creator_avatar_url || item.creator_avatar}
                               alt={item.creator_name || ''}
-                              className="w-[30px] h-[30px] rounded-full object-cover shrink-0"
+                              className="w-6 h-6 rounded-full object-cover shrink-0"
                               onError={(e) => { e.target.style.display = 'none' }}
                             />
                           ) : (
-                            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0">
                               {(item.creator_name || item.creator || '?').charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -294,26 +278,25 @@ export default function ProjectsListPage() {
                         {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1 shrink-0">
+                        <div className="flex items-center justify-end gap-1">
                           <Link
                             to={`${ADMIN_PROJECTS}/${item.id}`}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors shrink-0"
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
                             aria-label={`Lihat detail ${item.title}`}
                           >
                             <Eye size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                             aria-label={`Hapus ${item.title}`}
                           >
                             <Trash2 size={15} />
                           </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
-                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
@@ -342,7 +325,6 @@ export default function ProjectsListPage() {
           </>
         )}
       </div>
-      {dialog}
     </motion.div>
   )
 }

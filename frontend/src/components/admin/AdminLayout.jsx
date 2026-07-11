@@ -84,15 +84,11 @@ export default function AdminLayout() {
 
         {/* User info */}
         {user && (
-          <div className="flex items-center gap-3 px-5 py-3">
-            <button className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">Semua</button>
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{user.name || 'Admin'}</p>
-              <p className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 truncate">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                {user.email}
-              </p>
-            </div>
+          <div className="px-5 py-3">
+            <p className="flex items-center gap-1.5 truncate text-xs text-gray-500 dark:text-gray-400">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+              {user.email}
+            </p>
           </div>
         )}
 
@@ -100,7 +96,7 @@ export default function AdminLayout() {
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
           {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClass}>
-              <item.icon size={18} className="shrink-0" />
+              <item.icon size={16} className="shrink-0" />
               <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
@@ -132,7 +128,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/5"
+              className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-white/5"
               aria-label="Buka menu"
             >
               <Menu size={18} className="text-gray-700 dark:text-gray-300" />

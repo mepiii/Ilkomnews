@@ -397,7 +397,7 @@ const SubmitProjectPage = () => {
               <Layers size={14} className="text-neutral-400" />
               <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Kategori</h3>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon
                 return (
@@ -572,7 +572,7 @@ const SubmitProjectPage = () => {
               <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Informasi Pembuat</h3>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Nama Lengkap *</label>
                   <input type="text" required value={form.creator_name} onChange={e => update('creator_name', e.target.value)} placeholder="Nama pembuat" className={inputCls} />
@@ -636,7 +636,7 @@ const SubmitProjectPage = () => {
               <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Kolaborator <span className="text-neutral-400 font-normal">(opsional)</span></h3>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Nama</label>
                   <input type="text" value={collabName} onChange={e => setCollabName(e.target.value)} placeholder="Nama kolaborator" className={inputCls} />

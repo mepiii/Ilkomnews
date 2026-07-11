@@ -6,9 +6,6 @@ import { ArrowLeft, Check, X, ExternalLink, GitFork, User, Calendar, FolderOpen,
 import { adminProjects } from '../../services/adminApi'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
-import { useToast } from '../../components/ui/Toast'
-import { useConfirm } from '../../hooks/useConfirm'
-import ImageWithFallback from '../../components/ui/ImageWithFallback'
 
 function RejectModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('')
@@ -88,8 +85,6 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState('')
   const [rejectModal, setRejectModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
-  const { showToast } = useToast()
-  const { confirm, dialog } = useConfirm()
 
   useEffect(() => {
     adminProjects.getById(id)
@@ -99,14 +94,12 @@ export default function ProjectDetailPage() {
   }, [id])
 
   const handleAccept = async () => {
-    if (!(await confirm({ title: 'Terima proyek?', message: 'Proyek akan ditandai sebagai diterima.', confirmText: 'Terima' }))) return
     setActionLoading(true)
     try {
       await adminProjects.accept(id)
       setProject((prev) => ({ ...prev, status: 'accepted' }))
-      showToast('Proyek diterima', { type: 'success' })
     } catch (err) {
-      showToast('Gagal: ' + err.message, { type: 'error' })
+      alert('Gagal: ' + err.message)
     } finally {
       setActionLoading(false)
     }
@@ -118,9 +111,8 @@ export default function ProjectDetailPage() {
       setProject((prev) => ({ ...prev, status: 'rejected', rejection_reason: reason }))
       setRejectModal(false)
       document.body.classList.remove('scroll-locked')
-      showToast('Proyek ditolak', { type: 'success' })
     } catch (err) {
-      showToast('Gagal: ' + err.message, { type: 'error' })
+      alert('Gagal: ' + err.message)
     }
   }
 
@@ -168,11 +160,10 @@ export default function ProjectDetailPage() {
           {/* Thumbnail */}
           {(project.thumbnail_url || project.thumbnail) && (
             <div className="rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414]">
-              <ImageWithFallback
-                src={project.thumbnail_url || project.thumbnail}
-                alt={project.title}
+              <img 
+                src={project.thumbnail_url || project.thumbnail} 
+                alt={project.title} 
                 className="w-full aspect-video object-cover"
-                fallback={<div className="w-full aspect-video flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] text-sm text-gray-400">No image</div>}
               />
             </div>
           )}
@@ -246,7 +237,7 @@ export default function ProjectDetailPage() {
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base">Screenshot</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {screenshots.map((src, i) => (
-                  <ImageWithFallback key={i} src={src} alt={`Screenshot ${i + 1}`} className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video object-cover" fallback={<div className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] text-xs text-gray-400">No image</div>} />
+                  <img key={i} src={src} alt={`Screenshot ${i + 1}`} className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video object-cover" />
                 ))}
               </div>
             </div>
@@ -285,11 +276,10 @@ export default function ProjectDetailPage() {
             </h2>
             <div className="flex items-center gap-3">
               {project.creator_avatar_url || project.creator_avatar ? (
-                <ImageWithFallback
-                  src={project.creator_avatar_url || project.creator_avatar}
+                <img 
+                  src={project.creator_avatar_url || project.creator_avatar} 
                   alt={project.creator_name}
                   className="w-12 h-12 rounded-full object-cover border-2 border-gray-900 dark:border-white/20 flex-shrink-0"
-                  fallback={<div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">{(project.creator_name || '?').charAt(0).toUpperCase()}</div>}
                 />
               ) : (
                            <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">
@@ -345,7 +335,7 @@ export default function ProjectDetailPage() {
                   return (
                       <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-[#141414]">
                        {avatar ? (
-                          <ImageWithFallback src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" fallback={<div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">{name.charAt(0)}</div>} />
+                          <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
                        ) : (
                   <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white/20 flex items-center justify-center text-white dark:text-gray-100 text-lg font-bold flex-shrink-0">
                           {name.charAt(0)}
@@ -375,7 +365,6 @@ export default function ProjectDetailPage() {
         />,
         document.body
       )}
-      {dialog}
     </div>
   )
 }

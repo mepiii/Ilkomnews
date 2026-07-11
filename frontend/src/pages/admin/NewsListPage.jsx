@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Search, Plus, Edit, Trash2, Newspaper, GripVertical, RefreshCw } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
 import ErrorState from '../../components/admin/ui/ErrorState'
 import { ADMIN_BASE } from '../../config/admin'
 import { springPreset, useReducedMotionSafe } from '../../lib/animations'
-import { useToast } from '../../components/ui/Toast'
-import { useConfirm } from '../../hooks/useConfirm'
 
 const ADMIN_NEWS = `/${ADMIN_BASE}/news`
 
@@ -37,8 +35,6 @@ export default function NewsListPage() {
   const isFirstLoad = useRef(true)
   const debounceRef = useRef(null)
   const reduce = useReducedMotionSafe()
-  const { showToast } = useToast()
-  const { confirm, dialog } = useConfirm()
 
   const handleDragStart = (e, index) => {
     setDraggedIndex(index)
@@ -116,15 +112,12 @@ export default function NewsListPage() {
   }
 
   const handleDelete = async (id, title) => {
-    if (!(await confirm({ message: `Hapus berita "${title}"?` }))) return
-    const snapshot = items
-    setItems((prev) => prev.filter((it) => it.id !== id))
+    if (!window.confirm(`Hapus berita "${title}"?`)) return
     try {
       await adminNews.delete(id)
-      showToast('Berita dihapus', { type: 'success' })
+      fetchNews()
     } catch (err) {
-      setItems(snapshot)
-      showToast('Gagal menghapus: ' + err.message, { type: 'error' })
+      alert('Gagal menghapus: ' + err.message)
     }
   }
 
@@ -213,7 +206,7 @@ export default function NewsListPage() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
           />
         </div>
-        <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1 justify-center lg:justify-start">
+        <div className="flex gap-1 bg-gray-100 dark:bg-[#141414] rounded-lg p-1">
           {STATUS_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -261,16 +254,8 @@ export default function NewsListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
-                  <AnimatePresence initial={false}>
                   {items.map((item, index) => (
-                    <motion.tr
-                      key={item.id}
-                      layout={!reduce}
-                      initial={reduce ? false : { opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, x: -12 }}
-                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className={`hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
+                    <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragOver={(e) => handleDragOver(e, index)}
@@ -286,10 +271,10 @@ export default function NewsListPage() {
                           return (
                             <div className="flex items-center gap-3">
                               {thumb ? (
-                                <img src={thumb} alt={item.title} className="w-14 h-14 rounded-xl object-cover bg-gray-200 dark:bg-neutral-800 shrink-0" />
+                                <img src={thumb} alt={item.title} className="w-16 h-10 rounded-lg object-cover bg-gray-200 dark:bg-neutral-800 shrink-0" />
                               ) : (
-                                <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                                  <Newspaper size={20} className="text-gray-300 dark:text-gray-600" />
+                                <div className="w-16 h-10 rounded-lg bg-gray-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                                  <Newspaper size={16} className="text-gray-300 dark:text-gray-600" />
                                 </div>
                               )}
                               <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{item.title}</span>
@@ -332,26 +317,23 @@ export default function NewsListPage() {
                         </button>
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1 shrink-0">
+                        <div className="flex items-center justify-end gap-1">
                           <Link
                             to={`${ADMIN_NEWS}/${item.id}/edit`}
-                            aria-label={`Edit ${item.title}`}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors shrink-0"
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
                           >
                             <Edit size={15} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id, item.title)}
-                            aria-label={`Hapus ${item.title}`}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                           >
                             <Trash2 size={15} />
                           </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
-                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
@@ -383,7 +365,6 @@ export default function NewsListPage() {
           </>
         )}
       </div>
-      {dialog}
     </motion.div>
   )
 }
