@@ -97,3 +97,6 @@ memory/
 .eslintcache
 .cache/
 .turbo/
+
+# --------------- Build artifacts (do not track) ---------------
+frontend/frontend_prod.zip
