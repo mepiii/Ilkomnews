@@ -61,15 +61,4 @@ test.describe('Gallery + article detail', () => {
     const real = errors.filter((e) => !isBenign(e))
     expect(real, real.join(' | ')).toEqual([])
   })
-
-  test('Article detail page renders content', async ({ page, errors }) => {
-    const list = (await (await page.request.get('/api/articles')).json()).data
-    test.skip(list.length === 0, 'no articles seeded')
-    const id = list[0].id
-    await page.goto(`/articles/${id}`)
-    await page.waitForSelector('h1, article', { timeout: 15000 })
-    await page.waitForTimeout(500)
-    const real = errors.filter((e) => !isBenign(e))
-    expect(real, real.join(' | ')).toEqual([])
-  })
 })

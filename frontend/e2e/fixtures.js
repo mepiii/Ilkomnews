@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test'
+import { test as base, expect, request } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -27,6 +27,32 @@ function loadAdminBase() {
 
 export const ADMIN_BASE = loadAdminBase()
 export const ADMIN_LOGIN_PATH = `/${ADMIN_BASE}/login`
+
+// Seed admin from database/seeders/AdminSeeder.php (Admin 1). Shared so both the
+// admin-flow and admin-api specs log in through the real UI and get the session
+// cookie set the same way.
+export async function loginAsAdmin(page) {
+  // ponytail: /api/admin/login is `throttle:login` (5/min). Under a full-suite
+  // run the same seed admin is logged in repeatedly and the limiter 429s the
+  // POST, leaving us stuck on /login. Retry with a backoff that clears the
+  // window instead of failing the whole authenticated block.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.context().clearCookies()
+    await page.goto(ADMIN_LOGIN_PATH)
+    await page.waitForSelector('#login-email', { timeout: 10000 })
+    await page.fill('#login-email', 'admin1@akademik.fasilkom.unsri.ac.id')
+    await page.fill('#login-password', 'AdminAkademik01!')
+    await page.locator('button[type="submit"]').first().click()
+    try {
+      await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 })
+      return /\/dashboard/.test(page.url())
+    } catch {
+      if (attempt === 2) return false
+      await page.waitForTimeout(15000) // wait out the 1-min throttle window
+    }
+  }
+  return false
+}
 
 // Known-benign console noise we don't want to fail the run on:
 //  - missing favicon
@@ -64,4 +90,4 @@ export const test = base.extend({
   },
 })
 
-export { expect }
+export { expect, request }

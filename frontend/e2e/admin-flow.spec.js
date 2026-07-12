@@ -1,4 +1,4 @@
-import { test, expect, isBenign, ADMIN_LOGIN_PATH, ADMIN_BASE } from './fixtures.js'
+import { test, expect, isBenign, ADMIN_LOGIN_PATH, ADMIN_BASE, loginAsAdmin } from './fixtures.js'
 
 // Authenticated admin panel flows. fixtures.js derives the obscure base from
 // VITE_ADMIN_BASE (== k9x2m4q7w8e1r5t3y6u0i8o2p4a6s0d8). Backend must be
@@ -18,19 +18,6 @@ const ADMIN_PAGES = [
   'chat-stats',
   'audit-logs',
 ]
-
-async function loginAsAdmin(page) {
-  await page.context().clearCookies()
-  await page.goto(ADMIN_LOGIN_PATH)
-  await page.waitForSelector('#login-email', { timeout: 10000 })
-  await page.fill('#login-email', 'admin1@akademik.fasilkom.unsri.ac.id')
-  await page.fill('#login-password', 'AdminAkademik01!')
-  await page.locator('button[type="submit"]').first().click()
-  // Wait until the URL actually leaves /login (the regex /\/dashboard|\/login/
-  // would match the current /login instantly and return before navigation).
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 })
-  return /\/dashboard/.test(page.url())
-}
 
 test.describe('Admin authenticated flows', () => {
   test('seed admin can log in and reach the dashboard', async ({ page, errors }) => {

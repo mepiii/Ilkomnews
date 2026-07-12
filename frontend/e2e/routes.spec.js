@@ -37,8 +37,10 @@ test.describe('Public routes load without runtime errors', () => {
 
   test('unknown route renders the 404 NotFoundPage (not HomePage)', async ({ page, errors }) => {
     await page.goto('/this-route-does-not-exist-xyz')
-    // App catch-all (*) renders NotFoundPage since the M5 fix.
-    await expect(page.getByText(/Halaman tidak ditemukan/i).first()).toBeVisible({ timeout: 10000 })
+    // App catch-all (*) renders NotFoundPage. Headlines use WordBounce which
+    // splits text into per-character spans, so match on a stable phrase
+    // ("ditemukan") that only appears on NotFoundPage.
+    await expect(page.getByText(/ditemukan/i).first()).toBeVisible({ timeout: 10000 })
     const real = errors.filter((e) => !isBenign(e))
     expect(real, real.join(' | ')).toEqual([])
   })

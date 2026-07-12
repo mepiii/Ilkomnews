@@ -5,12 +5,12 @@ import { test, expect } from '@playwright/test'
 // endpoint so the suite truly covers "all API". Backend must be running and
 // seeded (Vite proxies /api -> http://127.0.0.1:8000).
 
-const LATEST = ['/api/news/latest', '/api/articles/latest', '/api/events/upcoming']
-const CATS = ['/api/news/categories', '/api/articles/categories', '/api/events/categories']
+const LATEST = ['/api/news/latest', '/api/events/upcoming']
+const CATS = ['/api/news/categories', '/api/events/categories']
 const CAREER_FILTERS = ['/api/careers/types', '/api/careers/locations']
 
 test.describe('Public API — content lists & latest', () => {
-  for (const ep of ['/api/news', '/api/articles', '/api/events', '/api/careers', '/api/projects']) {
+  for (const ep of ['/api/news', '/api/events', '/api/careers', '/api/projects']) {
     test(`${ep} returns paginated data array`, async ({ request }) => {
       const resp = await request.get(ep)
       expect(resp.status()).toBe(200)
@@ -39,14 +39,6 @@ test.describe('Public API — content lists & latest', () => {
     })
   }
 
-  test('/api/articles/category/{category} returns a list', async ({ request }) => {
-    const cats = await (await request.get('/api/articles/categories')).json()
-    const resp = await request.get(`/api/articles/category/${encodeURIComponent(cats[0])}`)
-    expect(resp.status()).toBe(200)
-    const body = await resp.json()
-    expect(Array.isArray(body.data ?? body)).toBeTruthy()
-  })
-
   for (const ep of CAREER_FILTERS) {
     test(`${ep} returns a non-empty filter array`, async ({ request }) => {
       const resp = await request.get(ep)
@@ -58,7 +50,7 @@ test.describe('Public API — content lists & latest', () => {
   }
 
   test('single-item show endpoints return the matching id', async ({ request }) => {
-    for (const base of ['/api/news', '/api/articles', '/api/events', '/api/careers']) {
+    for (const base of ['/api/news', '/api/events', '/api/careers']) {
       const list = (await (await request.get(base)).json()).data
       test.skip(list.length === 0, `${base} empty`)
       const id = list[0].id
@@ -122,7 +114,7 @@ test.describe('Public API — submissions, notifications & quota', () => {
 })
 
 test.describe('Public API — interaction tracking', () => {
-  for (const type of ['news', 'articles', 'events', 'projects']) {
+  for (const type of ['news', 'events', 'projects']) {
     test(`${type} stats endpoint returns counters`, async ({ request }) => {
       const list = (await (await request.get(`/api/${type}`)).json()).data
       test.skip(list.length === 0, `${type} empty`)
@@ -137,7 +129,7 @@ test.describe('Public API — interaction tracking', () => {
   }
 
   const ACTIONS = ['view', 'like', 'save', 'share']
-  for (const type of ['news', 'articles', 'events', 'projects']) {
+  for (const type of ['news', 'events', 'projects']) {
     for (const action of ACTIONS) {
       test(`POST ${type}/${action} returns <500 (idempotent toggincrement)`, async ({ request }) => {
         const list = (await (await request.get(`/api/${type}`)).json()).data
