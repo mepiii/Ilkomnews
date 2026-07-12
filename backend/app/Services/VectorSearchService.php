@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Log;
 
 class VectorSearchService
 {
+    // F2: chunks below this cosine similarity are treated as irrelevant noise,
+    // not ground truth. Prevents a near-zero-match chunk from becoming context
+    // for the LLM (the original RAG bypass). Tune up if retrieval gets loose.
+    private const SIMILARITY_FLOOR = 0.2;
+
     protected EmbeddingService $embeddingService;
 
     public function __construct(EmbeddingService $embeddingService)
@@ -59,14 +64,22 @@ class VectorSearchService
         // Generate embedding for query
         $queryEmbedding = $this->embeddingService->generate($query);
 
-        if (!$queryEmbedding) {
+        if (! $queryEmbedding) {
             Log::error('Failed to generate query embedding');
+
             return [];
         }
 
-        // Get all chunks with embeddings
+        // ponytail: only compare against chunks embedded by the SAME model —
+        // mismatched dims (e.g. Azure 1536 vs Gemini) produce garbage cosine.
+        // Default to null so a missing model key degrades to "no vector match"
+        // instead of throwing (the caller falls back to keyword search).
+        $model = $queryEmbedding['model'] ?? null;
+
+        // Get all chunks with embeddings for the active model
         $chunks = DB::table('knowledge_chunks')
             ->whereNotNull('embedding')
+            ->where('embedding_model', $model)
             ->get();
 
         if ($chunks->isEmpty()) {
@@ -78,7 +91,7 @@ class VectorSearchService
         foreach ($chunks as $chunk) {
             $chunkEmbedding = json_decode($chunk->embedding, true);
 
-            if (!is_array($chunkEmbedding)) {
+            if (! is_array($chunkEmbedding)) {
                 continue;
             }
 
@@ -87,17 +100,52 @@ class VectorSearchService
                 $chunkEmbedding
             );
 
+            // F2: drop irrelevant chunks below the floor so they never reach
+            // the LLM as context. If everything is filtered out, $scored stays
+            // empty and we return [] → caller falls back to keyword search.
+            if ($similarity < self::SIMILARITY_FLOOR) {
+                continue;
+            }
+
             $scored[] = [
                 'chunk' => $chunk,
                 'similarity' => $similarity,
             ];
         }
 
+        if (empty($scored)) {
+            return [];
+        }
+
         // Sort by similarity (descending)
-        usort($scored, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+        usort($scored, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         // Return top K
         return array_slice($scored, 0, $topK);
+    }
+
+    /**
+     * SQL LIKE keyword search across one or more query variants.
+     * Escapes LIKE wildcards (% and _) so a user-supplied query cannot act
+     * as a wildcard and match unrelated chunks.
+     */
+    public function keywordSearch(array $queries, int $limit): array
+    {
+        if (empty($queries)) {
+            return [];
+        }
+
+        return DB::table('knowledge_chunks')
+            ->where(function ($q) use ($queries) {
+                foreach ($queries as $query) {
+                    $escaped = addcslashes($query, '\\%_');
+                    $q->orWhere('chunk_text', 'LIKE', "%{$escaped}%")
+                        ->orWhere('summary', 'LIKE', "%{$escaped}%");
+                }
+            })
+            ->limit($limit)
+            ->get()
+            ->all();
     }
 
     /**
@@ -109,14 +157,7 @@ class VectorSearchService
         $vectorResults = $this->search($query, $topK);
 
         // SQL LIKE search for keyword matching.
-        // Escape LIKE wildcards (% and _) so a user-supplied query cannot
-        // act as a wildcard and match unrelated chunks.
-        $escapedQuery = addcslashes($query, '%_');
-        $keywordResults = DB::table('knowledge_chunks')
-            ->where('chunk_text', 'LIKE', "%{$escapedQuery}%")
-            ->orWhere('summary', 'LIKE', "%{$escapedQuery}%")
-            ->limit($topK * 2)
-            ->get();
+        $keywordResults = $this->keywordSearch([$query], $topK * 2);
 
         // Combine and deduplicate using Reciprocal Rank Fusion
         return $this->reciprocalRankFusion($vectorResults, $keywordResults, $topK);
@@ -160,7 +201,7 @@ class VectorSearchService
                 }
             }
 
-            if (!$chunk) {
+            if (! $chunk) {
                 foreach ($keywordResults as $kwChunk) {
                     if ($kwChunk->id == $id) {
                         $chunk = $kwChunk;
