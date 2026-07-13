@@ -113,29 +113,6 @@ export const newsService = {
   }
 }
 
-// Articles Service
-export const articlesService = {
-  getAll: async () => {
-    return fetchAPI('/articles')
-  },
-
-  getLatest: async (limit = 5) => {
-    return fetchAPI(`/articles/latest?limit=${limit}`)
-  },
-
-  getById: async (id) => {
-    return fetchAPI(`/articles/${id}`)
-  },
-
-  filterByCategory: async (category) => {
-    return fetchAPI(`/articles/category/${category}`)
-  },
-
-  getCategories: async () => {
-    return fetchAPI('/articles/categories')
-  }
-}
-
 // Careers Service
 export const careersService = {
   getAll: async () => {
@@ -181,7 +158,6 @@ export const projectsService = {
 // Export all services
 export const api = {
   news: newsService,
-  articles: articlesService,
   careers: careersService,
   projects: projectsService,
 }

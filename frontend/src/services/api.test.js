@@ -9,15 +9,11 @@ global.fetch = mockFetch
 vi.stubEnv('VITE_USE_REAL_API', '')
 vi.stubEnv('DEV', true)
 
-const { newsService, articlesService, careersService, viewTracker, api } = await import('./api.js')
+const { newsService, careersService, viewTracker, api } = await import('./api.js')
 
 const mockNews = [
   { id: 1, title: 'AI News', summary: 'About AI', category: 'tech', date: '2026-01-01', image: '/img.jpg' },
   { id: 2, title: 'Web News', summary: 'About Web', category: 'tech', date: '2026-01-02', image: '/img2.jpg' },
-]
-
-const mockArticles = [
-  { id: 1, title: 'Article One', readTime: 5, content: '...', category: 'tech' },
 ]
 
 const mockCareers = [
@@ -94,25 +90,9 @@ describe('careersService', () => {
   })
 })
 
-describe('articlesService', () => {
-  it('getAll returns articles list', async () => {
-    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockArticles))
-    const result = await articlesService.getAll()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result[0]).toHaveProperty('readTime')
-  })
-
-  it('getById returns article', async () => {
-    mockFetch.mockImplementationOnce(() => mockJsonResponse(mockArticles[0]))
-    const result = await articlesService.getById(1)
-    expect(result).toBeTruthy()
-  })
-})
-
 describe('api aggregate', () => {
   it('exports all service namespaces', () => {
     expect(api).toHaveProperty('news')
-    expect(api).toHaveProperty('articles')
     expect(api).toHaveProperty('careers')
     expect(api).toHaveProperty('projects')
   })

@@ -195,7 +195,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 function showDetails(logId) {
     const detailsRow = document.getElementById('details-' + logId);
     if (detailsRow) {

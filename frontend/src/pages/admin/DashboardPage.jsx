@@ -95,7 +95,7 @@ export default function DashboardPage() {
   }
 
   if (error) {
-    return <ErrorState message={`Gagal memuat dashboard: ${error}`} onRetry={() => { setError(''); setLoading(true); adminDashboard.getStats().then(setData).catch((err) => setError(err.message)).finally(() => setLoading(false)) }} />
+    return <ErrorState message={`Gagal memuat dashboard: ${error}`} onRetry={() => { setError(''); setLoading(true); const controller = new AbortController(); abortRef.current = controller; adminDashboard.getStats({ signal: controller.signal }).then(setData).catch((err) => { if (err.name !== 'AbortError') setError(err.message) }).finally(() => setLoading(false)) }} />
   }
 
   const stats = data?.stats || {}
@@ -132,7 +132,7 @@ export default function DashboardPage() {
       {/* Welcome header */}
       <motion.div variants={itemVariants} className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-[#141414] p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg shrink-0">
             <img src={logo} alt="BEM ILKOM" className="h-full w-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">

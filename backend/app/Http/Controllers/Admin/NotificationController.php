@@ -18,7 +18,7 @@ class NotificationController extends Controller
     {
         $notifications = Notification::with('project:id,title,category,thumbnail,status,rejection_reason')
             ->latest()
-            ->paginate($request->input('per_page', 20));
+            ->paginate(min((int) $request->input('per_page', 20), 100));
 
         $unreadCount = Notification::where('read', false)->count();
 

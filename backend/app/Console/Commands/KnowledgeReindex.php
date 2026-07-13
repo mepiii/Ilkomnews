@@ -13,7 +13,7 @@ class KnowledgeReindex extends Command
      * @var string
      */
     protected $signature = 'knowledge:reindex
-                            {--type=all : Content type to reindex (all, news, article, event, project)}
+                            {--type=all : Content type to reindex (all, news, event, project)}
                             {--force : Force reindex even if embeddings exist}';
 
     /**
@@ -47,9 +47,10 @@ class KnowledgeReindex extends Command
         try {
             if ($type === 'all') {
                 $stats = $this->indexer->reindexAll();
+            } elseif (in_array($type, ['news', 'event', 'project'], true)) {
+                $stats = $this->indexer->reindexByType($type);
             } else {
-                $this->error("Partial reindexing for type '{$type}' is not yet implemented.");
-                $this->info("Use --type=all for full reindex.");
+                $this->error("Unknown type '{$type}'. Use all, news, event, or project.");
                 return Command::FAILURE;
             }
 
@@ -58,7 +59,6 @@ class KnowledgeReindex extends Command
             $this->newLine();
             $this->info("=== Reindex Summary ===");
             $this->info("News items indexed: {$stats['news']}");
-            $this->info("Articles indexed: {$stats['articles']}");
             $this->info("Events indexed: {$stats['events']}");
             $this->info("Projects indexed: {$stats['projects']}");
             $this->info("FAQ items indexed: {$stats['faq']}");

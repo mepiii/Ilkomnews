@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { WordBounce } from '../ui/WordBounce'
 
 class ErrorBoundary extends Component {
   state = { error: null }
@@ -13,7 +14,7 @@ class ErrorBoundary extends Component {
         return (
           <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-8">
             <div className="max-w-md w-full text-center">
-              <h1 className="text-2xl font-bold text-red-500 mb-4">Something went wrong</h1>
+              <h1 className="text-2xl font-bold text-red-500 mb-4"><WordBounce text="Something went wrong" /></h1>
               <p className="text-neutral-600 dark:text-neutral-400 mb-4 text-sm font-mono break-all">
                 {this.state.error.message}
               </p>
@@ -31,7 +32,7 @@ class ErrorBoundary extends Component {
       return (
         <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-8">
           <div className="max-w-md w-full text-center">
-            <h1 className="text-2xl font-bold text-red-500 mb-4">Something went wrong</h1>
+            <h1 className="text-2xl font-bold text-red-500 mb-4"><WordBounce text="Something went wrong" /></h1>
             <p className="text-neutral-600 dark:text-neutral-400 mb-6 text-sm">
               An unexpected error occurred. Please try reloading the page.
             </p>

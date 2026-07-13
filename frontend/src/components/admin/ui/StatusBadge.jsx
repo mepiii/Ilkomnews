@@ -1,9 +1,9 @@
 const STATUS_STYLES = {
-  pending:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  accepted:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  rejected:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  published:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  draft:      'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  pending:   'status-pill status-pending',
+  accepted:  'status-pill status-accepted',
+  rejected:  'status-pill status-rejected',
+  published: 'status-pill status-published',
+  draft:     'status-pill status-draft',
 }
 
 const STATUS_LABELS = {

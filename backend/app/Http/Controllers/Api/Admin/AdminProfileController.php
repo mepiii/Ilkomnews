@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -109,19 +110,20 @@ class AdminProfileController extends Controller
 
         $isSelf = $request->user()->id === $admin->id;
 
+        // M: peer-admin password reset is a privileged, account-takeover-capable
+        // action — require the acting admin's own current_password too (no silent
+        // takeover of another admin). Audited below via AuditLog.
         $rules = [
             'password' => 'required|string|min:12|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+            'current_password' => 'required|string',
         ];
-        if ($isSelf) {
-            $rules['current_password'] = 'required|string';
-        }
 
         $validated = $request->validate($rules, [
             'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
             'password.min' => 'Password minimal 12 karakter.',
         ]);
 
-        if ($isSelf && !Hash::check($validated['current_password'], $admin->password)) {
+        if (!Hash::check($validated['current_password'], $request->user()->password)) {
             return response()->json([
                 'message' => 'Password lama yang Anda masukkan salah!',
             ], 400);
@@ -129,6 +131,16 @@ class AdminProfileController extends Controller
 
         $admin->update([
             'password' => Hash::make($validated['password']),
+        ]);
+
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => $isSelf ? 'update_own_password' : 'reset_admin_password',
+            'entity_type' => 'user',
+            'entity_id' => $admin->id,
+            'details' => ['target_email' => $admin->email, 'self' => $isSelf],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
@@ -164,6 +176,16 @@ class AdminProfileController extends Controller
             'password' => Hash::make($validated['password']),
             'is_admin' => true,
             'email_verified_at' => now(),
+        ]);
+
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'create_admin',
+            'entity_type' => 'user',
+            'entity_id' => $admin->id,
+            'details' => ['email' => $admin->email],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json([
@@ -202,6 +224,16 @@ class AdminProfileController extends Controller
         }
 
         $admin->delete();
+
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'delete_admin',
+            'entity_type' => 'user',
+            'entity_id' => $admin->id,
+            'details' => ['email' => $admin->email],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return response()->json([
             'message' => 'Admin berhasil dihapus',

@@ -9,7 +9,7 @@ const Breadcrumb = () => {
   const pathnames = location.pathname.split('/').filter(x => x)
   const lastPath = pathnames[pathnames.length - 1]
   const isDetailPage = pathnames.length >= 2 &&
-    ['news', 'articles'].includes(pathnames[pathnames.length - 2])
+    ['news'].includes(pathnames[pathnames.length - 2])
 
   // ponytail: derived from pathname — no state/effect needed
   const detailTitle = isDetailPage && lastPath
@@ -18,7 +18,7 @@ const Breadcrumb = () => {
 
   const getPathName = (path, isLast = false) => {
     if (isLast && detailTitle) return detailTitle
-    const names = { 'news': 'Berita', 'articles': 'Artikel', 'ilkom-gallery': 'ILKOM Gallery', 'ilkomgallery': 'ILKOM Gallery', 'about': 'Tentang', 'detail': 'Detail' }
+    const names = { 'news': 'Berita', 'ilkom-gallery': 'ILKOM Gallery', 'ilkomgallery': 'ILKOM Gallery', 'about': 'Tentang', 'detail': 'Detail' }
     if (path.includes('-') && !isLast) return getTitleFromSlug(path)
     return names[path] || path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
   }

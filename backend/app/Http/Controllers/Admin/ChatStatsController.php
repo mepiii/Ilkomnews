@@ -19,7 +19,11 @@ class ChatStatsController extends Controller
             'successful' => (clone $query)->where('status', 'success')->count(),
             'rejected' => (clone $query)->where('status', 'topic_rejected')->count(),
             'no_context' => (clone $query)->where('status', 'no_context')->count(),
+            // ponytail: there is no rate-limit status; 'rejected' is input-validation
+            // rejection (empty/multi-question/over-length), 'topic_rejected' is the
+            // off-topic block. Keep both keys distinct so the dashboard labels are accurate.
             'rate_limited' => (clone $query)->where('status', 'rejected')->count(),
+            'topic_rejected' => (clone $query)->where('status', 'topic_rejected')->count(),
             'today' => ChatLog::whereDate('created_at', today())->count(),
             'daily_breakdown' => ChatLog::selectRaw("DATE(created_at) as date, count(*) as total, SUM(status = 'success') as success, SUM(status = 'topic_rejected') as rejected")
                 ->where('created_at', '>=', $from)->groupBy('date')->orderBy('date')->get(),

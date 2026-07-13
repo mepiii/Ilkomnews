@@ -38,7 +38,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'chat_model' => env('GEMINI_CHAT_MODEL', 'gemini-2.5-flash'),
-        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
+        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001'),
     ],
 
     'azure' => [

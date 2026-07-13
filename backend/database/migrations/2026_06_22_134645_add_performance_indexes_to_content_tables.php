@@ -21,12 +21,6 @@ return new class extends Migration
                 ['date', 'idx_news_date'],
                 ['published, date', 'idx_news_published_date'],
             ],
-            'articles' => [
-                ['published', 'idx_articles_published'],
-                ['category', 'idx_articles_category'],
-                ['date', 'idx_articles_date'],
-                ['published, date', 'idx_articles_published_date'],
-            ],
             'events' => [
                 ['published', 'idx_events_published'],
                 ['category', 'idx_events_category'],
@@ -69,14 +63,6 @@ return new class extends Migration
             $table->dropIndex('idx_news_category');
             $table->dropIndex('idx_news_date');
             $table->dropIndex('idx_news_published_date');
-        });
-
-        // Articles table indexes
-        Schema::table('articles', function (Blueprint $table) {
-            $table->dropIndex('idx_articles_published');
-            $table->dropIndex('idx_articles_category');
-            $table->dropIndex('idx_articles_date');
-            $table->dropIndex('idx_articles_published_date');
         });
 
         // Events table indexes

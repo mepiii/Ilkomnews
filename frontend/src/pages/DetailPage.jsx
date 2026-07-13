@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { springPreset, useReducedMotionSafe } from '../lib/animations'
 import NewsDetail from '../components/news/NewsDetail'
-import ArticleDetail from '../components/articles/ArticleDetail'
 import Breadcrumb from '../components/common/Breadcrumb'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
@@ -11,7 +10,7 @@ import { PageBackground } from '../components/ui/PageBackground'
 import { api } from '../services/api'
 import { isNumericId, generateSlug } from '../utils/formatters'
 
-const VALID_TYPES = ['news', 'articles']
+const VALID_TYPES = ['news']
 
 const DetailPage = ({ type }) => {
   const { slug } = useParams()
@@ -37,7 +36,7 @@ const DetailPage = ({ type }) => {
       setLoading(true)
       setError(null)
       try {
-        const service = type === 'news' ? api.news : api.articles
+        const service = api.news
         let result = null
         let allData = []
 
@@ -69,7 +68,7 @@ const DetailPage = ({ type }) => {
         if (!active) return
         if (result) {
           setData(result)
-          setRelated(allData.filter(item => item.id !== result.id).slice(0, 3))
+          setRelated(allData.filter(item => item.id !== result.id).slice(0, 4))
         } else {
           setError('Konten tidak ditemukan')
         }
@@ -104,7 +103,6 @@ const DetailPage = ({ type }) => {
   const renderDetail = () => {
     switch (type) {
       case 'news': return <NewsDetail news={data} relatedNews={related} />
-      case 'articles': return <ArticleDetail article={data} relatedArticles={related} />
       default: return <ErrorMessage message="Tipe konten tidak valid" />
     }
   }

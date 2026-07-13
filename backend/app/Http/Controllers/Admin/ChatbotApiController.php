@@ -129,7 +129,7 @@ class ChatbotApiController extends Controller
                 // Anthropic uses the /messages endpoint
                 $url = $base ? $base . '/messages' : 'https://api.anthropic.com/v1/messages';
 
-                $response = Http::timeout(20)->withHeaders([
+                $response = Http::timeout(10)->withoutRedirecting()->withHeaders([
                     'x-api-key' => $apiKey,
                     'anthropic-version' => '2023-06-01',
                     'Content-Type' => 'application/json',
@@ -162,7 +162,7 @@ class ChatbotApiController extends Controller
                     ? ($base ?: 'https://api.openai.com/v1')
                     : ($base ? $base . '/models' : 'https://api.openai.com/v1/models');
 
-                $response = Http::timeout(20)->withHeaders([
+                $response = Http::timeout(10)->withoutRedirecting()->withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->get($url);
@@ -184,7 +184,7 @@ class ChatbotApiController extends Controller
             // Chat Completions API (default) — standard /v1/chat/completions
             $url = $base ? $base . '/chat/completions' : 'https://api.openai.com/v1/chat/completions';
 
-            $response = Http::timeout(20)->withHeaders([
+            $response = Http::timeout(10)->withoutRedirecting()->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post($url, [

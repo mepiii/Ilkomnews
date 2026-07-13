@@ -47,11 +47,12 @@ class ChatApiTest extends TestCase
 
     public function test_chat_rejects_multiple_questions()
     {
+        // Two '?' in one message → multiple-question guard rejects with 422.
         $response = $this->postJson('/api/chat', [
             'message' => 'Apa itu FASILKOM? Kapan pendaftaran?',
         ]);
 
-        $response->assertOk()
+        $response->assertStatus(422)
             ->assertJsonPath('message', 'Mohon ajukan satu pertanyaan saja.');
     }
 

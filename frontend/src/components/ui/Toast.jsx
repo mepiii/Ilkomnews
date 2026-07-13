@@ -5,17 +5,17 @@ const ToastContext = createContext(null)
 
 const TYPE_STYLES = {
   success: {
-    border: 'border-l-[var(--accent)]',
+    border: 'border-[var(--accent)]/40',
     icon: '✓',
     iconColor: 'text-[var(--accent)]',
   },
   error: {
-    border: 'border-l-red-500',
+    border: 'border-red-500/40',
     icon: '✕',
     iconColor: 'text-red-500',
   },
   info: {
-    border: 'border-l-[var(--accent)]',
+    border: 'border-[var(--accent)]/40',
     icon: 'ℹ',
     iconColor: 'text-[var(--accent)]',
   },
@@ -65,7 +65,7 @@ export function ToastProvider({ children }) {
                 onClick={() => dismiss(t.id)}
                 role="button"
                 title="Klik untuk menutup"
-                className={`pointer-events-auto flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--border-color)] border-l-4 ${style.border} bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] shadow-lg backdrop-blur-md`}
+                className={`pointer-events-auto flex cursor-pointer items-center gap-2 rounded-lg border ${style.border} bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] shadow-lg backdrop-blur-md`}
               >
                 <span className={`shrink-0 text-base leading-none ${style.iconColor}`} aria-hidden="true">
                   {style.icon}

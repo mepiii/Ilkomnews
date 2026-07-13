@@ -237,7 +237,7 @@ export default function ProjectDetailPage() {
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 text-sm sm:text-base">Screenshot</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {screenshots.map((src, i) => (
-                  <img key={i} src={src} alt={`Screenshot ${i + 1}`} className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video object-cover" />
+                  <img key={i} src={src} alt={`Screenshot ${i + 1}`} loading="lazy" className="rounded-lg border border-gray-200 dark:border-neutral-800 w-full aspect-video object-cover" />
                 ))}
               </div>
             </div>

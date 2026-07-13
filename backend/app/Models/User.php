@@ -19,11 +19,13 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    // ponytail: is_admin kept OUT of $fillable so mass-assignment
+    // (e.g. ProfileController@update via $request->validated()) can never grant
+    // admin. Set only by AdminProfileController with an explicit literal.
     protected $fillable = [
         'name',
         'email',
         'password',
-        'is_admin',
         'email_verified_at',
     ];
 

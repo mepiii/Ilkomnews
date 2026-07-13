@@ -31,7 +31,11 @@ class NewsController extends BasePublishableController
             })
             ->firstOrFail();
 
-        $news->incrementViews();
+        try {
+            $news->incrementViews();
+        } catch (\Throwable $e) {
+            // View counting must never break article reads.
+        }
 
         return response()->json($news);
     }

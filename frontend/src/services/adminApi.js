@@ -87,7 +87,12 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
     } catch (error) {
       clearTimeout(timeoutId)
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout', { cause: error })
+        // Aborts come from our own 15s timer OR the caller's signal
+        // (component unmount / React StrictMode double-invoke). Neither is a
+        // network failure — callers ignore AbortError, so just rethrow it.
+        // ponytail: retrying on a stale aborted signal is what surfaced
+        // "Request timeout" on every admin reload; dropped.
+        throw error
       }
       // Only retry genuine network failures (fetch rejected before producing a
       // response). Errors thrown after a response was received — including
@@ -127,15 +132,15 @@ export const adminAuth = {
 }
 
 export const adminDashboard = {
-  getStats() {
-    return fetchAdmin('/admin/dashboard')
+  getStats(options = {}) {
+    return fetchAdmin('/admin/dashboard', options)
   },
 }
 
 export const adminNews = {
-  getAll(params = {}) {
+  getAll(params = {}, options = {}) {
     const qs = new URLSearchParams(params).toString()
-    return fetchAdmin(`/admin/news${qs ? `?${qs}` : ''}`)
+    return fetchAdmin(`/admin/news${qs ? `?${qs}` : ''}`, options)
   },
 
   getById(id) {
@@ -174,9 +179,6 @@ export const adminNews = {
     return fetchAdmin(`/admin/news/${id}`, { method: 'DELETE' })
   },
 
-  reorder: async (order) => {
-    return fetchAdmin('/admin/news/reorder', { method: 'PUT', body: JSON.stringify({ order }) })
-  },
   toggleHidden: async (id) => {
     return fetchAdmin(`/admin/news/${id}/toggle-hidden`, { method: 'PUT' })
   },
@@ -201,6 +203,10 @@ export const adminProjects = {
       method: 'POST',
       body: JSON.stringify({ rejection_reason: reason }),
     })
+  },
+
+  delete(id) {
+    return fetchAdmin(`/admin/projects/${id}`, { method: 'DELETE' })
   },
 }
 

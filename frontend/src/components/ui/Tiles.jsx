@@ -145,22 +145,6 @@ export function Tiles({ className, tileSize = 'md' }) {
           )
         })}
       </div>
-
-      {/* Ambient glow orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-[15%] left-[20%] w-[500px] h-[500px] rounded-full blur-[120px]"
-          style={{ background: 'var(--glow-primary)' }}
-        />
-        <div
-          className="absolute bottom-[20%] right-[15%] w-[400px] h-[400px] rounded-full blur-[100px]"
-          style={{ background: 'var(--glow-secondary)' }}
-        />
-        <div
-          className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[140px]"
-          style={{ background: 'var(--glow-accent)' }}
-        />
-      </div>
     </div>
   )
 }

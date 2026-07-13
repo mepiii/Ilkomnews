@@ -39,20 +39,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
 
-    <!-- Prevent FOUC (Flash of Unstyled Content) for Dark Mode -->
-    <script>
-      (function() {
-        try {
-          var savedTheme = localStorage.getItem('ilkom-theme');
-          var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        } catch (e) {}
-      })();
+    <!-- JSON-LD structured data (static Organization schema) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "ILKOM NEWS - Fakultas Ilmu Komputer Universitas Sriwijaya",
+        "url": "https://ilkomnews.bemfasilkomunsri.org/",
+        "logo": "https://ilkomnews.bemfasilkomunsri.org/BEM.png",
+        "description": "Portal berita terkini dan galeri proyek mahasiswa Fakultas Ilmu Komputer (FASILKOM) Universitas Sriwijaya.",
+        "sameAs": []
+      }
     </script>
+
+    <!-- Prevent FOUC (Flash of Unstyled Content) for Dark Mode.
+         ponytail: externalized to drop 'unsafe-inline'; render-blocking (no defer) so it runs before paint -->
+    <script src="/fouc.js"></script>
+
+    <!-- ponytail: meta CSP for the statically-served SPA; no nonce possible on a static file.
+         localhost/127.0.0.1:8000 are dev-only (backend APP_URL in local env);
+         they never serve the prod page, so they're inert in production but
+         required for local e2e where the API answers with absolute :8000 URLs. -->
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: http://localhost:8000 http://127.0.0.1:8000; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://bemfasilkomunsri.org https://www.bemfasilkomunsri.org https://ilkomnews.bemfasilkomunsri.org; frame-src 'none'; object-src 'none'; base-uri 'self'">
 
     <!-- Structured Data -->
     <script type="application/ld+json">

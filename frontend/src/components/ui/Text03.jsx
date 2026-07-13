@@ -1,19 +1,22 @@
 import { motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
+import { headingHover } from '../../lib/animations'
 
 export function Text_03({ text, className = '', animate = true }) {
   const letters = text.split('')
-  
+  const gradient = /(section|brand)-gradient-text/.test(className)
+  const outerClass = cn('inline-block', className)
+
   if (!animate) {
     return (
-      <span className={cn('bg-gradient-to-r from-[rgb(48,11,85)] to-[rgb(122,71,166)] bg-clip-text text-transparent', className)}>
+      <span className={cn('text-accent', className)}>
         {text}
       </span>
     )
   }
 
   return (
-    <span className={cn('inline-block', className)}>
+    <span className={outerClass}>
       {letters.map((letter, i) => (
         <motion.span
           key={i}
@@ -25,9 +28,15 @@ export function Text_03({ text, className = '', animate = true }) {
             delay: i * 0.03,
             ease: [0.25, 0.46, 0.45, 0.94]
           }}
-          className="bg-gradient-to-r from-[rgb(48,11,85)] to-[rgb(122,71,166)] bg-clip-text text-transparent inline-block"
+          whileHover={headingHover}
+          className="inline-block"
         >
-          {letter === ' ' ? '\u00A0' : letter}
+          {/* Gradient clips on the INNER glyph span so bg-clip:text moves with
+              the bounce transform \u2014 a letter translated out of the parent box
+              no longer vanishes on hover. */}
+          <span className={cn('inline-block', gradient && 'section-gradient-text')}>
+            {letter === ' ' ? '\u00A0' : letter}
+          </span>
         </motion.span>
       ))}
     </span>

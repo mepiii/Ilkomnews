@@ -245,11 +245,12 @@ export default function ProjectsListPage() {
                             <img
                               src={item.thumbnail_url || item.thumbnail}
                               alt=""
-                              className="w-10 h-10 rounded-lg object-cover shrink-0 hidden sm:block"
+                              loading="lazy"
+                              className="w-16 h-10 rounded-lg object-cover shrink-0 hidden sm:block"
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display = 'flex') }}
                             />
                           ) : null}
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
+                          <div className="w-16 h-10 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0 hidden sm:flex items-center justify-center" style={{ display: (item.thumbnail_url || item.thumbnail) ? 'none' : undefined }}>
                             <FolderOpen size={16} className="text-gray-500 dark:text-gray-400" />
                           </div>
                           <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">{item.title}</span>
@@ -261,11 +262,11 @@ export default function ProjectsListPage() {
                             <img
                               src={item.creator_avatar_url || item.creator_avatar}
                               alt={item.creator_name || ''}
-                              className="w-6 h-6 rounded-full object-cover shrink-0"
+                              className="avatar-sm object-cover"
                               onError={(e) => { e.target.style.display = 'none' }}
                             />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0">
+                            <div className="avatar-sm bg-gray-200 dark:bg-[#262626] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400">
                               {(item.creator_name || item.creator || '?').charAt(0).toUpperCase()}
                             </div>
                           )}

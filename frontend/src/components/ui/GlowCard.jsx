@@ -21,12 +21,13 @@ const GlowCard = ({
   children,
   className = '',
   glowColor = 'purple',
+  glow = true,
   width,
   height,
 }) => {
   const cardRef = useRef(null)
   const isDark = useThemeMode()
-  const glow = GLOW_COLORS[glowColor] || GLOW_COLORS.purple
+  const glowTint = GLOW_COLORS[glowColor] || GLOW_COLORS.purple
   const sheen = SHEEN_COLORS[glowColor] || SHEEN_COLORS.purple
 
   const handleMouseMove = useCallback((e) => {
@@ -56,9 +57,11 @@ const GlowCard = ({
     }
   }, [handleMouseMove, handleMouseLeave])
 
-  const hoverShadow = isDark
-    ? `0 16px 42px rgba(0,0,0,0.42), 0 0 26px ${glow}`
-    : `0 12px 30px rgba(0,0,0,0.08), 0 0 18px ${glow}`
+  const hoverShadow = !glow
+    ? (isDark ? '0 20px 48px rgba(0,0,0,0.55)' : '0 16px 36px rgba(0,0,0,0.14)')
+    : (isDark
+      ? '0 20px 48px rgba(0,0,0,0.55)'
+      : `0 16px 36px rgba(0,0,0,0.14), 0 0 18px ${glowTint}`)
 
   return (
     <motion.div
@@ -76,15 +79,16 @@ const GlowCard = ({
         borderRadius: '16px',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        boxShadow: 'var(--shadow-glass)',
+        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.45)' : '0 8px 24px rgba(0,0,0,0.12)',
         willChange: 'transform',
         overflow: 'hidden',
       }}
-      className={`group ${className}`}
+      className={`group min-w-0 ${className}`}
       whileHover={{ y: -4, scale: 1.01, boxShadow: hoverShadow }}
       transition={{ type: 'spring', stiffness: 300, damping: 24, mass: 0.6 }}
     >
-      {/* Glassmorphic top highlight — subtle gradient border treatment */}
+      {/* Glassmorphic top highlight — subtle gradient border treatment (light only) */}
+      {!isDark && (
       <div
         aria-hidden="true"
         style={{
@@ -97,8 +101,10 @@ const GlowCard = ({
           zIndex: 1,
         }}
       />
+      )}
 
-      {/* Pointer-tracked sheen — appears softly on hover */}
+      {/* Pointer-tracked sheen — appears softly on hover (glow mode, light only) */}
+      {glow && !isDark && (
       <div
         aria-hidden="true"
         className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -111,6 +117,7 @@ const GlowCard = ({
           zIndex: 1,
         }}
       />
+      )}
 
       {/* Content sits above the decorative overlays */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>

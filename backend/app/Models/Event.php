@@ -33,6 +33,12 @@ class Event extends Model
         // F3: Keep knowledge embeddings fresh when source content changes.
         static::saved(function (Event $event) {
             try {
+                // Draft/unpublished events must not leak into the RAG corpus.
+                if (!$event->published) {
+                    app(\App\Services\VectorSearchService::class)
+                        ->deleteEmbeddings('event', $event->id);
+                    return;
+                }
                 $text = ($event->title ?? '') . "\n\n" . ($event->content ?? '');
                 app(\App\Services\KnowledgeIndexer::class)
                     ->indexContent('event', $event->id, $event->title ?? '', $text);

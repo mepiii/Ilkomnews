@@ -70,7 +70,9 @@ export default function NewsFormPage() {
           image: null,
           published: Boolean(item.published),
           setExpiry: Boolean(item.expires_at),
-          expires_at: item.expires_at ? item.expires_at.replace(' ', 'T').slice(0, 16) : '',
+          // datetime-local wants 'YYYY-MM-DDTHH:mm' (or :ss). Take the first
+          // 19 chars (strip any microseconds/tz suffix) and swap space→T.
+          expires_at: item.expires_at ? item.expires_at.slice(0, 19).replace(' ', 'T') : '',
         });
         
         // Handle main image preview - check both image_url and image
@@ -422,7 +424,7 @@ export default function NewsFormPage() {
               onClick={() => authorFileInputRef.current?.click()}
               className="relative cursor-pointer group"
             >
-              <input type="file" accept="image/*" ref={authorFileInputRef} onChange={handleAuthorImageChange} className="hidden" />
+              <input type="file" accept="image/*" ref={authorFileInputRef} onChange={handleAuthorImageChange} className="hidden" aria-label="Unggah foto penulis" />
               <div className={`w-20 h-20 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${
                 authorImagePreview 
                   ? 'border-green-500/50 bg-gray-50 dark:bg-[#141414]' 
@@ -487,6 +489,7 @@ export default function NewsFormPage() {
               className="hidden"
               accept="image/*"
               onChange={handleImageChange}
+              aria-label="Unggah gambar berita"
             />
             {imagePreview ? (
               <div className="relative inline-block">

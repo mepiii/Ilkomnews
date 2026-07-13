@@ -2,30 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
-use App\Models\News;
-use App\Models\Article;
-use App\Models\ProjectSubmission;
-use App\Models\ChatLog;
 use App\Models\ChatConversation;
+use App\Models\ChatLog;
 use App\Models\ChatMessage;
+use App\Models\Event;
+use App\Models\LlmProvider;
+use App\Models\News;
+use App\Models\ProjectSubmission;
 use App\Services\GeminiService;
+use App\Services\RAGPipeline;
 use App\Services\SafeUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatController extends Controller
 {
     private const MAX_INPUT_CHARS = 200;
-    private const MAX_INPUT_WORDS = 40;
-    private const MAX_OUTPUT_CHARS = 800;
+
+    private const MAX_INPUT_WORDS = 60;
+
+    // ponytail: 1500 chars (was 800). The old cap clipped Gemini's full reply
+    // even when the user's question was short — the cutoff you saw. 1500 keeps
+    // a 4-5 sentence answer intact and still fits the chat bubble comfortably.
+    private const MAX_OUTPUT_CHARS = 1500;
+
     private const MAX_OUTPUT_TOKENS = 512;
+
     private const MAX_CONTEXT_CHARS = 600;
+
     private const MAX_RETRIEVED_CHUNKS = 3;
+
     private const MAX_CONCURRENT = 20;
+
     private const MAX_MESSAGES_PER_SESSION = 20;
 
     private const STOPWORDS = [
@@ -36,6 +48,35 @@ class ChatController extends Controller
         'the', 'is', 'are', 'was', 'were', 'and', 'or', 'to', 'in', 'on', 'at',
         'of', 'for', 'with', 'by', 'a', 'an', 'it', 'what', 'how', 'when',
         'where', 'who', 'can', 'do', 'does', 'did',
+    ];
+
+    /**
+     * Canonical FAQ answers (mirror of WolfyWidget FAQ_CATEGORIES on the
+     * frontend). Used as a zero-token fast path: an exact/near match is served
+     * without ever calling the LLM, so the bot stays usable even when the
+     * Gemini free-tier quota is exhausted. Keyed by a normalized question.
+     * ponytail: keyword index built once from the map; a real vector cache is
+     * overkill for ~15 fixed questions.
+     */
+    private const FAQ = [
+        'apa itu ilkom news' => 'ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM Sriwijaya University. Platform ini menampilkan berita kampus, artikel ilmiah, dan karya proyek mahasiswa.',
+        'siapa yang mengelola ilkom news' => 'ILKOM NEWS dikelola oleh tim admin FASILKOM Unsri dengan dukungan dari mahasiswa dan dosen.',
+        'apakah ilkom news gratis' => 'Ya, semua konten di ILKOM NEWS dapat diakses secara gratis oleh mahasiswa, dosen, dan masyarakat umum.',
+        'bagaimana cara submit proyek' => 'Klik menu "Submit Proyek" di navbar, isi form lengkap dengan judul, deskripsi, kategori, tech stack, dan upload thumbnail. Setelah itu tunggu review dari admin selama 3-7 hari kerja.',
+        'siapa yang bisa submit proyek' => 'Mahasiswa aktif FASILKOM Sriwijaya University dari semua angkatan dan program studi dapat submit proyek.',
+        'apa saja kategori proyek' => 'Kategori proyek meliputi: Web Development, Mobile App, UI/UX Design, Game Development, dan AI/Machine Learning.',
+        'berapa lama proses review' => 'Proses review biasanya membutuhkan waktu 3-7 hari kerja tergantung jumlah submission yang masuk.',
+        'bagaimana jika proyek ditolak' => 'Admin akan memberikan alasan penolakan. Anda dapat memperbaiki dan mengajukan ulang proyek tersebut.',
+        'apakah proyek kelompok bisa di-submit' => 'Ya, proyek kelompok bisa di-submit dengan mencantumkan nama seluruh anggota tim.',
+        'bagaimana cara melacak proyek' => 'Gunakan halaman "Track Proyek" dengan memasukkan tracking ID yang Anda dapat saat submit. Status proyek akan ditampilkan di sana.',
+        'di mana saya mendapat tracking id' => 'Tracking ID akan ditampilkan setelah Anda berhasil submit proyek. Simpan ID tersebut untuk melacak status proyek Anda.',
+        'apa saja status proyek' => 'Status proyek: Pending (menunggu review), Accepted (diterima), Rejected (ditolak dengan alasan).',
+        'apa saja kategori berita' => 'Kategori berita meliputi: Workshop, Kompetisi, Pelatihan, dan Seminar. Setiap kategori memiliki konten relevan untuk mahasiswa.',
+        'bagaimana cara mencari berita' => 'Gunakan fitur pencarian di halaman Berita atau filter berdasarkan kategori untuk menemukan berita yang Anda cari.',
+        'apakah bisa save berita' => 'Ya, klik ikon bookmark pada berita untuk menyimpannya. Akses berita tersimpan di menu "Koleksi".',
+        'apa itu ilkom gallery' => 'Ilkom Gallery adalah galeri karya proyek mahasiswa FASILKOM yang telah disetujui oleh admin. Berisi proyek dari berbagai kategori.',
+        'bagaimana cara melihat detail proyek' => 'Klik pada kartu proyek untuk melihat detail lengkap termasuk deskripsi, tech stack, dan tim pembuat.',
+        'apakah bisa save proyek' => 'Ya, klik ikon bookmark pada proyek untuk menyimpannya ke koleksi pribadi Anda.',
     ];
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
@@ -91,7 +132,7 @@ PROMPT;
     public function chat(Request $request)
     {
         $validated = $request->validate([
-            'message' => 'required|string|max:' . self::MAX_INPUT_CHARS,
+            'message' => 'required|string|max:'.self::MAX_INPUT_CHARS,
             'session_id' => 'nullable|string|max:64',
             'device_id' => 'nullable|string|max:128',
             'model' => 'nullable|string|max:200',
@@ -103,9 +144,23 @@ PROMPT;
         $sessionId = $validated['session_id'] ?? Str::random(32);
         $userMessage = trim($validated['message']);
 
+        // Zero-token fast path: serve a known FAQ answer without calling
+        // the LLM. Keeps the bot usable even when the Gemini quota is out.
+        $faqAnswer = $this->matchFaq($userMessage);
+        if ($faqAnswer !== null) {
+            $this->logChat($sessionId, $userMessage, $faqAnswer, 'faq_hit', $ip);
+
+            return response()->json([
+                'error' => false,
+                'message' => $faqAnswer,
+                'session_id' => $sessionId,
+                'source' => 'faq',
+            ]);
+        }
+
         // Global concurrent limit (lock to prevent race conditions)
         $lock = Cache::lock('chat:global:lock', 10);
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             return response()->json([
                 'error' => true,
                 'message' => 'Server sedang sibuk. Silakan coba lagi dalam beberapa saat.',
@@ -135,17 +190,19 @@ PROMPT;
             $inputError = $this->validateInput($userMessage);
             if ($inputError) {
                 $this->logChat($sessionId, $userMessage, $inputError, 'rejected', $ip);
+
                 return response()->json([
                     'error' => false,
                     'message' => $inputError,
                     'session_id' => $sessionId,
-                ]);
+                ], 422);
             }
 
             // Topic guard
             $topicBlock = $this->topicGuard($userMessage);
             if ($topicBlock) {
                 $this->logChat($sessionId, $userMessage, $topicBlock, 'topic_rejected', $ip);
+
                 return response()->json([
                     'error' => false,
                     'message' => $topicBlock,
@@ -155,7 +212,7 @@ PROMPT;
 
             // Retrieve context (RAG)
             // RAG pipeline (vector search) with keyword LIKE fallback
-            $rag = app(\App\Services\RAGPipeline::class);
+            $rag = app(RAGPipeline::class);
             $vectorContext = $rag->retrieveOnly($userMessage);
 
             // F4: If vector retrieval is unavailable (no embedding-capable
@@ -175,22 +232,10 @@ PROMPT;
             // Always ground with the site/faculty baseline so in-scope FAQ
             // (e.g. "FASILKOM kepanjangannya apa") can be answered even when
             // the DB has no matching item.
-            $context = $this->baseContext() . ($context !== '' ? "\n\n" . $context : '');
-
-            // Zero-hallucination check
-            if (empty(trim($context))) {
-                $noResult = 'Informasi yang Anda cari tidak ditemukan di database website.';
-                $this->logChat($sessionId, $userMessage, $noResult, 'no_context', $ip);
-                return response()->json([
-                    'error' => false,
-                    'message' => $noResult,
-                    'session_id' => $sessionId,
-                    'source' => null,
-                ]);
-            }
+            $context = $this->baseContext().($context !== '' ? "\n\n".$context : '');
 
             // Build prompt with context and strict instructions
-            $systemPrompt = self::SYSTEM_PROMPT . "\n\nKONTEKS DARI DATABASE:\n{$context}\n\nPENTING: Jawab HANYA berdasarkan konteks di atas. Jika konteks tidak mengandung jawaban yang relevan, katakan persis: 'Informasi yang Anda cari tidak ditemukan di database website.' JANGAN pernah menghasilkan informasi dari pengetahuan Anda sendiri.";
+            $systemPrompt = self::SYSTEM_PROMPT."\n\nKONTEKS DARI DATABASE:\n{$context}\n\nPENTING: Jawab HANYA berdasarkan konteks di atas. Jika konteks tidak mengandung jawaban yang relevan, katakan persis: 'Informasi yang Anda cari tidak ditemukan di database website.' JANGAN pernah menghasilkan informasi dari pengetahuan Anda sendiri.";
 
             // DB-backed session management
             $conversation = ChatConversation::firstOrCreate(
@@ -222,12 +267,13 @@ PROMPT;
             $reply = null;
             $success = false;
             $lastErrorStatus = 503;
+            $noResult = 'Informasi yang Anda cari tidak ditemukan di database website.';
 
             $geminiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
-            if (!empty($geminiKey)) {
+            if (! empty($geminiKey)) {
                 try {
-                    $gemini = new \App\Services\GeminiService();
-                    $geminiPrompt = $systemPrompt . "\n\nRIWAYAT PERCAKAPAN:\n";
+                    $gemini = new GeminiService;
+                    $geminiPrompt = $systemPrompt."\n\nRIWAYAT PERCAKAPAN:\n";
                     foreach ($messages as $m) {
                         if ($m['role'] === 'system') {
                             continue;
@@ -237,24 +283,46 @@ PROMPT;
                     }
                     $geminiResult = $gemini->chat($geminiPrompt, [
                         'temperature' => 0.3,
-                        'max_tokens'  => self::MAX_OUTPUT_TOKENS,
+                        // ponytail: 400 tokens comfortably fits ≤1500 chars;
+                        // the old 160 cap truncated longer answers.
+                        'max_tokens' => 400,
                     ]);
-                    if (!empty($geminiResult['content'])) {
+                    if (! empty($geminiResult['content'])) {
                         $reply = $geminiResult['content'];
                         $success = true;
                     }
                 } catch (\Exception $e) {
-                    \Log::warning('Chatbot native Gemini failed: ' . $e->getMessage());
+                    \Log::warning('Chatbot native Gemini failed: '.$e->getMessage());
                 }
             }
 
             // --- Fallback: legacy LlmProvider table (kept for backward compatibility) ---
-            if (!$success) {
-                $providers = \App\Models\LlmProvider::where('is_active', true)
+            if (! $success) {
+                $providers = LlmProvider::where('is_active', true)
                     ->orderBy('priority', 'asc')
-                    ->get();
+                    ->get()
+                    // Skip rows whose provider_type/model_id are inconsistent
+                    // (e.g. a "gemini" row pointing at an OpenAI model). The
+                    // native GEMINI_API_KEY path above already covers Gemini,
+                    // so a misconfigured DB row here only wastes a request.
+                    ->reject(fn ($p) => strtolower((string) ($p->provider_type ?? '')) === 'gemini');
 
                 if ($providers->isEmpty()) {
+                    // No usable DB provider. If a native Gemini key was
+                    // configured, the LLM is only temporarily unavailable (e.g.
+                    // free-tier quota); degrade gracefully rather than claim
+                    // "no provider". Otherwise it's a real misconfiguration.
+                    if (! empty($geminiKey)) {
+                        $this->logChat($sessionId, $userMessage, $noResult, 'provider_down', $ip);
+
+                        return response()->json([
+                            'error' => false,
+                            'message' => 'Maaf, layanan asisten sedang tidak tersedia sementara waktu. Anda bisa menanyakannya lagi nanti, atau lihat FAQ di menu chatbot.',
+                            'session_id' => $sessionId,
+                            'source' => null,
+                        ], 503);
+                    }
+
                     return response()->json([
                         'error' => false,
                         'message' => 'Layanan chatbot sedang tidak tersedia (Tidak ada LLM Provider yang aktif).',
@@ -279,7 +347,7 @@ PROMPT;
                         });
                         if ($matched) {
                             $base = rtrim($matched->base_url, '/');
-                            $resolvedUrl = $matched->api_type === 'raw' ? $base : $base . '/chat/completions';
+                            $resolvedUrl = $matched->api_type === 'raw' ? $base : $base.'/chat/completions';
                             $resolvedModel = $reqModel;
                             $providers = collect([$matched]);
                         }
@@ -287,83 +355,85 @@ PROMPT;
                 }
 
                 foreach ($providers as $provider) {
-                // SSRF guard: never send the provider's API key to a private /
-                // internal / metadata address. base_url is admin-supplied; if it
-                // resolves to a non-public target, skip this provider entirely.
-                if (!SafeUrl::isSafe((string) $provider->base_url)) {
-                    \Log::warning("Chatbot LLM: skipping provider {$provider->name} — base_url failed SSRF safety check.");
-                    continue;
-                }
+                    // SSRF guard: never send the provider's API key to a private /
+                    // internal / metadata address. base_url is admin-supplied; if it
+                    // resolves to a non-public target, skip this provider entirely.
+                    if (! SafeUrl::isSafe((string) $provider->base_url)) {
+                        \Log::warning("Chatbot LLM: skipping provider {$provider->name} — base_url failed SSRF safety check.");
 
-                try {
-                    $payload = [];
-                    $headers = [
-                        'Authorization' => "Bearer {$provider->api_key}",
-                        'Content-Type' => 'application/json',
-                    ];
-
-                    if ($provider->provider_type === 'anthropic') {
-                        $headers['x-api-key'] = $provider->api_key;
-                        $headers['anthropic-version'] = '2023-06-01';
-                        unset($headers['Authorization']);
-
-                        $anthropicMessages = [];
-                        foreach ($messages as $m) {
-                            if ($m['role'] !== 'system') {
-                                $anthropicMessages[] = $m;
-                            }
-                        }
-
-                        $payload = [
-                            'model' => $resolvedModel ?? $provider->model_id,
-                            'max_tokens' => self::MAX_OUTPUT_TOKENS,
-                            'temperature' => 0.3,
-                            'system' => $systemPrompt,
-                            'messages' => $anthropicMessages,
-                        ];
-                    } else {
-                        // OpenAI / GitHub Models / Groq Format
-                        if (str_contains($provider->base_url, 'github.ai')) {
-                            $headers['Accept'] = 'application/vnd.github+json';
-                        }
-                        $payload = [
-                            'model' => $resolvedModel ?? $provider->model_id,
-                            'messages' => $messages,
-                            'max_tokens' => self::MAX_OUTPUT_TOKENS,
-                            'temperature' => 0.3,
-                            'top_p' => 0.8,
-                        ];
+                        continue;
                     }
 
-                    $response = Http::timeout(15)
-                        ->withHeaders($headers)
-                        ->post($resolvedUrl ?? $provider->base_url, $payload);
+                    try {
+                        $payload = [];
+                        $headers = [
+                            'Authorization' => "Bearer {$provider->api_key}",
+                            'Content-Type' => 'application/json',
+                        ];
 
-                    if ($response->successful()) {
-                        $data = $response->json();
                         if ($provider->provider_type === 'anthropic') {
-                            $reply = $data['content'][0]['text'] ?? null;
+                            $headers['x-api-key'] = $provider->api_key;
+                            $headers['anthropic-version'] = '2023-06-01';
+                            unset($headers['Authorization']);
+
+                            $anthropicMessages = [];
+                            foreach ($messages as $m) {
+                                if ($m['role'] !== 'system') {
+                                    $anthropicMessages[] = $m;
+                                }
+                            }
+
+                            $payload = [
+                                'model' => $resolvedModel ?? $provider->model_id,
+                                'max_tokens' => self::MAX_OUTPUT_TOKENS,
+                                'temperature' => 0.3,
+                                'system' => $systemPrompt,
+                                'messages' => $anthropicMessages,
+                            ];
                         } else {
-                            $reply = $data['choices'][0]['message']['content'] ?? null;
+                            // OpenAI / GitHub Models / Groq Format
+                            if (str_contains($provider->base_url, 'github.ai')) {
+                                $headers['Accept'] = 'application/vnd.github+json';
+                            }
+                            $payload = [
+                                'model' => $resolvedModel ?? $provider->model_id,
+                                'messages' => $messages,
+                                'max_tokens' => self::MAX_OUTPUT_TOKENS,
+                                'temperature' => 0.3,
+                                'top_p' => 0.8,
+                            ];
                         }
 
-                        if ($reply) {
-                            $success = true;
-                            break; // Successfully got a reply, exit fallback loop
+                        $response = Http::timeout(15)
+                            ->withHeaders($headers)
+                            ->post($resolvedUrl ?? $provider->base_url, $payload);
+
+                        if ($response->successful()) {
+                            $data = $response->json();
+                            if ($provider->provider_type === 'anthropic') {
+                                $reply = $data['content'][0]['text'] ?? null;
+                            } else {
+                                $reply = $data['choices'][0]['message']['content'] ?? null;
+                            }
+
+                            if ($reply) {
+                                $success = true;
+                                break; // Successfully got a reply, exit fallback loop
+                            }
+                        } else {
+                            $lastErrorStatus = $response->status();
+                            // If rate limited, log it and try the next provider
+                            \Log::warning("Chatbot LLM fallback: Provider {$provider->name} failed with status {$lastErrorStatus}");
                         }
-                    } else {
-                        $lastErrorStatus = $response->status();
-                        // If rate limited, log it and try the next provider
-                        \Log::warning("Chatbot LLM fallback: Provider {$provider->name} failed with status {$lastErrorStatus}");
+                    } catch (\Exception $e) {
+                        \Log::warning("Chatbot LLM fallback exception for {$provider->name}: ".$e->getMessage());
+
+                        continue; // Try next provider
                     }
-                } catch (\Exception $e) {
-                    \Log::warning("Chatbot LLM fallback exception for {$provider->name}: " . $e->getMessage());
-                    continue; // Try next provider
                 }
             }
-            }
 
-            if (!$success || !$reply) {
+            if (! $success || ! $reply) {
                 if ($lastErrorStatus === 429) {
                     return response()->json([
                         'error' => false,
@@ -371,19 +441,26 @@ PROMPT;
                         'session_id' => $sessionId,
                     ], 429);
                 }
+                // All providers failed (e.g. Gemini free-tier quota exhausted).
+                // Degrade gracefully to a site-scoped message instead of a hard
+                // error — the bot stays alive for FAQ (handled earlier).
+                $this->logChat($sessionId, $userMessage, $noResult, 'provider_down', $ip);
+
                 return response()->json([
                     'error' => false,
-                    'message' => 'Maaf, terjadi kesalahan pada semua penyedia layanan. Silakan coba lagi.',
+                    'message' => 'Maaf, layanan asisten sedang tidak tersedia sementara waktu. Anda bisa menanyakannya lagi nanti, atau lihat FAQ di menu chatbot.',
                     'session_id' => $sessionId,
+                    'source' => null,
                 ], 503);
             }
 
             // F1: Groundedness check — the answer must be grounded in the
             // retrieved context. If not, do NOT return a possibly-hallucinated
             // answer; return a site-scoped fallback instead.
-            if (!$this->isAnswerGrounded($reply, $context)) {
+            if (! $this->isAnswerGrounded($reply, $context)) {
                 $noGrounding = 'Maaf, saya hanya bisa menjawab seputar konten ILKOM News. Coba tanyakan mengenai berita, artikel, event, atau galeri proyek di website ini.';
                 $this->logChat($sessionId, $userMessage, $noGrounding, 'not_grounded', $ip);
+
                 return response()->json([
                     'error' => false,
                     'message' => $noGrounding,
@@ -394,7 +471,7 @@ PROMPT;
 
             // Output limits
             if (strlen($reply) > self::MAX_OUTPUT_CHARS) {
-                $reply = substr($reply, 0, self::MAX_OUTPUT_CHARS - 3) . '...';
+                $reply = substr($reply, 0, self::MAX_OUTPUT_CHARS - 3).'...';
             }
             // Count bullets and truncate to 5
             $bulletCount = substr_count($reply, '•') + substr_count($reply, '- ') + substr_count($reply, '* ');
@@ -405,7 +482,9 @@ PROMPT;
                 foreach ($lines as $line) {
                     if (preg_match('/^[•\-\*]\s/', trim($line))) {
                         $bullets++;
-                        if ($bullets > 5) continue;
+                        if ($bullets > 5) {
+                            continue;
+                        }
                     }
                     $output[] = $line;
                 }
@@ -432,6 +511,190 @@ PROMPT;
         }
     }
 
+    /**
+     * SSE streaming chat. Mirrors chat() up to the LLM call, but streams tokens
+     * from Gemini word-by-word. FAQ hits are answered instantly (no Gemini, no
+     * daily quota consumed). Non-FAQ questions consume one of the 5 daily AI
+     * questions per IP.
+     */
+    public function chatStream(Request $request)
+    {
+        $validated = $request->validate([
+            'message' => 'required|string|max:'.self::MAX_INPUT_CHARS,
+            'session_id' => 'nullable|string|max:64',
+            'device_id' => 'nullable|string|max:128',
+        ]);
+
+        $ip = $request->ip();
+        $userMessage = trim($validated['message']);
+
+        // Zero-token fast path: never touches Gemini, never counts against quota.
+        $faqAnswer = $this->matchFaq($userMessage);
+        if ($faqAnswer !== null) {
+            $this->logChat($sessionId = $validated['session_id'] ?? Str::random(32), $userMessage, $faqAnswer, 'faq_hit', $ip);
+
+            return $this->sseDone($faqAnswer, $sessionId, 'faq');
+        }
+
+        // System-level input guard (no Gemini call): reject > 40 words or
+        // off-topic/jailbreak attempts before any quota is spent.
+        $inputError = $this->validateInput($userMessage);
+        if ($inputError) {
+            $sessionId = $validated['session_id'] ?? Str::random(32);
+            $this->logChat($sessionId, $userMessage, $inputError, 'rejected', $ip);
+
+            return $this->sseDone($inputError, $sessionId, null);
+        }
+        $topicBlock = $this->topicGuard($userMessage);
+        if ($topicBlock) {
+            $sessionId = $validated['session_id'] ?? Str::random(32);
+            $this->logChat($sessionId, $userMessage, $topicBlock, 'topic_rejected', $ip);
+
+            return $this->sseDone($topicBlock, $sessionId, null);
+        }
+
+        // Daily AI budget (5/IP/day) — checked only for real LLM questions.
+        $dailyKey = 'chat:ai:daily:'.$ip;
+        if (RateLimiter::tooManyAttempts($dailyKey, 5)) {
+            $sessionId = $validated['session_id'] ?? Str::random(32);
+            $seconds = RateLimiter::availableIn($dailyKey);
+            $msg = 'Batas 5 pertanyaan per hari telah tercapai. Coba lagi besok!';
+
+            return $this->sseDone($msg, $sessionId, null);
+        }
+
+        $sessionId = $validated['session_id'] ?? Str::random(32);
+
+        // Build context (keyword LIKE + baseline) — no embedding/vector call.
+        $context = $this->baseContext();
+        $retrieved = $this->retrieveContext($userMessage);
+        if ($retrieved !== '') {
+            $context .= "\n\n".$retrieved;
+        }
+        if (empty(trim($retrieved))) {
+            $noResult = 'Informasi yang Anda cari tidak ditemukan di database website.';
+            $this->logChat($sessionId, $userMessage, $noResult, 'no_context', $ip);
+
+            return $this->sseDone($noResult, $sessionId, null);
+        }
+
+        $systemPrompt = self::SYSTEM_PROMPT."\n\nKONTEKS DARI DATABASE:\n{$context}\n\nPENTING: Jawab HANYA berdasarkan konteks di atas. Jika konteks tidak mengandung jawaban yang relevan, katakan persis: 'Informasi yang Anda cari tidak ditemukan di database website.' JANGAN pernah menghasilkan informasi dari pengetahuan Anda sendiri.";
+        $geminiPrompt = $systemPrompt."\n\nPengguna: ".$userMessage;
+        // ponytail: stream caps output at 160 tokens; the frontend also shows a
+        // hard 800-char ceiling. No Gemini round-trip needed to enforce either.
+        $maxTokens = 160;
+
+        $geminiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
+        if (empty($geminiKey)) {
+            return $this->sseDone('Layanan chatbot sedang tidak tersedia (Tidak ada LLM Provider yang aktif).', $sessionId, null);
+        }
+
+        // Count this against the daily quota now (one successful reach of LLM).
+        RateLimiter::hit($dailyKey, 86400);
+
+        // Save user message.
+        $conversation = ChatConversation::firstOrCreate(
+            ['session_id' => $sessionId],
+            ['visitor_id' => $validated['device_id'] ?? $ip]
+        );
+        ChatMessage::create([
+            'conversation_id' => $conversation->id,
+            'role' => 'user',
+            'content' => $userMessage,
+        ]);
+
+        return $this->streamGeminiReply($geminiPrompt, $maxTokens, $sessionId, $userMessage, $context, $ip);
+    }
+
+    /**
+     * Open an SSE response and stream Gemini tokens, enforcing output limits.
+     */
+    private function streamGeminiReply(string $prompt, int $maxTokens, string $sessionId, string $userMessage, string $context, string $ip)
+    {
+        $out = new StreamedResponse(function () use ($prompt, $maxTokens, $sessionId, $userMessage, $context, $ip) {
+            $gemini = new GeminiService;
+            $full = '';
+            $limitHit = false;
+            $failed = true;
+
+            foreach ($gemini->streamChat($prompt, ['max_tokens' => $maxTokens, 'temperature' => 0.3]) as $text) {
+                $failed = false;
+                if (! $limitHit) {
+                    $candidate = $full.$text;
+                    if (mb_strlen($candidate) > self::MAX_OUTPUT_CHARS) {
+                        $full = mb_substr($candidate, 0, self::MAX_OUTPUT_CHARS);
+                        $limitHit = true;
+                    } else {
+                        $full = $candidate;
+                    }
+                }
+                if (connection_aborted()) {
+                    return;
+                }
+                echo 'data: '.json_encode(['token' => $text])."\n\n";
+                ob_flush();
+                flush();
+            }
+
+            if ($failed) {
+                $msg = 'Maaf, layanan asisten sedang tidak tersedia sementara waktu. Anda bisa menanyakannya lagi nanti, atau lihat FAQ di menu chatbot.';
+                $this->logChat($sessionId, $userMessage, $msg, 'provider_down', $ip);
+                echo 'data: '.json_encode(['token' => $msg, 'done' => true])."\n\n";
+                ob_flush();
+                flush();
+
+                return;
+            }
+
+            // Trim to word boundary if we hit the char ceiling.
+            if ($limitHit) {
+                $trimmed = preg_replace('/\s+\S*$/u', '', $full);
+                $full = ($trimmed !== '' ? $trimmed : $full).'...';
+            }
+
+            // Groundedness guard (no Gemini call): reject likely hallucination.
+            if (! $this->isAnswerGrounded($full, $context)) {
+                $full = 'Maaf, saya hanya bisa menjawab seputar konten ILKOM News. Coba tanyakan mengenai berita, artikel, event, atau galeri proyek di website ini.';
+            }
+
+            ChatMessage::create([
+                'conversation_id' => ChatConversation::where('session_id', $sessionId)->first()?->id,
+                'role' => 'assistant',
+                'content' => $full,
+            ]);
+            $this->logChat($sessionId, $userMessage, $full, $failed ? 'provider_down' : 'success', $ip);
+
+            echo 'data: '.json_encode(['done' => true, 'message' => $full])."\n\n";
+            ob_flush();
+            flush();
+        });
+
+        $out->headers->set('Content-Type', 'text/event-stream');
+        $out->headers->set('Cache-Control', 'no-cache');
+        $out->headers->set('X-Accel-Buffering', 'no');
+        $out->headers->set('Connection', 'keep-alive');
+
+        return $out;
+    }
+
+    /**
+     * Emit a single SSE message (FAQ / rejected / graceful) and close.
+     */
+    private function sseDone(string $message, string $sessionId, ?string $source)
+    {
+        $out = new StreamedResponse(function () use ($message, $source) {
+            echo 'data: '.json_encode(['token' => $message, 'done' => true, 'source' => $source])."\n\n";
+            ob_flush();
+            flush();
+        });
+        $out->headers->set('Content-Type', 'text/event-stream');
+        $out->headers->set('Cache-Control', 'no-cache');
+        $out->headers->set('X-Accel-Buffering', 'no');
+        $out->headers->set('Connection', 'keep-alive');
+
+        return $out;
+    }
+
     private function checkRateLimits(string $ip, ?string $deviceId): ?array
     {
         $limits = [
@@ -449,6 +712,7 @@ PROMPT;
         foreach ($limits as [$key, $max, $ttl, $msg]) {
             if (RateLimiter::tooManyAttempts($key, $max)) {
                 $seconds = RateLimiter::availableIn($key);
+
                 return [
                     'error' => true,
                     'message' => str_replace('{s}', $seconds, $msg),
@@ -463,27 +727,20 @@ PROMPT;
 
     private function validateInput(string $message): ?string
     {
-        // Word count
+        // Word count — generous enough for a follow-up sentence, still caps spam.
         $words = preg_split('/\s+/', trim($message));
         if (count($words) > self::MAX_INPUT_WORDS) {
-            return 'Pesan terlalu panjang. Maksimal ' . self::MAX_INPUT_WORDS . ' kata.';
+            return 'Pesan terlalu panjang. Maksimal '.self::MAX_INPUT_WORDS.' kata.';
         }
 
-        // Multiple questions
-        $questionMarks = substr_count($message, '?');
-        if ($questionMarks > 1) {
-            return 'Mohon ajukan satu pertanyaan saja.';
-        }
-
-        // Check for multiple question words (even without ?)
-        $questionWords = preg_match_all('/\b(apa|kapan|dimana|siapa|kenapa|bagaimana|berapa|mengapa|apakah)\b/i', $message);
-        if ($questionWords > 2) {
-            return 'Mohon ajukan satu pertanyaan saja.';
-        }
-
-        // Reject large pasted content
+        // Reject large pasted content (multi-paragraph dump)
         if (preg_match('/\n{3,}/', $message)) {
             return 'Mohon kirim satu pertanyaan singkat.';
+        }
+
+        // Reject multiple questions in one message (one '?' per message).
+        if (substr_count($message, '?') > 1) {
+            return 'Mohon ajukan satu pertanyaan saja.';
         }
 
         return null;
@@ -574,11 +831,6 @@ PROMPT;
             $chunks[] = "[Berita]\n{$news}";
         }
 
-        $articles = $this->searchArticles($keywords);
-        if ($articles !== '') {
-            $chunks[] = "[Artikel]\n{$articles}";
-        }
-
         $events = $this->searchEvents($keywords);
         if ($events !== '') {
             $chunks[] = "[Event]\n{$events}";
@@ -603,7 +855,7 @@ PROMPT;
 
         // Truncate to MAX_CONTEXT_CHARS
         if (strlen($context) > self::MAX_CONTEXT_CHARS) {
-            $context = substr($context, 0, self::MAX_CONTEXT_CHARS - 3) . '...';
+            $context = substr($context, 0, self::MAX_CONTEXT_CHARS - 3).'...';
         }
 
         return $context;
@@ -668,27 +920,6 @@ PROMPT;
         return implode("\n", $lines);
     }
 
-    private function searchArticles(array $keywords): string
-    {
-        $results = Article::published()
-            ->where($this->buildLikeConditions($keywords, ['title', 'summary']))
-            ->latest('date')
-            ->limit(3)
-            ->get(['title', 'summary', 'category']);
-
-        if ($results->isEmpty()) {
-            return '';
-        }
-
-        $lines = [];
-        foreach ($results as $article) {
-            $summary = Str::limit($article->summary ?? '', 80);
-            $lines[] = "- {$article->title} [{$article->category}]: {$summary}";
-        }
-
-        return implode("\n", $lines);
-    }
-
     private function searchEvents(array $keywords): string
     {
         $results = Event::published()
@@ -712,11 +943,10 @@ PROMPT;
 
     private function searchProjects(array $keywords): string
     {
-        // H1: Expose ACCEPTED and PENDING submissions via public chat (per
-        // product decision); rejected submissions remain hidden. Drop
-        // tracking_id from the result set so the internal tracking identifier
-        // never leaks to anonymous users.
-        $results = ProjectSubmission::whereIn('status', ['accepted', 'pending'])
+        // M: Only surface ACCEPTED (moderated) submissions to anonymous chat —
+        // pending rows carry unmoderated submitter PII. Drop tracking_id from
+        // the result set so the internal tracking identifier never leaks.
+        $results = ProjectSubmission::where('status', 'accepted')
             ->where(function ($q) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $escaped = addcslashes($keyword, '%_');
@@ -737,7 +967,9 @@ PROMPT;
         foreach ($results as $project) {
             $desc = $project->description ? Str::limit($project->description, 100) : '';
             $tech = is_array($project->tech_stack) ? implode(', ', array_slice($project->tech_stack, 0, 3)) : '';
-            $status = match ($project->status) { 'accepted' => 'Diterima', 'pending' => 'Pending (menunggu review)', default => 'Ditolak' };
+            $status = match ($project->status) {
+                'accepted' => 'Diterima', 'pending' => 'Pending (menunggu review)', default => 'Ditolak'
+            };
 
             $line = "- {$project->title} [{$project->category}] - Status: {$status}";
             if ($tech) {
@@ -762,10 +994,10 @@ PROMPT;
     private function baseContext(): string
     {
         return "[Tentang ILKOM NEWS & FASILKOM]\n"
-            . "- ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM, Universitas Sriwijaya (Unsri).\n"
-            . "- FASILKOM = Fakultas Ilmu Komputer, Universitas Sriwijaya.\n"
-            . "- ILKOM = Ilmu Komputer (program studi di FASILKOM).\n"
-            . "- Konten website saat ini: Berita dan Galeri Proyek mahasiswa. (Belum ada Artikel atau Event.)";
+            ."- ILKOM NEWS adalah portal berita dan galeri proyek mahasiswa FASILKOM, Universitas Sriwijaya (Unsri).\n"
+            ."- FASILKOM = Fakultas Ilmu Komputer, Universitas Sriwijaya.\n"
+            ."- ILKOM = Ilmu Komputer (program studi di FASILKOM).\n"
+            .'- Konten website saat ini: Berita dan Galeri Proyek mahasiswa. (Belum ada Artikel atau Event.)';
     }
 
     /**
@@ -774,12 +1006,12 @@ PROMPT;
      */
     private function recentContext(): string
     {
-        $news = \App\Models\News::published()
+        $news = News::published()
             ->latest('date')
             ->limit(3)
             ->get(['title', 'summary', 'category', 'date']);
 
-        $projects = \App\Models\ProjectSubmission::where('status', 'accepted')
+        $projects = ProjectSubmission::where('status', 'accepted')
             ->latest()
             ->limit(3)
             ->get(['title', 'category', 'creator_name']);
@@ -797,7 +1029,7 @@ PROMPT;
             return '';
         }
 
-        return "[Konten Terbaru di Website]\n" . implode("\n", $lines);
+        return "[Konten Terbaru di Website]\n".implode("\n", $lines);
     }
 
     private function logChat(string $sessionId, string $userMessage, string $response, string $status, string $ip): void
@@ -811,8 +1043,62 @@ PROMPT;
                 'ip_address' => $ip,
             ]);
         } catch (\Exception $e) {
-            \Log::warning('Chat logging failed: ' . $e->getMessage());
+            \Log::warning('Chat logging failed: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Match a user message against the canonical FAQ.
+     * Token-overlap: fraction of the FAQ question's content words also present
+     * in the message. Catches reordering ("ILKOM NEWS itu apa" vs "apa itu
+     * ILKOM NEWS"). Returns the answer, or null on no match.
+     * ponytail: overlap heuristic only; enough for ~15 fixed questions.
+     */
+    private function matchFaq(string $message): ?string
+    {
+        $msgWords = $this->faqWords($message);
+        if (empty($msgWords)) {
+            return null;
+        }
+        $msgSet = array_flip($msgWords);
+
+        $bestCoverage = 0;
+        $bestAnswer = null;
+
+        foreach (self::FAQ as $question => $answer) {
+            $qWords = $this->faqWords($question);
+            if (empty($qWords)) {
+                continue;
+            }
+            $hits = 0;
+            foreach ($qWords as $w) {
+                if (isset($msgSet[$w])) {
+                    $hits++;
+                }
+            }
+            $coverage = $hits / count($qWords);
+            $msgLenRatio = count($msgWords) / count($qWords);
+            if ($coverage >= 0.6 && $msgLenRatio <= 2.5 && $coverage > $bestCoverage) {
+                $bestCoverage = $coverage;
+                $bestAnswer = $answer;
+            }
+        }
+
+        return $bestAnswer;
+    }
+
+    private function faqWords(string $text): array
+    {
+        $clean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', mb_strtolower(trim($text)));
+        $words = preg_split('/\s+/', $clean) ?: [];
+        $result = [];
+        foreach ($words as $w) {
+            if (strlen($w) >= 3 && ! in_array($w, self::STOPWORDS, true)) {
+                $result[] = $w;
+            }
+        }
+
+        return array_values(array_unique($result));
     }
 
     /**

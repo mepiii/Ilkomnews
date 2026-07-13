@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UploadQuotaService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,12 +27,12 @@ class UploadQuota extends Model
 
     public function getRemainingBytesAttribute(): int
     {
-        $limit = 5 * 1024 * 1024; // 5MB
-        return max(0, $limit - $this->bytes_used);
+        // ponytail: single source of truth lives in UploadQuotaService::DAILY_LIMIT_BYTES
+        return max(0, UploadQuotaService::DAILY_LIMIT_BYTES - $this->bytes_used);
     }
 
     public function getIsExceededAttribute(): bool
     {
-        return $this->bytes_used >= 5 * 1024 * 1024;
+        return $this->bytes_used >= UploadQuotaService::DAILY_LIMIT_BYTES;
     }
 }

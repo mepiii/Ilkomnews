@@ -108,3 +108,11 @@ db-reset.sh
 setup.sh
 AUDIT.md
 PRODUCT.md
+
+# --------------- Secrets / scratch (never commit) ---------------
+# DEFAULT_ADMINS.md holds default admin passwords; dbg.mjs carries live creds in plaintext
+DEFAULT_ADMINS.md
+**/dbg.mjs
+# Local E2E audit + MCP session artifacts (regenerable, not shipped)
+.audit-*/
+.playwright-mcp/

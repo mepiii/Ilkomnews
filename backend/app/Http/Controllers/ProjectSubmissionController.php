@@ -22,7 +22,7 @@ class ProjectSubmissionController extends Controller
             'thumbnail_url' => 'nullable|string|max:500',
             'creator_avatar' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:500',
             'creator_avatar_url' => 'nullable|string|max:500',
-            'tech_stack' => 'nullable|array|max:20',
+            'tech_stack' => 'required|array|min:1|max:20',
             'live_demo' => 'nullable|string|max:500',
             'github_link' => 'nullable|string|max:500',
             'download_link' => 'nullable|string|max:500',
@@ -46,10 +46,14 @@ class ProjectSubmissionController extends Controller
         $validated['creator_type'] = $request->input('creator_type', 'mahasiswa');
 
         // Check upload quota (5MB/day per IP)
-        $quotaService = new UploadQuotaService();
+        $quotaService = new UploadQuotaService;
         $totalBytes = 0;
-        if ($request->hasFile('thumbnail')) $totalBytes += $request->file('thumbnail')->getSize();
-        if ($request->hasFile('creator_avatar')) $totalBytes += $request->file('creator_avatar')->getSize();
+        if ($request->hasFile('thumbnail')) {
+            $totalBytes += $request->file('thumbnail')->getSize();
+        }
+        if ($request->hasFile('creator_avatar')) {
+            $totalBytes += $request->file('creator_avatar')->getSize();
+        }
         if ($request->hasFile('screenshots')) {
             foreach ($request->file('screenshots') as $screenshot) {
                 $totalBytes += $screenshot->getSize();
@@ -57,7 +61,7 @@ class ProjectSubmissionController extends Controller
         }
         if ($totalBytes > 0) {
             $quota = $quotaService->check($request, $totalBytes);
-            if (!$quota['allowed']) {
+            if (! $quota['allowed']) {
                 return response()->json([
                     'message' => 'Batas upload harian tercapai (5MB/hari). Coba lagi besok.',
                     'quota' => $quota,
@@ -66,39 +70,40 @@ class ProjectSubmissionController extends Controller
         }
 
         // Normalize thumbnail_url: add https:// if missing
-        if (!empty($validated['thumbnail_url'])) {
+        if (! empty($validated['thumbnail_url'])) {
             $url = $validated['thumbnail_url'];
-            if (!preg_match('/^https?:\/\//i', $url)) {
-                $validated['thumbnail_url'] = 'https://' . $url;
+            if (! preg_match('/^https?:\/\//i', $url)) {
+                $validated['thumbnail_url'] = 'https://'.$url;
             }
         }
 
         // Validate external image URLs (anti-SSRF / anti-abuse): only http(s)
         // schemes and non-private, non-localhost hosts are allowed.
-        if (!empty($validated['thumbnail_url']) && !$this->isSafeImageUrl($validated['thumbnail_url'])) {
+        if (! empty($validated['thumbnail_url']) && ! $this->isSafeImageUrl($validated['thumbnail_url'])) {
             return response()->json([
                 'error' => 'Invalid or unsafe thumbnail URL provided.',
             ], 422);
         }
 
-        if (!empty($validated['creator_avatar_url']) && !$this->isSafeImageUrl($validated['creator_avatar_url'])) {
+        if (! empty($validated['creator_avatar_url']) && ! $this->isSafeImageUrl($validated['creator_avatar_url'])) {
             return response()->json([
                 'error' => 'Invalid or unsafe avatar URL provided.',
             ], 422);
         }
 
         // Handle thumbnail - file upload takes precedence over URL
-        $compressor = new ImageCompressionService();
+        $compressor = new ImageCompressionService;
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $compressor->compress($request->file('thumbnail'), 'projects/thumbnails');
-        } elseif ($request->has('thumbnail_url') && !empty($request->thumbnail_url)) {
+        } elseif ($request->has('thumbnail_url') && ! empty($request->thumbnail_url)) {
             $validated['thumbnail'] = $validated['thumbnail_url'];
+            unset($validated['thumbnail_url']);
         }
 
         // Handle creator_avatar - file upload takes precedence over URL
         if ($request->hasFile('creator_avatar')) {
             $validated['creator_avatar'] = $compressor->compress($request->file('creator_avatar'), 'projects/avatars');
-        } elseif ($request->has('creator_avatar_url') && !empty($request->creator_avatar_url)) {
+        } elseif ($request->has('creator_avatar_url') && ! empty($request->creator_avatar_url)) {
             $validated['creator_avatar'] = $validated['creator_avatar_url'];
         }
         unset($validated['creator_avatar_url']);
@@ -116,7 +121,7 @@ class ProjectSubmissionController extends Controller
         if ($request->has('tech_stack')) {
             $techStack = $request->input('tech_stack');
             if (is_array($techStack)) {
-                $validated['tech_stack'] = array_values(array_filter(array_map(function($item) {
+                $validated['tech_stack'] = array_values(array_filter(array_map(function ($item) {
                     return is_string($item) ? trim($item) : strval($item);
                 }, $techStack)));
                 $validated['tech_stack'] = array_slice($validated['tech_stack'], 0, 20);
@@ -131,13 +136,14 @@ class ProjectSubmissionController extends Controller
                 foreach (array_values($collaborators) as $i => $item) {
                     if (is_string($item)) {
                         $normalized[] = trim($item);
+
                         continue;
                     }
-                    if (is_array($item) && !empty($item['name'])) {
+                    if (is_array($item) && ! empty($item['name'])) {
                         $avatar = $item['avatar'] ?? null;
                         if ($request->hasFile("collaborators.$i.avatar")) {
                             $avatar = $compressor->compress($request->file("collaborators.$i.avatar"), 'projects/avatars');
-                        } elseif (!empty($item['avatar_url'])) {
+                        } elseif (! empty($item['avatar_url'])) {
                             $avatar = $item['avatar_url'];
                         }
                         $normalized[] = [
@@ -161,16 +167,21 @@ class ProjectSubmissionController extends Controller
         // Notify the user that their project was submitted
         Notification::create([
             'tracking_id' => $submission->tracking_id,
-            'project_id'  => $submission->id,
-            'type'        => 'submitted',
-            'title'       => 'Proyek Berhasil Dikirim',
-            'message'     => 'Proyek Anda telah berhasil dikirim! ID Pelacakan: ' . $submission->tracking_id,
-            'read'        => false,
+            'project_id' => $submission->id,
+            'type' => 'submitted',
+            'title' => 'Proyek Berhasil Dikirim',
+            'message' => 'Proyek Anda telah berhasil dikirim! ID Pelacakan: '.$submission->tracking_id,
+            'read' => false,
         ]);
+
+        // Bust the cached public notification feed for this tracking id so the
+        // "Dikirim" notification appears immediately (the 5-min cache would
+        // otherwise serve the pre-submit empty result for up to 5 minutes).
+        Cache::forget("public-notifications:{$submission->tracking_id}");
 
         // Bust the cached public notification feed for this tracking id
         // (mirrors GalleryController::accept cache bust on status change).
-        \Illuminate\Support\Facades\Cache::forget("public-notifications:{$submission->tracking_id}");
+        Cache::forget("public-notifications:{$submission->tracking_id}");
 
         // Record upload quota usage
         if ($totalBytes > 0) {
@@ -203,7 +214,10 @@ class ProjectSubmissionController extends Controller
     // Public: list accepted projects
     public function publicIndex(Request $request)
     {
-        $cacheKey = 'public-projects:index:' . md5(json_encode([
+        // ponytail: file cache store ignores tags, so bust via a version counter
+        // mixed into the key. flushPublicCache() bumps the counter.
+        $version = Cache::get('public-projects:version', 1);
+        $cacheKey = "public-projects:index:{$version}:".md5(json_encode([
             'category' => $request->category,
             'search' => $request->search,
             'page' => $request->get('page', 1),
@@ -220,7 +234,7 @@ class ProjectSubmissionController extends Controller
                 $search = addcslashes($request->search, '%_');
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('creator_name', 'like', "%{$search}%");
+                        ->orWhere('creator_name', 'like', "%{$search}%");
                 });
             }
 
@@ -233,7 +247,8 @@ class ProjectSubmissionController extends Controller
     // Public: single accepted project
     public function publicShow(string $id)
     {
-        $payload = Cache::remember("public-projects:show:{$id}", 120, function () use ($id) {
+        $version = Cache::get('public-projects:version', 1);
+        $payload = Cache::remember("public-projects:show:{$version}:{$id}", 120, function () use ($id) {
             return ProjectSubmission::where('id', $id)
                 ->where('status', 'accepted')
                 ->firstOrFail()
@@ -245,14 +260,12 @@ class ProjectSubmissionController extends Controller
 
     /**
      * Bust the public project caches. Called from admin state changes.
+     * Store-independent: bumps a version counter baked into every key rather
+     * than relying on Cache::tags (which is a no-op on the file driver).
      */
     public function flushPublicCache(): void
     {
-        try {
-            Cache::tags('public-projects')->flush();
-        } catch (\Throwable $e) {
-            // cache store doesn't support tags — short TTL covers it
-        }
+        Cache::increment('public-projects:version');
     }
 
     /**
@@ -263,11 +276,11 @@ class ProjectSubmissionController extends Controller
      */
     private function isSafeImageUrl(?string $url): bool
     {
-        if (empty($url) || !is_string($url)) {
+        if (empty($url) || ! is_string($url)) {
             return false;
         }
 
-        if (!preg_match('/^https?:\/\//i', $url)) {
+        if (! preg_match('/^https?:\/\//i', $url)) {
             return false;
         }
 
@@ -291,7 +304,7 @@ class ProjectSubmissionController extends Controller
         // DNS), we do NOT reject the URL so the normal submission flow keeps
         // working. Private IP literals and localhost are still blocked above.
         $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : @gethostbyname($host);
-        if (!is_string($ip) || $ip === $host) {
+        if (! is_string($ip) || $ip === $host) {
             return true;
         }
 

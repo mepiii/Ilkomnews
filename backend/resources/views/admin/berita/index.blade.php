@@ -50,7 +50,7 @@
         <div id="pagination" class="flex justify-center"></div>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         let currentPage = 1;
 

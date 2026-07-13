@@ -1,29 +1,29 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
 import NewsExpandableCard from '../cards/NewsExpandableCard'
 import { FlowButton } from '../ui/FlowButton'
 import { GlowCard } from '../ui/GlowCard'
-import { Text_03 } from '../ui/Text03'
+import { WordBounce } from '../ui/WordBounce'
+import { SectionPill } from '../ui/SectionPill'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import { newsService } from '../../services/api'
 import { parseTags } from '../../utils/parsers'
 import { isNotExpired } from '../../utils/expiry'
 import AnimatedFilterDropdown from '../shared/AnimatedFilterDropdown'
-import { Newspaper, Tag } from 'lucide-react'
+import { Newspaper, Tag, Hammer, Trophy, GraduationCap, Presentation } from 'lucide-react'
 import { container, itemVariant } from '../../lib/animations'
 
 const TABS = [
   { id: 'all', label: 'Semua Berita', icon: Newspaper },
-  { id: 'Workshop', label: 'Workshop', icon: Newspaper },
-  { id: 'Kompetisi', label: 'Kompetisi', icon: Newspaper },
-  { id: 'Pelatihan', label: 'Pelatihan', icon: Newspaper },
-  { id: 'Seminar', label: 'Seminar', icon: Newspaper },
+  { id: 'Workshop', label: 'Workshop', icon: Hammer },
+  { id: 'Kompetisi', label: 'Kompetisi', icon: Trophy },
+  { id: 'Pelatihan', label: 'Pelatihan', icon: GraduationCap },
+  { id: 'Seminar', label: 'Seminar', icon: Presentation },
 ]
 
 const LatestNews = () => {
-  const reduce = useReducedMotion()
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [backgroundLoading, setBackgroundLoading] = useState(false)
@@ -90,33 +90,21 @@ const LatestNews = () => {
     <section className="py-20 md:py-24 relative z-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          className="text-center mb-16 group"
+          className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary mb-5">
-            <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1">
-              <span className="text-xs font-semibold uppercase tracking-wider">Berita Terkini</span>
-            </div>
-            <p className="pr-3 text-xs text-theme-muted">Terbaru</p>
-          </div>
-          <motion.h2
-            className="heading-hover text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header group-hover:scale-[1.01] transition-transform duration-200"
-            whileHover={reduce ? undefined : { scale: 1.02 }}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            <Text_03 text="Berita Terkini" className="section-gradient-text" />
-          </motion.h2>
+          <SectionPill label="Berita Terkini" caption="Terbaru" />
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-4 font-header">
+            <WordBounce text="Berita Terkini" gradient />
+          </h2>
           <div className="w-20 h-0.5 mx-auto rounded-full mb-5" style={{ background: 'linear-gradient(to right, rgb(48,11,85), rgb(122,71,166))' }} />
           <p className="text-theme-muted text-base max-w-2xl mx-auto">Informasi terbaru seputar kegiatan mahasiswa dan kampus</p>
         </motion.div>
 
-        <div className="flex justify-center mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex justify-center mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
           <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
@@ -140,7 +128,7 @@ const LatestNews = () => {
             initial="hidden"
             animate="show"
             exit={{ opacity: 0, y: -12 }}
-            className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-6 items-stretch"
+            className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch"
           >
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
@@ -164,7 +152,7 @@ const LatestNews = () => {
               </div>
             ) : (
               items.map((article, i) => (
-                <motion.div key={article.id || i} variants={itemVariant} className="h-full">
+                <motion.div key={article.id || i} variants={itemVariant} className="h-full min-w-0">
                   <GlowCard glowColor="purple" className="rounded-2xl h-full">
                     <NewsExpandableCard article={article} />
                   </GlowCard>

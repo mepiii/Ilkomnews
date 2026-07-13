@@ -61,7 +61,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
           className="absolute bottom-[-6px] h-[2px] transition-all duration-300 ease-out"
           style={{
             ...activeStyle,
-            backgroundColor: isDark ? '#fff' : '#1a1a2e',
+            backgroundColor: isDark ? 'var(--accent)' : 'var(--accent)',
           }}
         />
         <div className="relative flex space-x-[6px] items-center overflow-x-auto scrollbar-hide pb-2 -mb-2">
@@ -72,7 +72,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
               className="px-3 py-2 cursor-pointer transition-colors duration-300 h-[30px] flex-shrink-0"
               style={{
                 color: index === activeIndex
-                  ? (isDark ? '#ffffff' : '#1a1a2e')
+                  ? (isDark ? 'var(--accent)' : 'var(--accent)')
                   : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(26,26,46,0.5)'),
                 fontWeight: index === activeIndex ? 600 : 500,
               }}

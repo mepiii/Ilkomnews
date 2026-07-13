@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\News;
 use App\Models\ProjectSubmission;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class CleanOldContent extends Command
 {

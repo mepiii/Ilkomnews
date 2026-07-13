@@ -136,7 +136,7 @@ const ProjectExpandableCard = ({ project }) => {
                     <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{project.creator_name}</span>
                     <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] whitespace-nowrap shrink-0">Pembuat</span>
                     {project.creator_type === 'dosen' && (
-                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 whitespace-nowrap shrink-0">Dosen</span>
+                      <span className="tech-badge text-[9px] whitespace-nowrap shrink-0">Dosen</span>
                     )}
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const ProjectExpandableCard = ({ project }) => {
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <span className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{collabName}</span>
                       {collabType === 'dosen' && (
-                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 whitespace-nowrap shrink-0">Dosen</span>
+                        <span className="tech-badge text-[9px] whitespace-nowrap shrink-0">Dosen</span>
                       )}
                     </div>
                   </div>

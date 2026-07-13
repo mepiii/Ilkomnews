@@ -7,10 +7,13 @@ import {
 } from 'lucide-react'
 import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { motion, useReducedMotion } from 'framer-motion'
-import { formatDate, formatRelativeTime, formatNumber, generateSlug } from '../../utils/formatters'
+import { formatDate, formatRelativeTime, formatNumber } from '../../utils/formatters'
 import { useEngagement } from '../../context/EngagementContext'
 import ImageWithFallback from '../ui/ImageWithFallback'
 import { GradientPlaceholder } from '../ui/ExpandableCard'
+import NewsExpandableCard from '../cards/NewsExpandableCard'
+import { GlowCard } from '../ui/GlowCard'
+import { WordBounce } from '../ui/WordBounce'
 import { shareItem } from '../../lib/share'
 import { useToast } from '../../components/ui/Toast'
 
@@ -80,7 +83,7 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
         animate={{ opacity: 1, y: 0 }}
         className="relative rounded-2xl overflow-hidden mb-8"
       >
-        <div className="aspect-[16/7] bg-[#1A0533]">
+        <div className="aspect-[4/3] sm:aspect-[16/9] md:aspect-[16/7] bg-[#1A0533]">
           {(news.image_url || news.image) ? (
             <ImageWithFallback
               src={news.image_url || news.image}
@@ -92,7 +95,7 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
             <GradientPlaceholder themeColor="270 50% 40%" title={news.title} className="w-full h-full" />
           )}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
           <div className="flex flex-wrap gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-white" style={{ background: 'var(--accent)' }}>
@@ -104,9 +107,8 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              whileHover={reduce ? undefined : { scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-              className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight font-heading"
-            >{news.title}</motion.h1>
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight font-heading"
+            ><WordBounce text={news.title} /></motion.h1>
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
             <span className="flex items-center gap-1"><Calendar size={12} /> {formatDate(news.date)}</span>
             <span className="flex items-center gap-1"><Clock size={12} /> {formatRelativeTime(news.date)}</span>
@@ -132,12 +134,12 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-xl p-6 md:p-10" 
+        className="rounded-xl p-6 md:p-10 shadow-lg dark:shadow-black/40 ring-1 ring-[var(--border-color)]"
         style={{ background: 'var(--bg-card)' }}
       >
         {/* Summary */}
         {news.summary && (
-          <div className="mb-8 border-l-4 rounded-r-xl p-5" style={{ borderColor: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
+          <div className="mb-8 rounded-xl p-5" style={{ border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--accent) 6%, transparent)' }}>
             <p className="text-sm leading-relaxed font-medium italic" style={{ color: 'var(--text-primary)' }}>
               "{news.summary}"
             </p>
@@ -157,9 +159,10 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
         {news.author && (
           <div className="flex items-start gap-4 p-5 rounded-xl mb-6" style={{ background: 'var(--bg-secondary)' }}>
             {authorImageUrl ? (
-              <img 
-                src={authorImageUrl} 
-                alt={news.author} 
+              <img
+                src={authorImageUrl}
+                alt={news.author}
+                loading="lazy"
                 className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                 onError={(e) => {
                   e.target.style.display = 'none'
@@ -266,33 +269,16 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
           className="mt-12 mb-8"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold font-heading" style={{ color: 'var(--text-primary)' }}>Berita Terkait</h2>
+            <h2 className="text-xl font-bold font-heading"><WordBounce text="Berita Terkait" gradient /></h2>
             <Link to="/news" className="text-xs font-medium flex items-center gap-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--accent)' }}>
               Lihat Semua <ChevronRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {relatedNews.slice(0, 4).map(item => (
-              <Link 
-                key={item.id} 
-                to={`/news/${generateSlug(item.title)}`} 
-                className="group rounded-xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg" 
-                style={{ background: 'var(--bg-secondary)' }}
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <ImageWithFallback
-                    src={item.image_url || item.image || `https://picsum.photos/seed/news-${item.id}/400/300`}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    fallbackText="No Image"
-                  />
-                </div>
-                <div className="p-4">
-                  <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{formatDate(item.date)}</p>
-                  <h3 className="text-sm font-bold line-clamp-2 mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
-                  <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{item.summary || 'Tidak ada deskripsi'}</p>
-                </div>
-              </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-5 items-stretch">
+            {relatedNews.slice(0, 2).map(item => (
+              <GlowCard key={item.id} glowColor="purple" className="rounded-2xl h-full min-w-0">
+                <NewsExpandableCard article={item} />
+              </GlowCard>
             ))}
           </div>
         </motion.div>

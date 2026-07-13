@@ -53,6 +53,16 @@ export const pageItem = {
 // Spring used for modal surface transitions
 export const modalSpring = { type: 'spring', stiffness: 300, damping: 28 }
 
+// Bouncy per-letter/word hover for headings & titles.
+// Spring (single targets) so it ALWAYS returns to base on hover-out,
+// and overshoots for the springy feel. Keyframe arrays here strand the
+// element at the last keyframe when the pointer leaves mid-animation.
+export const headingHover = {
+  y: -12,
+  scale: 1.12,
+  transition: { type: 'spring', stiffness: 450, damping: 11 },
+}
+
 // Tiny, safe hook for prefers-reduced-motion.
 // Returns true when the user has requested reduced motion.
 // Guarded for SSR / non-browser environments.

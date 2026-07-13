@@ -10,9 +10,9 @@ import { PageBackground } from '../components/ui/PageBackground'
 import { API_BASE } from '../services/api'
 
 const STATUS_CONFIG = {
-  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: 'Menunggu Peninjauan' },
-  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20', label: 'Diterima' },
-  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Ditolak' },
+  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-[rgba(122,71,166,0.12)] dark:bg-[rgba(122,71,166,0.18)]', border: 'border-[rgba(122,71,166,0.35)]', label: 'Menunggu Peninjauan' },
+  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-[rgba(122,71,166,0.12)] dark:bg-[rgba(122,71,166,0.18)]', border: 'border-[rgba(122,71,166,0.35)]', label: 'Diterima' },
+  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-[rgba(122,71,166,0.12)] dark:bg-[rgba(122,71,166,0.18)]', border: 'border-[rgba(122,71,166,0.35)]', label: 'Ditolak' },
 }
 
 const TrackPage = () => {

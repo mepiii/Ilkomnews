@@ -170,7 +170,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
     function closeModal() {
         document.getElementById('add-provider-modal').classList.add('hidden');
         document.getElementById('provider-form').reset();

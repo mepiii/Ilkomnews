@@ -5,7 +5,6 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\News;
-use App\Models\Article;
 use App\Models\Event;
 use App\Models\ProjectSubmission;
 
@@ -30,7 +29,6 @@ class KnowledgeIndexer
     {
         $stats = [
             'news' => 0,
-            'articles' => 0,
             'events' => 0,
             'projects' => 0,
             'faq' => 0,
@@ -39,7 +37,7 @@ class KnowledgeIndexer
         ];
 
         // Index news
-        $news = News::where('published', true)->get();
+        $news = News::where('published', true)->select(['id', 'title', 'content'])->get();
         foreach ($news as $item) {
             $result = $this->indexContent('news', $item->id, $item->title, $item->content);
             if ($result['success']) {
@@ -50,20 +48,8 @@ class KnowledgeIndexer
             }
         }
 
-        // Index articles
-        $articles = Article::where('published', true)->get();
-        foreach ($articles as $item) {
-            $result = $this->indexContent('article', $item->id, $item->title, $item->content);
-            if ($result['success']) {
-                $stats['articles']++;
-                $stats['chunks'] += $result['chunks'];
-            } else {
-                $stats['errors'][] = $result['error'];
-            }
-        }
-
         // Index events
-        $events = Event::where('published', true)->get();
+        $events = Event::where('published', true)->select(['id', 'title', 'content'])->get();
         foreach ($events as $item) {
             $text = $item->title . "\n\n" . ($item->content ?? '');
             $result = $this->indexContent('event', $item->id, $item->title, $text);
@@ -80,8 +66,8 @@ class KnowledgeIndexer
         $faqCount = $this->indexFaq();
         $stats['faq'] += $faqCount;
 
-        // Index project submissions
-        $projects = ProjectSubmission::whereIn('status', ['accepted', 'pending'])->get();
+        // Index project submissions (accepted/moderated only — pending carry PII)
+        $projects = ProjectSubmission::where('status', 'accepted')->get();
         foreach ($projects as $item) {
             $text = $item->title . "\n\n" . $item->description . "\n\nTech: " . implode(', ', $item->tech_stack ?? []);
             $result = $this->indexContent('project', $item->id, $item->title, $text);
@@ -94,6 +80,40 @@ class KnowledgeIndexer
         }
 
         Log::info('Knowledge reindex completed', $stats);
+
+        return $stats;
+    }
+
+    /**
+     * Reindex a single content type. Honors the --type flag in KnowledgeReindex.
+     */
+    public function reindexByType(string $type): array
+    {
+        $stats = ['news' => 0, 'events' => 0, 'projects' => 0, 'faq' => 0, 'chunks' => 0, 'errors' => []];
+
+        if ($type === 'news') {
+            foreach (News::where('published', true)->get() as $item) {
+                $result = $this->indexContent('news', $item->id, $item->title, $item->content);
+                $result['success'] ? ($stats['news']++ + ($stats['chunks'] += $result['chunks'])) : ($stats['errors'][] = $result['error']);
+            }
+        }
+
+        if ($type === 'event') {
+            foreach (Event::where('published', true)->get() as $item) {
+                $text = $item->title . "\n\n" . ($item->content ?? '');
+                $result = $this->indexContent('event', $item->id, $item->title, $text);
+                $result['success'] ? ($stats['events']++ + ($stats['chunks'] += $result['chunks'])) : ($stats['errors'][] = $result['error']);
+            }
+        }
+
+        if ($type === 'project') {
+            // Only accepted (moderated) submissions feed the RAG corpus.
+            foreach (ProjectSubmission::where('status', 'accepted')->get() as $item) {
+                $text = $item->title . "\n\n" . $item->description . "\n\nTech: " . implode(', ', $item->tech_stack ?? []);
+                $result = $this->indexContent('project', $item->id, $item->title, $text);
+                $result['success'] ? ($stats['projects']++ + ($stats['chunks'] += $result['chunks'])) : ($stats['errors'][] = $result['error']);
+            }
+        }
 
         return $stats;
     }

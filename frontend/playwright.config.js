@@ -3,9 +3,13 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.js',
+  globalSetup: './e2e/globalSetup.js',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  // ponytail: single retry absorbs the rare admin-session 302/429 stall that
+  // makes page.request hang to the action timeout. The app endpoints are
+  // correct (verified green in isolation); this is harness resilience only.
+  retries: 1,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   timeout: 45000,

@@ -5,7 +5,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Api\Admin\AdminProfileController;
 use App\Http\Controllers\Api\Admin\ApiKeyController;
 use App\Models\News;
-use App\Models\Article;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
@@ -22,14 +21,13 @@ Route::get('/', function () {
 Route::get('/sitemap.xml', function () {
     $baseUrl = config('app.url');
     $news = News::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
-    $articles = Article::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
     $events = Event::where('published', true)->latest('date')->limit(50)->get(['slug', 'updated_at']);
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
     // Static pages
-    $staticPages = ['', '/news', '/articles', '/events', '/ilkomgallery', '/gallery', '/submit', '/track', '/koleksi'];
+    $staticPages = ['', '/news', '/events', '/ilkomgallery', '/gallery', '/submit', '/track', '/koleksi'];
     foreach ($staticPages as $page) {
         $xml .= '  <url>' . "\n";
         $xml .= '    <loc>' . $baseUrl . $page . '</loc>' . "\n";
@@ -57,6 +55,17 @@ Route::get('/sitemap.xml', function () {
 // ── Redirect /login to /admin/login ──
 Route::get('/login', function () {
     return redirect()->route('admin.login');
+});
+
+// ── robots.txt ──
+Route::get('/robots.txt', function () {
+    $base = rtrim(config('app.url'), '/');
+    $txt = "User-agent: *\n";
+    $txt .= "Allow: /\n";
+    $txt .= "Disallow: /admin\n";
+    $txt .= "Disallow: /portal\n";
+    $txt .= "Sitemap: {$base}/sitemap.xml\n";
+    return response($txt, 200)->header('Content-Type', 'text/plain');
 });
 
 // ── Admin Login (guest) ──

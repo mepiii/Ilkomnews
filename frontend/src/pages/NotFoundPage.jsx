@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { springPreset, useReducedMotionSafe } from '../lib/animations'
+import { WordBounce } from '../components/ui/WordBounce'
 
 export default function NotFoundPage() {
   const reduce = useReducedMotionSafe()
@@ -13,8 +14,8 @@ export default function NotFoundPage() {
     >
       <div className="max-w-md w-full text-center">
         <div className="glass-card rounded-2xl p-8 border-red-300/30">
-          <h1 className="text-6xl font-bold text-[var(--accent)] mb-2">404</h1>
-          <p className="text-lg font-semibold text-theme-primary mb-1">Halaman tidak ditemukan</p>
+          <h1 className="text-6xl font-bold text-[var(--accent)] mb-2"><WordBounce text="404" gradient /></h1>
+          <p className="text-lg font-semibold mb-1"><WordBounce text="Halaman tidak ditemukan" gradient /></p>
           <p className="text-sm text-theme-muted mb-6">
             Maaf, halaman yang Anda cari tidak tersedia atau telah dipindahkan.
           </p>

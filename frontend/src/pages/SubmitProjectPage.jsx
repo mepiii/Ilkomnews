@@ -92,7 +92,7 @@ const ProfilePhotoUpload = ({ preview, name, onFile, onClear, size = 'w-20 h-20'
       </div>
       <label className="absolute -bottom-1 -right-1 rounded-full bg-[var(--accent)] text-white border-2 border-white dark:border-neutral-900 w-8 h-8 flex items-center justify-center cursor-pointer hover:brightness-110 transition-all shadow">
         <ImageIcon size={15} />
-        <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+        <input type="file" accept="image/*" onChange={onFile} className="hidden" aria-label="Unggah foto profil" />
       </label>
     </div>
     <div className="min-w-0">
@@ -103,7 +103,7 @@ const ProfilePhotoUpload = ({ preview, name, onFile, onClear, size = 'w-20 h-20'
       <div className="flex items-center gap-3">
         <label className="text-xs font-medium text-[var(--accent)] cursor-pointer hover:underline">
           {preview ? 'Ubah Foto' : 'Unggah Foto'}
-          <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+          <input type="file" accept="image/*" onChange={onFile} className="hidden" aria-label="Unggah foto profil" />
         </label>
         {preview && (
           <button type="button" onClick={onClear} className="text-xs text-red-500 hover:underline">Hapus</button>
@@ -117,7 +117,6 @@ const SubmitProjectPage = () => {
   const [form, setForm] = useState({ ...baseForm })
   const [extraFields, setExtraFields] = useState({})
   const [techStackTags, setTechStackTags] = useState([])
-  const [techInput, setTechInput] = useState('')
   const [selectedTech, setSelectedTech] = useState('')
   const [collabName, setCollabName] = useState('')
   const [collabNim, setCollabNim] = useState('')
@@ -146,38 +145,13 @@ const SubmitProjectPage = () => {
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
   const updateExtra = (field, value) => setExtraFields(prev => ({ ...prev, [field]: value }))
 
-  // Tech stack handlers - properly rewritten
+  // Tech stack handlers - select only
   const handleTechSelect = (e) => {
     const value = e.target.value
     if (value && !techStackTags.includes(value)) {
       setTechStackTags(prev => [...prev, value])
     }
     setSelectedTech('') // Reset select after adding
-  }
-
-  const handleTechInput = (e) => {
-    const value = e.target.value
-    if (value.includes(',')) {
-      value.split(',')
-        .map(t => t.trim())
-        .filter(Boolean)
-        .forEach(token => {
-          if (!techStackTags.includes(token)) {
-            setTechStackTags(prev => [...prev, token])
-          }
-        })
-      setTechInput('')
-    } else {
-      setTechInput(value)
-    }
-  }
-
-  const addTechTag = () => {
-    const trimmed = techInput.trim()
-    if (trimmed && !techStackTags.includes(trimmed)) {
-      setTechStackTags(prev => [...prev, trimmed])
-      setTechInput('')
-    }
   }
 
   const removeTechTag = (tagToRemove) => {
@@ -235,6 +209,13 @@ const SubmitProjectPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // ponytail: single source of validation — the slide-to-submit path calls
+    // handleSubmit directly and skips the <form onSubmit> wrapper entirely.
+    if (techStackTags.length === 0) {
+      setError('Minimal satu teknologi harus ditambahkan.')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
@@ -361,7 +342,7 @@ const SubmitProjectPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to={`/track?id=${result.tracking_id}`} className="flex-1 px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl font-medium hover:brightness-110 transition flex items-center justify-center gap-2">
+              <Link to={`/track?id=${result.tracking_id}`} className="btn-glass flex-1 px-4 py-2.5 rounded-xl font-medium hover:brightness-110 transition flex items-center justify-center gap-2">
                 <ExternalLink size={16} /> Lacak Status
               </Link>
               <Link to="/" className="flex-1 px-4 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-xl font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition flex items-center justify-center">
@@ -390,7 +371,15 @@ const SubmitProjectPage = () => {
           </motion.div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); setShowConfirm(true); }} className="space-y-6">
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          if (techStackTags.length === 0) {
+            setError('Minimal satu teknologi harus ditambahkan.')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+          }
+          setShowConfirm(true)
+        }} className="space-y-6">
           {/* Category */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
@@ -404,8 +393,8 @@ const SubmitProjectPage = () => {
                   <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-all ${
                       form.category === cat.id
-                        ? 'bg-[var(--accent)] text-white shadow-md'
-                        : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700'
+                        ? 'tech-badge'
+                        : 'border border-white/20 dark:border-white/10 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }`}>
                     <Icon size={18} />
                     <span>{cat.label}</span>
@@ -433,7 +422,7 @@ const SubmitProjectPage = () => {
               <div>
                 <label className={labelCls}>Thumbnail</label>
                 <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${form.thumbnail ? 'border-green-400 bg-green-50 dark:bg-green-900/10' : 'border-neutral-300 dark:border-neutral-600 hover:border-[var(--accent)]/50'}`}>
-                  <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" aria-label="Unggah thumbnail proyek" />
                   {form.thumbnail ? (
                     <>
                       <img src={form.thumbnail} alt="Preview" loading="lazy" className="w-10 h-10 rounded-lg object-cover" />
@@ -453,14 +442,17 @@ const SubmitProjectPage = () => {
 
           {/* Tech Stack - Rewritten for reliability */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Layers size={14} className="text-neutral-400" />
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Teknologi</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+                <Layers size={14} />
+              </div>
+              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Teknologi <span className="text-red-500">*</span></h3>
             </div>
+            <p className="text-xs text-neutral-400 mb-4 ml-9">Pilih minimal satu teknologi yang dipakai dalam proyek ini.</p>
             <div className="space-y-3">
               <div className="flex gap-2">
-                <select 
-                  value={selectedTech} 
+                <select
+                  value={selectedTech}
                   onChange={handleTechSelect}
                   className={`${inputCls} flex-1`}
                 >
@@ -473,30 +465,6 @@ const SubmitProjectPage = () => {
                   }
                 </select>
               </div>
-              
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={techInput}
-                  onChange={handleTechInput}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addTechTag()
-                    }
-                  }}
-                  placeholder="Atau ketik teknologi kustom..."
-                  className={`${inputCls} flex-1`}
-                />
-                <button
-                  type="button"
-                  onClick={addTechTag}
-                  className="px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl hover:brightness-110 transition-colors flex items-center gap-1 text-sm font-medium"
-                >
-                  <Plus size={14} />
-                  Tambah
-                </button>
-              </div>
 
               {/* Selected tech stack tags */}
               {techStackTags.length > 0 && (
@@ -508,12 +476,12 @@ const SubmitProjectPage = () => {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 text-[var(--accent)] text-sm rounded-full font-medium"
+                        className="tech-badge inline-flex items-center gap-1.5 text-sm"
                       >
                         {tag}
-                        <button 
-                          type="button" 
-                          onClick={() => removeTechTag(tag)} 
+                        <button
+                          type="button"
+                          onClick={() => removeTechTag(tag)}
                           className="hover:text-red-500 transition-colors"
                         >
                           <X size={12} />
@@ -691,7 +659,7 @@ const SubmitProjectPage = () => {
                 <ProfilePhotoUpload preview={collabAvatar} name={collabName} onFile={handleCollabAvatarUpload} onClear={() => { setCollabAvatar(''); setCollabAvatarFile(null) }} />
               </div>
               <button type="button" onClick={addCollab}
-                className="px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium flex items-center gap-1.5 hover:brightness-110 transition-colors">
+                className="btn-glass px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-1.5 hover:brightness-110 transition-colors">
                 <Plus size={14} /> Tambah Kolaborator
               </button>
 

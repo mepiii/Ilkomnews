@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class GalleryController extends Controller
 {
     private const STATS_CACHE_KEY = 'admin:gallery:stats';
+
     private const STATS_CACHE_TTL = 60;
 
     /**
@@ -46,9 +47,9 @@ class GalleryController extends Controller
             $search = addcslashes($request->search, '%_');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('creator_name', 'like', "%{$search}%")
-                  ->orWhere('creator_nim', 'like', "%{$search}%")
-                  ->orWhere('tracking_id', 'like', "%{$search}%");
+                    ->orWhere('creator_name', 'like', "%{$search}%")
+                    ->orWhere('creator_nim', 'like', "%{$search}%")
+                    ->orWhere('tracking_id', 'like', "%{$search}%");
             });
         }
 
@@ -88,7 +89,7 @@ class GalleryController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        \App\Models\Notification::create([
+        Notification::create([
             'tracking_id' => $submission->tracking_id,
             'project_id' => $submission->id,
             'type' => 'accepted',
@@ -134,7 +135,7 @@ class GalleryController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        \App\Models\Notification::create([
+        Notification::create([
             'tracking_id' => $submission->tracking_id,
             'project_id' => $submission->id,
             'type' => 'rejected',
@@ -150,7 +151,7 @@ class GalleryController extends Controller
             'details' => [
                 'title' => $submission->title,
                 'tracking_id' => $submission->tracking_id,
-            'project_id' => $submission->id,
+                'project_id' => $submission->id,
                 'rejection_reason' => $rejectionReason,
             ],
             'ip_address' => request()->ip(),
@@ -199,15 +200,15 @@ class GalleryController extends Controller
         ]);
 
         // Delete associated files from storage
-        if ($submission->thumbnail && !filter_var($submission->thumbnail, FILTER_VALIDATE_URL)) {
+        if ($submission->thumbnail && ! filter_var($submission->thumbnail, FILTER_VALIDATE_URL)) {
             Storage::disk('public')->delete($submission->thumbnail);
         }
-        if ($submission->creator_avatar && !filter_var($submission->creator_avatar, FILTER_VALIDATE_URL)) {
+        if ($submission->creator_avatar && ! filter_var($submission->creator_avatar, FILTER_VALIDATE_URL)) {
             Storage::disk('public')->delete($submission->creator_avatar);
         }
         if ($submission->screenshots && is_array($submission->screenshots)) {
             foreach ($submission->screenshots as $screenshot) {
-                if (!filter_var($screenshot, FILTER_VALIDATE_URL)) {
+                if (! filter_var($screenshot, FILTER_VALIDATE_URL)) {
                     Storage::disk('public')->delete($screenshot);
                 }
             }

@@ -260,7 +260,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce }}">
     // Image preview — URL.createObjectURL is instant, no FileReader needed
     function previewImage(input) {
         const preview = document.getElementById('image-preview');

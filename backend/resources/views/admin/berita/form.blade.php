@@ -101,7 +101,7 @@
         </form>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
         const form = document.getElementById('news-form');
         const newsId = document.getElementById('news-id').value;

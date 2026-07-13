@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\News;
-use App\Models\Article;
 use App\Models\Event;
 use App\Models\Career;
 use App\Models\ProjectSubmission;
@@ -52,25 +51,6 @@ class DatabaseSeeder extends Seeder
                 'content' => $n['summary'] . "\n\nKonten lengkap akan segera tersedia. Pantau terus portal berita FASILKOM untuk informasi lebih lanjut.",
                 'date' => now()->subDays(rand(1, 30)),
                 'published' => $i !== 7,
-            ]);
-        }
-
-        // Articles
-        $articleData = [
-            ['title' => 'Tutorial Membuat REST API dengan Laravel 13', 'category' => 'Tutorial', 'author' => 'Rizky Ahmad', 'read_time' => '12 min read'],
-            ['title' => 'Panduan Lengkap Git untuk Pemula', 'category' => 'Pembelajaran', 'author' => 'Andi Pratama', 'read_time' => '8 min read'],
-            ['title' => 'Opini: Pentingnya Literasi Digital di Era AI', 'category' => 'Opini', 'author' => 'Dr. Bambang Sutedjo', 'read_time' => '6 min read'],
-            ['title' => 'Review: VS Code vs Cursor untuk AI-Assisted Coding', 'category' => 'Review', 'author' => 'Fajar Nugroho', 'read_time' => '10 min read'],
-            ['title' => 'Tips & Trik Optimasi Performance React Apps', 'category' => 'Tips & Trik', 'author' => 'Sari Dewi', 'read_time' => '7 min read'],
-            ['title' => 'Tutorial Deploy Next.js ke Vercel dan Docker', 'category' => 'Tutorial', 'author' => 'Rizky Ahmad', 'read_time' => '15 min read'],
-        ];
-
-        foreach ($articleData as $a) {
-            Article::updateOrCreate(['slug' => Str::slug($a['title'])], [
-                ...$a,
-                'summary' => "Ringkasan untuk {$a['title']}",
-                'content' => "Konten lengkap untuk {$a['title']}. Ini adalah artikel tutorial yang membahas secara mendalam topik yang dibahas.",
-                'date' => now()->subDays(rand(1, 14)),
             ]);
         }
 

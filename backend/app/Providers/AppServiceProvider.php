@@ -35,5 +35,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('chatbot', fn (Request $request) => [
             Limit::perMinute(30)->by($request->ip()),
         ]);
+
+        // ponytail: 5 AI questions per IP per day (measured against the actual
+        // Gemini call, not the FAQ fast path). 86400s = 1 day window; counted
+        // in ChatController only when a non-FAQ question reaches the LLM.
+        RateLimiter::for('chatbot-ai-daily', fn (Request $request) => [
+            Limit::perDay(5)->by($request->ip()),
+        ]);
     }
 }

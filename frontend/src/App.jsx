@@ -65,7 +65,7 @@ function AppContent() {
               <Route path="/koleksi" element={<SavedItemsPage />} />
               <Route path="/track" element={<TrackPage />} />
               <Route path={`/${ADMIN_BASE}/*`} element={<AdminRoutes />} />
-              {/* Anyone guessing /admin hits catch-all → redirect home */}
+              {/* Anyone guessing the literal /admin hits catch-all → redirect home */}
               <Route path="/admin" element={<Navigate to="/" replace />} />
               <Route path="/admin/*" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFoundPage />} />

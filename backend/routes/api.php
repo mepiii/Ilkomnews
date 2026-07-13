@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NewsController;
-use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ProjectSubmissionController;
@@ -18,18 +17,14 @@ use Illuminate\Support\Facades\Route;
 // ── Public API (rate limited) ──
 Route::middleware('throttle:api')->group(function () {
 
+    // Liveness probe for external uptime monitors (DB-only, no info leak)
+    Route::get('/ping', [Admin\HealthController::class, 'ping']);
+
     // News
     Route::get('/news', [NewsController::class, 'index']);
     Route::get('/news/latest', [NewsController::class, 'latest']);
     Route::get('/news/categories', [NewsController::class, 'categories']);
     Route::get('/news/{id}', [NewsController::class, 'show']);
-
-    // Articles
-    Route::get('/articles', [ArticleController::class, 'index']);
-    Route::get('/articles/latest', [ArticleController::class, 'latest']);
-    Route::get('/articles/categories', [ArticleController::class, 'categories']);
-    Route::get('/articles/category/{category}', [ArticleController::class, 'byCategory']);
-    Route::get('/articles/{id}', [ArticleController::class, 'show']);
 
     // Events
     Route::get('/events', [EventController::class, 'index']);
@@ -61,6 +56,8 @@ Route::middleware('throttle:api')->group(function () {
 
     // Chatbot (Wolfy) — rate limited separately
     Route::post('/chat', [ChatController::class, 'chat'])->middleware('throttle:chatbot');
+    // SSE streaming endpoint (token-by-token). FAQ hits never reach this.
+    Route::post('/chat/stream', [ChatController::class, 'chatStream'])->middleware('throttle:chatbot');
 
     // Interaction tracking (public)
     Route::get('/interactions/{type}/{id}/stats', [InteractionController::class, 'stats']);

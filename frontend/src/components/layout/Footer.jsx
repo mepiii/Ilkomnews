@@ -45,16 +45,16 @@ export default function Footer() {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: '-80px' }}
-        className="relative z-10 px-4 lg:px-8 pt-16 pb-8 lg:pt-24 lg:pb-10"
+        className="relative z-10 px-4 lg:px-8 pt-10 pb-6 lg:pt-14 lg:pb-8"
       >
         <div className="max-w-7xl mx-auto">
           {/* Top row */}
-          <motion.div variants={itemVariant} className="md:flex md:items-start md:justify-between mb-10">
+          <motion.div variants={itemVariant} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <Link to="/" className="flex items-center gap-x-3 group" aria-label="ILKOM NEWS">
-              <img src={logo} alt="ILKOM" className="h-9 w-auto group-hover:scale-105 transition-transform" />
-              <span className="font-bold text-xl font-header text-white">ILKOM NEWS</span>
+              <img src={logo} alt="ILKOM" className="h-8 w-auto group-hover:scale-105 transition-transform" />
+              <span className="font-bold text-lg font-header text-white">ILKOM NEWS</span>
             </Link>
-            <ul className="flex list-none mt-6 md:mt-0 gap-2">
+            <ul className="flex list-none gap-2">
               {socialLinks.map((link, i) => (
                 <motion.li key={i} variants={itemVariant}>
                   <motion.a
@@ -66,7 +66,7 @@ export default function Footer() {
                     transition={{ type: 'spring', stiffness: 400, damping: 12 }}
                     className={`inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-lg ${link.color}`}
                   >
-                    <link.icon className="text-sm" />
+                    <link.icon className="text-base" />
                   </motion.a>
                 </motion.li>
               ))}
@@ -74,16 +74,16 @@ export default function Footer() {
           </motion.div>
 
           {/* Contact info */}
-          <motion.div variants={itemVariant} className="mb-8">
+          <motion.div variants={itemVariant} className="mb-5">
             <ul className="flex flex-col gap-1.5">
               {contactInfo.map((c, i) => (
                 <li key={i}>
                   <a
                     href={c.href}
-                    className="inline-flex items-center gap-2 text-xs text-white/40 hover:text-white/70 hover-underline transition-colors"
+                    className="inline-flex items-center gap-2.5 text-xs text-white/45 hover:text-white/80 hover-underline transition-colors py-0.5"
                   >
-                    <c.icon size={12} />
-                    {c.label}
+                    <c.icon size={13} className="shrink-0 opacity-70" />
+                    <span className="break-all">{c.label}</span>
                   </a>
                 </li>
               ))}
@@ -91,39 +91,39 @@ export default function Footer() {
           </motion.div>
 
           {/* Divider */}
-          <motion.div variants={itemVariant} className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+          <motion.div variants={itemVariant} className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5" />
 
           {/* Bottom row */}
-          <div className="md:flex md:items-center md:justify-between gap-6">
-            <motion.div variants={itemVariant} className="text-white/30 text-sm leading-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <motion.div variants={itemVariant} className="text-white/30 text-xs leading-5">
               <div>© {new Date().getFullYear()} ILKOM NEWS</div>
-              <div className="text-white/20 text-xs mt-0.5">BEM FASILKOM UNSRI — Hak cipta dilindungi</div>
+              <div className="text-white/20 text-[11px] mt-0.5">BEM FASILKOM UNSRI — Hak cipta dilindungi</div>
             </motion.div>
 
-            <motion.nav variants={itemVariant} className="mt-4 md:mt-0">
-              <ul className="list-none flex flex-wrap gap-4">
+            <motion.nav variants={itemVariant} className="md:mt-0">
+              <ul className="list-none flex flex-col gap-0.5 md:flex-row md:items-center md:flex-wrap md:gap-4">
                 {mainLinks.map((link, i) => (
                   <li key={i}>
-                    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+                    <motion.div whileHover={{ x: 3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
                       <Link
                         to={link.href}
-                        className="text-sm text-white/50 hover:text-white hover-underline transition-colors duration-200 inline-flex items-center gap-1 group"
+                        className="text-xs text-white/55 hover:text-white hover-underline transition-colors duration-200 inline-flex items-center gap-1 group py-1 md:py-0"
                       >
                         {link.label}
-                        <ArrowUpRight size={12} className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                        <ArrowUpRight size={11} className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                       </Link>
                     </motion.div>
                   </li>
                 ))}
-                <li className="text-white/15">|</li>
+                <li className="hidden md:block text-white/15">|</li>
                 {legalLinks.map((link, i) => (
                   <li key={i}>
-                    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+                    <motion.div whileHover={{ x: 3 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
                       <a
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-white/30 hover:text-white/70 hover-underline transition-colors duration-200"
+                        className="text-xs text-white/35 hover:text-white/80 hover-underline transition-colors duration-200 py-1 md:py-0"
                       >
                         {link.label}
                       </a>
@@ -135,9 +135,9 @@ export default function Footer() {
           </div>
 
           {/* Bottom accent line */}
-          <motion.div variants={itemVariant} className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-1.5 text-white/20 text-xs">
+          <motion.div variants={itemVariant} className="mt-5 pt-4 border-t border-white/5 flex items-center justify-center gap-1.5 text-white/20 text-[11px]">
             <span>Dibuat dengan</span>
-            <Heart size={10} className="text-pink-400/60 fill-pink-400/60" />
+            <Heart size={9} className="text-pink-400/60 fill-pink-400/60" />
             <span>oleh FASILKOM UNSRI</span>
           </motion.div>
         </div>

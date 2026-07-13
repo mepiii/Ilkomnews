@@ -36,6 +36,9 @@
     --text-header-secondary: rgb(80, 30, 120);
     --tile: rgba(122, 71, 166, 0.02);
     --tile-border: rgba(122, 71, 166, 0.05);
+    --glass-highlight: rgba(255, 255, 255, 0.55);  /* inner top-edge sheen */
+    --gradient-from: rgb(48, 11, 85);
+    --gradient-to: rgb(122, 71, 166);
     --font-heading-weight: 700;
     --font-body-weight: 400;
     --transition-fast: 0.2s cubic-bezier(0.20, 1.00, 0.20, 1.00);
@@ -44,30 +47,35 @@
   }
 
   .dark {
-    /* Dark Mode — true black, subtle dark borders */
-    --bg-primary: #000000;
-    --bg-secondary: #0a0a0a;
-    --bg-card: rgba(15, 15, 15, 0.95);
-    --bg-card-hover: rgba(20, 20, 20, 0.98);
-    --text-primary: #e8e8e8;
-    --text-secondary: #a0a0a0;
-    --text-muted: #606060;
-    --border-color: rgba(125, 125, 125, 0.25);
-    --border-glass: rgba(125, 125, 125, 0.25);
-    --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --glass-blur: blur(20px) saturate(190%);
-    --glass-bg: rgba(15, 15, 15, 0.85);
-    --glass-border: rgba(125, 125, 125, 0.25);
-    --nav-bg: rgba(0, 0, 0, 0.92);
-    --nav-scrolled-bg: rgba(0, 0, 0, 0.98);
-    --footer-bg: linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%);
-    /* Dark accent: vibrant purple */
+    /* Dark Mode — near-black glass surfaces, WCAG-AA text */
+    --bg-primary: #050506;
+    --bg-secondary: #0b0b0d;
+    --bg-card: rgba(22, 22, 26, 0.72);
+    --bg-card-hover: rgba(30, 30, 36, 0.82);
+    --text-primary: #f4f4f6;
+    --text-secondary: #c4c4cc;   /* was #a0a0a0 — lifted for readability */
+    --text-muted: #9a9aa5;       /* was #606060 (failed AA) — now ~6:1 on bg */
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-glass: rgba(255, 255, 255, 0.14);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.55);
+    --glass-blur: blur(28px) saturate(180%);
+    --glass-bg: rgba(24, 24, 30, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-highlight: rgba(255, 255, 255, 0.10);  /* inner top-edge sheen */
+    --nav-bg: rgba(10, 10, 12, 0.72);
+    --nav-scrolled-bg: rgba(10, 10, 12, 0.85);
+    --footer-bg: linear-gradient(135deg, #0a0a0c 0%, #050506 50%, #000000 100%);
+    /* Dark accent: brand purple (no neon) */
     --accent: rgb(122, 71, 166);
-    --accent-hover: rgb(148, 100, 195);
-    --text-header: #e0e0e0;
-    --text-header-secondary: #b0b0b0;
-    --tile: rgba(255, 255, 255, 0.02);
-    --tile-border: rgba(122, 71, 166, 0.08);
+    --accent-hover: rgb(150, 95, 200);   /* lifted brand for hover affordance */
+    --text-header: #f4f4f6;
+    --text-header-secondary: #d6d6de;
+    --tile: rgba(122, 71, 166, 0.02);       /* barely visible, like light mode */
+    --tile-border: rgba(122, 71, 166, 0.06);
+    /* Brand gradient sweep for headings (no neon) — deep→lighter purple,
+       mirrors light mode's range so dark headings keep light/dark contrast */
+    --gradient-from: rgb(48, 11, 85);
+    --gradient-to: rgb(170, 120, 225);
   }
 
   html {
@@ -97,6 +105,14 @@
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
+  }
+
+  /* Keyboard focus ring — visible only for non-pointer nav. Theme-aware.
+     ponytail: 2px solid accent + 2px offset; swap to your outline token if added. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
   }
 
   /* body.scroll-locked applied by modals */
@@ -154,6 +170,15 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 
+  /* Admin actions: uniform active/focus feedback without per-button classes.
+     ponytail: global press feedback; swap for a shared .admin-btn class if one is added. */
+  .admin-panel button {
+    transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .admin-panel button:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+  }
+
   /* Dark mode: remove light borders on cards/tables/containers.
      Also catches arbitrary `border-[var(--accent)]/opacity` utilities, which
      Tailwind can't apply alpha to and which otherwise fall back to the
@@ -168,27 +193,31 @@
 
 @layer components {
   .glass-card {
+    position: relative;
     background: var(--bg-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
+    /* Liquid-glass: outer depth shadow + inner top-edge highlight */
+    box-shadow: var(--shadow-glass), inset 0 1px 0 0 var(--glass-highlight);
     transition: background 0.3s ease, box-shadow 0.3s ease;
   }
 
   .glass-card:hover {
     background: var(--bg-card-hover);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 0 var(--glass-highlight);
   }
 
   .dark .glass-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 var(--glass-highlight);
   }
 
   /* Accent button — picks up the CSS variable so it auto-switches per theme */
   .btn-accent {
     background-color: var(--accent);
     color: #ffffff;
+    min-height: 44px;
+    min-width: 44px;
     transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   }
   .btn-accent:hover {
@@ -212,7 +241,59 @@
   .dark .tech-badge {
     border-color: rgba(122, 71, 166, 0.45);
     background-color: rgba(122, 71, 166, 0.15);
+    color: rgb(122, 71, 166);
+  }
+
+  /* Circular avatar token — fixes "full image instead of circled profile" */
+  .avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    overflow: hidden;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+
+  /* Status pills (admin only) — solid fill, high contrast both themes */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+  }
+  .status-published { background-color: rgb(34 197 94 / 0.18); border-color: rgb(34 197 94 / 0.5); color: rgb(22 163 74); }
+  .status-pending   { background-color: rgb(234 179 8 / 0.18);  border-color: rgb(234 179 8 / 0.5);  color: rgb(161 98 7); }
+  .status-rejected  { background-color: rgb(239 68 68 / 0.18);  border-color: rgb(239 68 68 / 0.5);  color: rgb(220 38 38); }
+  .status-draft     { background-color: rgb(115 115 115 / 0.18); border-color: rgb(115 115 115 / 0.5); color: rgb(115 115 115); }
+  .dark .status-published { color: rgb(74 222 128); }
+  .dark .status-pending   { color: rgb(250 204 21); }
+  .dark .status-rejected  { color: rgb(248 113 113); }
+  .dark .status-draft     { color: rgb(163 163 163); }
+
+  /* Glassy purple button — low-opacity fill, accent color kept */
+  .btn-glass {
+    background-color: rgba(122, 71, 166, 0.12);
+    border: 1px solid rgba(122, 71, 166, 0.35);
+    color: rgb(48, 11, 85);
+    min-height: 44px;
+    min-width: 44px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .btn-glass:hover:not(:disabled) {
+    background-color: rgba(122, 71, 166, 0.22);
+  }
+  .dark .btn-glass {
+    background-color: rgba(122, 71, 166, 0.18);
+    border-color: rgba(122, 71, 166, 0.45);
     color: rgb(196, 162, 230);
+  }
+  .dark .btn-glass:hover:not(:disabled) {
+    background-color: rgba(122, 71, 166, 0.3);
   }
 
   /* Stacked avatar group */
@@ -294,12 +375,24 @@
   .font-header, .font-heading { font-family: 'RePo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; }
   .font-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400; }
 
-  /* Section gradient text */
+  /* Section gradient text — background-image longhand so .dark override
+     never resets background-clip to border-box (the dark disappear bug) */
   .section-gradient-text {
-    background: linear-gradient(135deg, var(--accent) 0%, rgb(122, 71, 166) 100%);
+    background-image: linear-gradient(135deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Hero sits on a dark image overlay in BOTH themes. Uses the brand
+     gradient vars so it follows the active theme (light = deep purple,
+     dark = lighter purple). */
+  .hero-gradient-text {
+    background-image: linear-gradient(135deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 12px rgba(122, 71, 166, 0.45));
   }
 
   /* Mobile-first responsive text scaling */
@@ -442,6 +535,7 @@
 
   /* Reduced Motion */
   @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;

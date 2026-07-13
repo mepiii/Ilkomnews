@@ -33,8 +33,12 @@ class HealthController extends Controller
         try {
             $free = disk_free_space(base_path());
             $total = disk_total_space(base_path());
-            $pct = round(($free / $total) * 100, 1);
-            $health['checks']['disk'] = ['status' => $pct > 10 ? 'ok' : 'warning', 'message' => "{$pct}% free (" . round($free / 1073741824, 1) . " GB)"];
+            if ($free === false || $total === false || $total <= 0) {
+                $health['checks']['disk'] = ['status' => 'error', 'message' => 'Cannot read disk usage'];
+            } else {
+                $pct = round(($free / $total) * 100, 1);
+                $health['checks']['disk'] = ['status' => $pct > 10 ? 'ok' : 'warning', 'message' => "{$pct}% free (" . round($free / 1073741824, 1) . " GB)"];
+            }
         } catch (\Exception $e) {
             $health['checks']['disk'] = ['status' => 'error', 'message' => 'Cannot read'];
         }
@@ -65,5 +69,17 @@ class HealthController extends Controller
         }
 
         return response()->json($health);
+    }
+
+    // Public liveness probe for external uptime monitors. DB-only, leaks nothing.
+    public function ping()
+    {
+        try {
+            DB::connection()->getPdo();
+
+            return response()->json(['status' => 'ok'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'down'], 503);
+        }
     }
 }

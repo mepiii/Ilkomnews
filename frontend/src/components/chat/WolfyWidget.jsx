@@ -86,6 +86,8 @@ const WolfyWidget = () => {
   const [sessionId] = useState(() => `wolfy_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const msgIdRef = useRef(0)
+  const mk = useCallback((role, content) => ({ id: `m_${++msgIdRef.current}`, role, content }), [])
   const visitorId = useVisitorId()
   const isDark = useThemeMode()
   const reduce = useReducedMotion()
@@ -116,7 +118,7 @@ const WolfyWidget = () => {
     const text = input.trim()
     if (!text || loading) return
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: text }])
+    setMessages(prev => [...prev, mk('user', text)])
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/chat`, {
@@ -124,12 +126,14 @@ const WolfyWidget = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, session_id: sessionId, device_id: visitorId }),
       })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message || 'Maaf, saya tidak bisa memproses pesan ini.' }])
+      const data = await res.json().catch(() => null)
+      setMessages(prev => [...prev, mk('assistant', data?.message || 'Maaf, saya tidak bisa memproses pesan ini.')])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Maaf, terjadi gangguan koneksi. Coba lagi nanti!' }])
-    } finally { setLoading(false) }
-  }, [input, loading, sessionId, visitorId])
+      setMessages(prev => [...prev, mk('assistant', 'Maaf, terjadi gangguan koneksi. Coba lagi nanti!')])
+    } finally {
+      setLoading(false)
+    }
+  }, [input, loading, sessionId, visitorId, mk])
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
@@ -167,18 +171,19 @@ const WolfyWidget = () => {
         whileTap={reduce ? undefined : { scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:shadow-[0_10px_40px_rgba(124,58,237,0.35)] transition-all duration-300",
+          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
           isOpen && "opacity-0 pointer-events-none scale-90"
         )}
-        style={{ background: `linear-gradient(135deg, ${accent}, #6d28d9)` }}
+        style={{ background: 'transparent', boxShadow: 'none', border: 'none' }}
       >
         <img 
           src="/assets/wolfy-avatar.png" 
           alt="Wolfy" 
           className="w-11 h-11 rounded-full object-cover"
-          onError={(e) => { 
+          onError={(e) => {
             e.target.style.display = 'none'
-            e.target.nextSibling.style.display = 'flex'
+            const sib = e.target.nextElementSibling
+            if (sib) sib.style.display = 'flex'
           }}
         />
         <Bot size={28} className="hidden text-white" />
@@ -198,17 +203,18 @@ const WolfyWidget = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: isDark ? darkBorder : 'rgba(0,0,0,0.06)' }}>
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-purple-500/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center">
                   <img 
                     src="/assets/wolfy-avatar.png" 
                     alt="Wolfy" 
                     className="w-full h-full object-cover"
-                    onError={(e) => { 
+                    onError={(e) => {
                       e.target.style.display = 'none'
-                      e.target.nextSibling.style.display = 'flex'
+                      const sib = e.target.nextElementSibling
+                      if (sib) sib.style.display = 'flex'
                     }}
                   />
-                  <Bot size={18} className="hidden text-purple-500" />
+                  <Bot size={18} className="hidden text-[var(--accent)]" />
                 </div>
                 <div>
                   <motion.h3 
@@ -379,9 +385,9 @@ const WolfyWidget = () => {
                         className={cn("flex gap-2", msg.role === 'user' ? "justify-end" : "justify-start")}
                       >
                         {msg.role === 'assistant' && (
-                          <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 ring-1 ring-purple-500/20 flex items-center justify-center">
-                            <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-                            <Bot size={14} className="hidden text-purple-500" />
+                          <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 flex items-center justify-center">
+                            <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
+                            <Bot size={14} className="hidden text-[var(--accent)]" />
                           </div>
                         )}
                         <motion.div
@@ -418,9 +424,9 @@ const WolfyWidget = () => {
                     ))}
                     {loading && (
                       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 justify-start">
-                        <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 ring-1 ring-purple-500/20 flex items-center justify-center">
-                          <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-                          <Bot size={14} className="hidden text-purple-500" />
+                        <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 flex items-center justify-center">
+                          <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
+                          <Bot size={14} className="hidden text-[var(--accent)]" />
                         </div>
                         <div className="px-4 py-3 rounded-2xl" style={{ background: isDark ? darkSurface : 'rgba(255,255,255,0.7)', borderRadius: '16px 16px 16px 4px' }}>
                           <div className="flex gap-1.5 items-center h-4">
@@ -437,7 +443,7 @@ const WolfyWidget = () => {
 
                   {/* Input */}
                   <div className="px-4 py-3 shrink-0" style={{ borderTop: `1px solid ${isDark ? darkBorder : 'rgba(0,0,0,0.04)'}` }}>
-                    <div className="flex gap-2 items-end">
+                    <div className="flex gap-2 items-end relative">
                       <input
                         ref={inputRef}
                         type="text"
@@ -449,6 +455,12 @@ const WolfyWidget = () => {
                         className="flex-1 px-4 py-2.5 rounded-2xl text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-purple-500/30 font-body"
                         style={{ ...glassInput, color: textPrimary }}
                       />
+                      <span
+                        className="absolute -top-4 right-1 text-[10px] tabular-nums"
+                        style={{ color: textSecondary }}
+                      >
+                        {input.length}/200
+                      </span>
                       <motion.button
                         whileHover={reduce ? undefined : { scale: 1.06 }}
                         whileTap={reduce ? undefined : { scale: 0.94 }}

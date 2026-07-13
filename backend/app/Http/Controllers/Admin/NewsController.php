@@ -56,7 +56,7 @@ class NewsController extends Controller
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:500', // 500KB max
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240', // 10MB max
             'expires_at' => 'nullable|date|after:now',
         ]);
 

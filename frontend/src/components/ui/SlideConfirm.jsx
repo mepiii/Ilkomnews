@@ -66,8 +66,7 @@ export default function SlideConfirm({
                 onClick={onConfirm}
                 disabled={loading}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50',
-                  'bg-[var(--accent)] hover:brightness-110'
+                  'btn-glass px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50'
                 )}
               >
                 {loading ? 'Mengirim...' : confirmText}

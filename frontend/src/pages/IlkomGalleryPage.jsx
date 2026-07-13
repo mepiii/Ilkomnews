@@ -6,6 +6,7 @@ import Breadcrumb from '../components/common/Breadcrumb'
 import ProjectExpandableCard from '../components/cards/ProjectExpandableCard'
 import { GlowCard } from '../components/ui/GlowCard'
 import { PageHeader } from '../components/ui/PageHeader'
+import { SectionPill } from '../components/ui/SectionPill'
 import EmptyResults from '../components/ui/EmptyResults'
 import { SmoothTabs } from '../components/ui/SmoothTabs'
 import ExpandingSearchDock from '../components/shared/ExpandingSearchDock'
@@ -120,12 +121,7 @@ const IlkomGalleryPage = () => {
           <Breadcrumb />
 
           <PageHeader
-            badge={
-              <div className="inline-flex items-center gap-2.5 border border-theme rounded-full bg-theme-secondary p-1 text-sm text-theme-primary">
-                <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1"><span className="text-xs font-semibold uppercase tracking-wider">Proyek Mahasiswa</span></div>
-                <p className="pr-3 text-xs text-theme-muted">Galeri</p>
-              </div>
-            }
+            badge={<SectionPill label="Proyek Mahasiswa" caption="Galeri" />}
             title="ILKOM Gallery"
             subtitle="Galeri karya dan proyek mahasiswa Fakultas Ilmu Komputer"
             textStyle="gradient"
@@ -154,7 +150,7 @@ const IlkomGalleryPage = () => {
 
           {/* Projects Grid — same as homepage */}
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab + currentPage + selectedTag} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }}              className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch">
+            <motion.div key={activeTab + currentPage + selectedTag} variants={container} initial="hidden" animate="show" exit={{ opacity: 0, y: -12 }}              className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <motion.div key={i} variants={itemVariant}>
@@ -175,7 +171,7 @@ const IlkomGalleryPage = () => {
                 />
               ) : (
                 paginatedItems.map((project, _i) => (
-                  <motion.div key={project.id || _i} variants={itemVariant}>
+                  <motion.div key={project.id || _i} variants={itemVariant} className="min-w-0">
                     <GlowCard glowColor="purple" className="rounded-2xl">
                       <ProjectExpandableCard project={project} />
                     </GlowCard>
@@ -187,7 +183,7 @@ const IlkomGalleryPage = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}

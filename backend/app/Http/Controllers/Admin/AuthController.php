@@ -59,8 +59,9 @@ class AuthController extends Controller
             return $this->loginError($request, $email, "Email or password incorrect. {$remaining} attempts remaining.");
         }
 
-        // Clear rate limiter on success
+        // Clear rate limiter and any lockout on success
         RateLimiter::clear($throttleKey);
+        Cache::forget($lockKey);
 
         $user = Auth::user();
 

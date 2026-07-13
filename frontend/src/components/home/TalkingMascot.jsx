@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { MessageCircle, GraduationCap, Trophy, Bot, Sparkles, BookOpen, Code2, Lightbulb, Zap, Star, Brain, Pointer, Volume2 } from 'lucide-react'
-import { Text_03 } from '../ui/Text03'
+import { WordBounce } from '../ui/WordBounce'
 import mascotIdle from '../../assets/mascot/mascot-idle.png'
 import mascotTalking from '../../assets/mascot/mascot-talking.png'
 
@@ -71,7 +71,7 @@ const TalkingMascot = () => {
             <p className="pr-3 text-xs text-theme-muted">Wolfy</p>
           </div>
           <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 font-header">
-            <Text_03 text="Sapa " className="section-gradient-text" /><Text_03 text="ArkaWolf" className="section-gradient-text" />
+            <WordBounce text="Sapa " gradient /><WordBounce text="ArkaWolf" gradient />
           </h2>
           <div className="w-12 h-[2px] bg-gray-300 dark:bg-gray-700 mx-auto rounded-full mb-4" />
           <p className="text-theme-muted text-sm lg:text-base max-w-md mx-auto">Klik ArkaWolf untuk mendengar fakta menarik tentang Fasilkom Unsri!</p>

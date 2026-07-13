@@ -58,6 +58,12 @@ export const GradientPlaceholder = React.memo(function GradientPlaceholder({
   )
 })
 
+// Compact metric label — renders nothing when count is 0.
+const Count = ({ value }) =>
+  value > 0 ? (
+    <span className="text-[11px] font-medium leading-none" style={{ color: 'var(--text-muted)' }}>{value}</span>
+  ) : null
+
 const InteractionBar = React.memo(function InteractionBar({
   compact = false,
   liked,
@@ -67,72 +73,100 @@ const InteractionBar = React.memo(function InteractionBar({
   onSave,
   onShare,
 }) {
+  // Compact footer: each action shows its count right beside the icon, and
+  // views is read-only — one icon per metric, no duplicate stat cluster.
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {counts.views > 0 && (
+          <span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+            <Eye size={14} /><span className="text-[11px] font-medium leading-none">{counts.views}</span>
+          </span>
+        )}
+        <motion.button
+          onClick={onLike}
+          aria-label={liked ? 'Unlike' : 'Like'}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors duration-150",
+            liked ? "text-red-500" : "text-[var(--text-muted)] hover:text-red-400")}
+        >
+          <Heart size={14} fill={liked ? "currentColor" : "none"} />
+          <Count value={counts.likes} />
+        </motion.button>
+        <motion.button
+          onClick={onSave}
+          aria-label={saved ? 'Unsave' : 'Save'}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors duration-150",
+            saved ? "text-blue-500" : "text-[var(--text-muted)] hover:text-blue-400")}
+        >
+          <Bookmark size={14} fill={saved ? "currentColor" : "none"} />
+          <Count value={counts.saves} />
+        </motion.button>
+        <motion.button
+          onClick={onShare}
+          aria-label="Share"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className="flex items-center gap-1 p-1.5 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
+        >
+          <Share2 size={14} />
+          <Count value={counts.shares} />
+        </motion.button>
+      </div>
+    )
+  }
+
   return (
     <div className={cn("flex items-center", compact ? "gap-1" : "gap-2")}>
-      <motion.button 
-        onClick={onLike} 
+      {counts.views > 0 && (
+        <span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+          <Eye size={compact ? 14 : 18} />
+          <span className="text-xs font-medium leading-none">{counts.views}</span>
+        </span>
+      )}
+      <motion.button
+        onClick={onLike}
         aria-label={liked ? 'Unlike' : 'Like'}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={cn("p-2 rounded-lg transition-colors duration-150",
+        className={cn("flex items-center gap-1 p-2 rounded-lg transition-colors duration-150",
           liked ? "text-red-500" : "text-[var(--text-muted)] hover:text-red-400"
         )}
       >
         <Heart size={compact ? 14 : 18} fill={liked ? "currentColor" : "none"} />
+        <Count value={counts.likes} />
       </motion.button>
-      <motion.button 
-        onClick={onSave} 
+      <motion.button
+        onClick={onSave}
         aria-label={saved ? 'Unsave' : 'Save'}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={cn("p-2 rounded-lg transition-colors duration-150",
+        className={cn("flex items-center gap-1 p-2 rounded-lg transition-colors duration-150",
           saved ? "text-blue-500" : "text-[var(--text-muted)] hover:text-blue-400"
         )}
       >
         <Bookmark size={compact ? 14 : 18} fill={saved ? "currentColor" : "none"} />
+        <Count value={counts.saves} />
       </motion.button>
-      <motion.button 
-        onClick={onShare} 
+      <motion.button
+        onClick={onShare}
         aria-label="Share"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="p-2 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
+        className="flex items-center gap-1 p-2 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
       >
         <Share2 size={compact ? 14 : 18} />
+        <Count value={counts.shares} />
       </motion.button>
-      {!compact && counts.likes > 0 && (
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-xs ml-1 font-medium"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {counts.likes}
-        </motion.span>
-      )}
-      {!compact && counts.saves > 0 && (
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-xs ml-1 font-medium"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {counts.saves}
-        </motion.span>
-      )}
-      {!compact && counts.shares > 0 && (
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-xs ml-1 font-medium"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {counts.shares}
-        </motion.span>
-      )}
     </div>
   )
 })
@@ -211,9 +245,7 @@ function ExpandableCard({
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const path = itemType === 'project'
       ? `/ilkomgallery/project/${itemId}`
-      : itemType === 'article'
-        ? `/articles/${generateSlug(title)}`
-        : `/news/${generateSlug(title)}`
+      : `/news/${generateSlug(title)}`
     const url = origin + path
     await shareItem({ title, url })
     showToast('Tautan berhasil disalin & dibagikan', { type: 'success' })
@@ -284,14 +316,16 @@ function ExpandableCard({
         onMouseMove={handleCardMouseMove}
         onClick={handleExpand}
         className={cn(
-          "group cursor-pointer overflow-hidden rounded-xl transition-all duration-300 relative",
+          "group cursor-pointer overflow-hidden rounded-xl relative flex flex-col",
+          "min-h-[24rem] sm:min-h-[28rem] h-full",
           "bg-white dark:bg-neutral-900",
           "border border-neutral-200 dark:border-[var(--border-color)]",
+          "transition-[transform,border-color,box-shadow] duration-300",
           "hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-black/50",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-900",
           className
         )}
-        style={{ width: '100%', minHeight: '420px', height: '100%', position: 'relative', '--glow-x': '50%', '--glow-y': '50%' }}
+        style={{ width: '100%', position: 'relative', '--glow-x': '50%', '--glow-y': '50%' }}
         tabIndex={0}
         role="button"
         aria-expanded={active}
@@ -306,8 +340,9 @@ function ExpandableCard({
             background: 'radial-gradient(420px circle at var(--glow-x) var(--glow-y), rgba(122,71,166,0.18), transparent 60%)',
           }}
         />
-        {/* Image - Compact aspect ratio (optional; falls back to placeholder) */}
-        <div className="relative z-[2] aspect-video overflow-hidden">
+        {/* Image - Fixed height so the card height never shifts with content
+            (optional; falls back to placeholder) */}
+        <div className="relative z-[2] h-48 shrink-0 overflow-hidden">
           {hasImage ? (
             <img
               src={src}
@@ -338,17 +373,17 @@ function ExpandableCard({
           )}
         </div>
 
-        {/* Content - Longer description area */}
-        <div className="relative z-[2] p-4 sm:p-5 min-h-[200px] sm:min-h-[220px] flex flex-col flex-grow gap-2 sm:gap-3">
+        {/* Content - Fills remaining height; clips so the card never resizes */}
+        <div className="relative z-[2] p-4 sm:p-5 flex-1 min-h-0 flex flex-col gap-2 sm:gap-3 overflow-hidden">
           <motion.h3 
             whileHover={{ scale: 1.02 }} 
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2 mb-2 break-words overflow-hidden leading-snug pr-1"
+            className="font-semibold text-base sm:text-sm text-[var(--text-primary)] line-clamp-3 sm:line-clamp-2 mb-2 break-words overflow-hidden leading-snug pr-1"
           >
             {title}
           </motion.h3>
           {description && (
-            <p className="text-xs text-[var(--text-muted)] line-clamp-5 break-words overflow-hidden leading-relaxed">
+            <p className="text-xs text-[var(--text-muted)] line-clamp-6 break-words overflow-hidden leading-relaxed">
               {description}
             </p>
           )}
@@ -363,7 +398,7 @@ function ExpandableCard({
             context state as the expanded modal, so a like here reflects there
             instantly without a reload. */}
         {itemId && (
-          <div className="relative z-[2] flex items-center justify-between gap-2 px-4 pb-4 pt-3 border-t border-[var(--border-color)]">
+          <div className="relative z-[2] flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-4 pt-3 border-t border-[var(--border-color)] sm:px-5">
             <InteractionBar
               compact
               liked={liked}
@@ -373,16 +408,6 @@ function ExpandableCard({
               onSave={handleSave}
               onShare={handleShare}
             />
-            <div
-              className="flex items-center gap-3 text-[11px] font-medium shrink-0"
-              style={{ color: 'var(--text-muted)' }}
-              aria-hidden="true"
-            >
-              {counts.views > 0 && <span className="flex items-center gap-1"><Eye size={12} />{counts.views}</span>}
-              {counts.likes > 0 && <span className="flex items-center gap-1"><Heart size={12} />{counts.likes}</span>}
-              {counts.saves > 0 && <span className="flex items-center gap-1"><Bookmark size={12} />{counts.saves}</span>}
-              {counts.shares > 0 && <span className="flex items-center gap-1"><Share2 size={12} />{counts.shares}</span>}
-            </div>
           </div>
         )}
       </motion.article>

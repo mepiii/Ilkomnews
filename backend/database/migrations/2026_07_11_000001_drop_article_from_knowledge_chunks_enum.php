@@ -5,12 +5,13 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    /**
+     * Article source type removed (whole Article feature deleted).
+     * Live table may still carry the enum value — widen only the MySQL column;
+     * SQLite stores enum as freeform TEXT so nothing to alter there.
+     */
     public function up(): void
     {
-        // SQLite stores enum columns as freeform TEXT, so 'faq' is already
-        // allowed there — only MySQL needs the column definition widened.
-        // ponytail: without the driver guard the sqlite test DB (phpunit.xml)
-        // would 0/88 the whole suite on a MySQL-only MODIFY COLUMN statement.
         if (DB::connection()->getDriverName() === 'mysql') {
             DB::statement("ALTER TABLE knowledge_chunks MODIFY COLUMN source_type ENUM('news','event','project','faq') NOT NULL");
         }
@@ -19,7 +20,7 @@ return new class extends Migration
     public function down(): void
     {
         if (DB::connection()->getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE knowledge_chunks MODIFY COLUMN source_type ENUM('news','event','project') NOT NULL");
+            DB::statement("ALTER TABLE knowledge_chunks MODIFY COLUMN source_type ENUM('news','article','event','project','faq') NOT NULL");
         }
     }
 };

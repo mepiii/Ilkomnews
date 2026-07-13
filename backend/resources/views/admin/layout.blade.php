@@ -290,7 +290,7 @@
     <div id="sidebar-overlay" class="hidden fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
 
     <!-- Sidebar Toggle Script -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -345,7 +345,7 @@
     </script>
 
     <!-- Theme Toggle Script -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('theme-toggle');
             const iconLight = document.getElementById('theme-icon-light');

@@ -13,14 +13,16 @@ class RAGPipeline
     protected int $maxContextTokens = 600;
     protected int $maxResponseTokens = 200;
 
-    // Topics to block (off-topic)
+    // Topics to block (off-topic). Keep narrow: ILKOM/tech-news topics
+    // (programming, math, health) are in-scope. Financial ADVICE is out of
+    // scope (mirrors the ChatController system prompt ban on financial advice),
+    // so trading/crypto/stock/investment prompts are rejected before the LLM.
+    // News ABOUT finance at ILKOM stays retrievable; only user advisory
+    // queries on these terms are blocked.
     protected array $blockedTopics = [
-        'programming', 'coding', 'python', 'javascript', 'java', 'code',
-        'math', 'mathematics', 'equation', 'formula', 'calculus',
         'politics', 'government', 'election', 'president',
         'religion', 'god', 'church', 'mosque', 'temple',
-        'medical', 'health', 'disease', 'symptom', 'medicine',
-        'financial', 'investment', 'stock', 'crypto', 'trading',
+        'trading', 'crypto', 'stock', 'investment', 'forex', 'bitcoin',
     ];
 
     public function __construct(
@@ -197,20 +199,30 @@ class RAGPipeline
     }
 
     /**
-     * Retrieve relevant chunks for all query variations
+     * Retrieve relevant chunks for all query variations.
+     * ponytail: embed the original query ONCE for vector search; run the
+     * SQL LIKE pass across all rewritten variants. Rewrite expand to 4–7
+     * variants, so the old per-variant embedding loop cost ~7 embedding calls
+     * per message and blew the Gemini free-tier 20 req/min budget in 2 chats.
      */
     protected function retrieve(array $queries): array
     {
         $allChunks = [];
 
-        foreach ($queries as $query) {
-            $results = $this->vectorSearch->hybridSearch($query, 3);
+        // Vector search once (single embedding call) on the first query.
+        $vectorResults = $this->vectorSearch->search($queries[0] ?? '', 3);
+        foreach ($vectorResults as $result) {
+            $id = $result['chunk']->id;
+            if (!isset($allChunks[$id])) {
+                $allChunks[$id] = $result;
+            }
+        }
 
-            foreach ($results as $result) {
-                $id = $result['chunk']->id;
-                if (!isset($allChunks[$id])) {
-                    $allChunks[$id] = $result;
-                }
+        // Keyword LIKE pass across all variants (no extra embedding calls).
+        $keywordResults = $this->vectorSearch->keywordSearch($queries, 3 * 2);
+        foreach ($keywordResults as $chunk) {
+            if (!isset($allChunks[$chunk->id])) {
+                $allChunks[$chunk->id] = ['chunk' => $chunk, 'score' => 0];
             }
         }
 
@@ -310,6 +322,12 @@ class RAGPipeline
      */
     protected function isGrounded(string $response, string $context): bool
     {
+        // An empty/placeholder response is not a real answer — never mark it grounded.
+        $response = trim($response);
+        if ($response === '') {
+            return false;
+        }
+
         // Simple check: response should have at least one word from context
         $contextWords = preg_split('/\s+/', strtolower($context));
         $responseWords = preg_split('/\s+/', strtolower($response));

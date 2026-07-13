@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Key, Eye, EyeOff, Save, CheckCircle, XCircle, Plug } from 'lucide-react'
+import { Key, Eye, EyeOff, Save, CheckCircle, XCircle, Plug, Plus, Trash2 } from 'lucide-react'
 import { adminApiKeys } from '../../services/adminApi'
 
 export default function ChatbotApiPage() {
@@ -7,8 +7,11 @@ export default function ChatbotApiPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const [apiKey, setApiKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
+  // ponytail: keys are an array of separate inputs (not one comma blob). The
+  // server masks stored keys, so a saved key can't be round-tripped back as a
+  // value — each row is (re)typed fully; existing keys show as masked chips.
+  const [keys, setKeys] = useState([''])
+  const [showKeys, setShowKeys] = useState({})
   const [model, setModel] = useState('gemini-2.5-flash')
 
   const [saving, setSaving] = useState(false)
@@ -41,10 +44,16 @@ export default function ChatbotApiPage() {
     setSaving(true)
     setSaveMsg(null)
     setError(null)
+    const validKeys = keys.map(k => k.trim()).filter(Boolean)
+    if (validKeys.length === 0) {
+      setSaveMsg({ success: false, message: 'Masukkan minimal satu kunci API.' })
+      setSaving(false)
+      return
+    }
     try {
-      await adminApiKeys.updateGemini({ api_key: apiKey, chat_model: model })
+      await adminApiKeys.updateGemini({ api_key: validKeys.join(','), chat_model: model })
       setSaveMsg({ success: true, message: 'Kunci API Gemini berhasil disimpan.' })
-      setApiKey('')
+      setKeys([''])
       await fetchStatus()
     } catch (err) {
       setSaveMsg({ success: false, message: err.message || 'Gagal menyimpan kunci API.' })
@@ -52,6 +61,11 @@ export default function ChatbotApiPage() {
       setSaving(false)
     }
   }
+
+  const setKeyAt = (i, val) => setKeys(prev => prev.map((k, idx) => idx === i ? val : k))
+  const addKeyRow = () => setKeys(prev => [...prev, ''])
+  const removeKeyRow = (i) => setKeys(prev => prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [''])
+  const toggleKeyRow = (i) => setShowKeys(prev => ({ ...prev, [i]: !prev[i] }))
 
   const handleTest = async () => {
     setTesting(true)
@@ -109,6 +123,11 @@ export default function ChatbotApiPage() {
                     {status.key_masked}
                   </span>
                 )}
+                {status?.key_count > 1 && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
+                    {status.key_count} kunci aktif
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -123,26 +142,65 @@ export default function ChatbotApiPage() {
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Kunci API Gemini</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  required
-                  type={showKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Masukkan Gemini API Key (mis. AIza...)"
-                  className="w-full px-3 py-2 pr-10 bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-gray-900 dark:border-white font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKey((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1"
-                  aria-label={showKey ? 'Sembunyikan kunci' : 'Tampilkan kunci'}
-                >
-                  {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+
+            {/* Existing saved keys (masked, read-only — re-type in a row to change). */}
+            {status?.keys_masked?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {status.keys_masked.map((masked, i) => (
+                  <span key={i} className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-[#141414] px-2 py-1 rounded border border-gray-200 dark:border-neutral-800">
+                    {masked}
+                  </span>
+                ))}
               </div>
+            )}
+
+            {/* One editable input per key. */}
+            <div className="space-y-2">
+              {keys.map((key, i) => (
+                <div key={i} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showKeys[i] ? 'text' : 'password'}
+                      value={key}
+                      onChange={(e) => setKeyAt(i, e.target.value)}
+                      placeholder={`AIza... (kunci ${i + 1})`}
+                      className="w-full px-3 py-2 pr-10 bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-neutral-800 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-gray-900 dark:border-white font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleKeyRow(i)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1"
+                      aria-label={showKeys[i] ? 'Sembunyikan kunci' : 'Tampilkan kunci'}
+                    >
+                      {showKeys[i] ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {keys.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeKeyRow(i)}
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                      aria-label={`Hapus kunci ${i + 1}`}
+                      title="Hapus kunci"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
+
+            <button
+              type="button"
+              onClick={addKeyRow}
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition"
+            >
+              <Plus size={14} /> Tambah Kunci Lain
+            </button>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Tiap kunci diisi pada kotaknya sendiri. Sistem akan bergiliran (rotasi) antar kunci untuk menghindari batas kuota harian tiap kunci. Kunci tersimpan ditampilkan tersembunyi — untuk mengubahnya, ketik ulang nilai penuh pada kotak di atas.
+            </p>
           </div>
 
           <div>
@@ -172,7 +230,7 @@ export default function ChatbotApiPage() {
           <div className="flex flex-wrap gap-3 pt-2">
             <button
               type="submit"
-              disabled={saving || !apiKey}
+              disabled={saving || !keys.some(k => k.trim())}
               className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (

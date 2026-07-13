@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\KnowledgeIndexer;
+use App\Services\VectorSearchService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +13,7 @@ use Illuminate\Support\Str;
 class ProjectSubmission extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'tracking_id', 'status', 'title', 'category', 'description',
         'thumbnail', 'tech_stack', 'live_demo', 'github_link',
@@ -41,66 +44,78 @@ class ProjectSubmission extends Model
         // their embeddings removed.
         static::saved(function (ProjectSubmission $submission) {
             try {
-                if (!in_array($submission->status, ['accepted', 'pending'], true)) {
-                    app(\App\Services\VectorSearchService::class)
+                if (! in_array($submission->status, ['accepted', 'pending'], true)) {
+                    app(VectorSearchService::class)
                         ->deleteEmbeddings('project', $submission->id);
+
                     return;
                 }
 
-                $text = ($submission->title ?? '') . "\n\n"
-                    . ($submission->description ?? '') . "\n\nTech: "
-                    . implode(', ', $submission->tech_stack ?? []);
+                $text = ($submission->title ?? '')."\n\n"
+                    .($submission->description ?? '')."\n\nTech: "
+                    .implode(', ', $submission->tech_stack ?? []);
 
-                app(\App\Services\KnowledgeIndexer::class)
+                app(KnowledgeIndexer::class)
                     ->indexContent('project', $submission->id, $submission->title ?? '', $text);
             } catch (\Throwable $e) {
-                \Log::warning('Failed to reindex project submission embedding: ' . $e->getMessage());
+                \Log::warning('Failed to reindex project submission embedding: '.$e->getMessage());
             }
         });
 
         static::deleted(function (ProjectSubmission $submission) {
             try {
-                app(\App\Services\VectorSearchService::class)
+                app(VectorSearchService::class)
                     ->deleteEmbeddings('project', $submission->id);
             } catch (\Throwable $e) {
-                \Log::warning('Failed to delete project submission embedding: ' . $e->getMessage());
+                \Log::warning('Failed to delete project submission embedding: '.$e->getMessage());
             }
         });
     }
 
     public function getCreatorAvatarUrlAttribute(): ?string
     {
-        if (!$this->creator_avatar) return null;
+        if (! $this->creator_avatar) {
+            return null;
+        }
         if (filter_var($this->creator_avatar, FILTER_VALIDATE_URL)) {
             return $this->creator_avatar;
         }
-        return asset('storage/' . $this->creator_avatar);
+
+        return asset('storage/'.$this->creator_avatar);
     }
 
     public function getThumbnailUrlAttribute(): ?string
     {
-        if (!$this->thumbnail) return null;
+        if (! $this->thumbnail) {
+            return null;
+        }
         // If thumbnail is already a URL, return as-is
         if (filter_var($this->thumbnail, FILTER_VALIDATE_URL)) {
             return $this->thumbnail;
         }
+
         // Otherwise treat as file path
-        return asset('storage/' . $this->thumbnail);
+        return asset('storage/'.$this->thumbnail);
     }
 
     public function getScreenshotsUrlsAttribute(): array
     {
-        if (!$this->screenshots) return [];
-        return array_map(fn($path) => asset('storage/' . $path), $this->screenshots);
+        if (! $this->screenshots) {
+            return [];
+        }
+
+        return array_map(fn ($path) => asset('storage/'.$path), $this->screenshots);
     }
 
     public function getCollaboratorsAttribute($value): array
     {
         $collabs = is_array($value) ? $value : (json_decode($value, true) ?: []);
+
         return array_map(function ($c) {
-            if (is_array($c) && !empty($c['avatar']) && is_string($c['avatar']) && !filter_var($c['avatar'], FILTER_VALIDATE_URL)) {
-                $c['avatar'] = asset('storage/' . $c['avatar']);
+            if (is_array($c) && ! empty($c['avatar']) && is_string($c['avatar']) && ! filter_var($c['avatar'], FILTER_VALIDATE_URL)) {
+                $c['avatar'] = asset('storage/'.$c['avatar']);
             }
+
             return $c;
         }, $collabs);
     }
@@ -110,7 +125,18 @@ class ProjectSubmission extends Model
         return $this->hasMany(Notification::class, 'project_id');
     }
 
-    public function scopePending($query) { return $query->where('status', 'pending'); }
-    public function scopeAccepted($query) { return $query->where('status', 'accepted'); }
-    public function scopeRejected($query) { return $query->where('status', 'rejected'); }
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeAccepted($query)
+    {
+        return $query->where('status', 'accepted');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
 }

@@ -201,6 +201,9 @@ class InteractionController extends Controller
      */
     private function resolveVisitorId(): string
     {
-        return (string) (request('visitor_id') ?? request()->header('X-Visitor-Id') ?? 'anon');
+        // ponytail: empty string must be anonymous too — otherwise distinct
+        // visitors with a blank id merge into one real key.
+        $id = (string) (request('visitor_id') ?? request()->header('X-Visitor-Id') ?? 'anon');
+        return $id === '' ? 'anon' : $id;
     }
 }

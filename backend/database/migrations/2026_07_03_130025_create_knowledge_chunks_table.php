@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('knowledge_chunks', function (Blueprint $table) {
             $table->id();
-            $table->enum('source_type', ['news', 'article', 'event', 'project']);
+            $table->enum('source_type', ['news', 'event', 'project']);
             $table->unsignedBigInteger('source_id');
             $table->text('chunk_text');
             $table->text('summary')->nullable();

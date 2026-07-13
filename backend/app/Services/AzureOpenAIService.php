@@ -106,8 +106,15 @@ class AzureOpenAIService
 
             if ($response->successful()) {
                 $data = $response->json();
+                $embedding = $data['data'][0]['embedding'] ?? null;
+                // ponytail: never persist an empty vector — cosine norm 0 would
+                // silently no-match. Surface the failure so the caller can skip.
+                if (empty($embedding)) {
+                    Log::error('Azure embeddings returned empty vector');
+                    return null;
+                }
                 return [
-                    'embedding' => $data['data'][0]['embedding'] ?? [],
+                    'embedding' => $embedding,
                     'tokens' => $data['usage']['total_tokens'] ?? 0,
                     'model' => $this->embeddingDeployment,
                 ];

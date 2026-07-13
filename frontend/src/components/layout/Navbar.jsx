@@ -35,6 +35,16 @@ const LampNavbar = () => {
   const [hovered, setHovered] = useState(null)
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const onChange = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   useEffect(() => {
     const current = navItems.find(item => item.path === location.pathname)
@@ -69,14 +79,16 @@ const LampNavbar = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: -100, opacity: 0 }}
+          initial={isMobile ? { y: -20, opacity: 0 } : { y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4"
+          exit={isMobile ? { y: -20, opacity: 0 } : { y: -100, opacity: 0 }}
+          transition={isMobile
+            ? { duration: 0.3, ease: 'easeOut' }
+            : { type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed top-0 left-0 right-0 z-50 flex justify-center px-5 pt-4 md:px-6"
         >
           {/* Desktop — sleek compact navbar */}
-          <div className="hidden md:flex items-center justify-center gap-1 bg-white/80 dark:bg-black/80 backdrop-blur-xl py-2 px-2 rounded-full border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)]">
+          <div className="hidden md:flex items-center justify-center gap-1 bg-white dark:bg-neutral-900 backdrop-blur-xl py-2 px-2 rounded-full border border-black/[0.06] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
             <Link to="/" className="flex items-center gap-2 px-2.5 py-1.5 mr-0.5 shrink-0 group" onClick={() => setActiveTab('Beranda')}>
               <motion.img 
                 src={logo} 
@@ -160,7 +172,7 @@ const LampNavbar = () => {
                           key={item.name} 
                           to={item.path}
                           onClick={() => { setActiveTab('Aktivitas'); setDropdownOpen(false) }}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
                         >
                           <Icon size={16} />
                           <span>{item.name}</span>
@@ -205,7 +217,7 @@ const LampNavbar = () => {
                           target="_blank" 
                           rel="noopener noreferrer"
                           onClick={() => setBemDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
                         >
                           <Icon size={16} />
                           <span>{app.name}</span>
@@ -225,7 +237,7 @@ const LampNavbar = () => {
           </div>
 
           {/* Mobile — compact navbar */}
-          <div className="md:hidden flex items-center justify-between w-full bg-white/80 dark:bg-black/80 backdrop-blur-xl py-2.5 px-4 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)]">
+          <div className="md:hidden flex items-center justify-between w-full bg-white dark:bg-neutral-900 backdrop-blur-xl py-2.5 px-4 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
             <Link to="/" className="flex items-center gap-2 shrink-0 group">
               <motion.img 
                 src={logo} 
@@ -259,7 +271,7 @@ const LampNavbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="md:hidden absolute top-full left-4 right-4 mt-2 bg-white dark:bg-neutral-900 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-2xl overflow-hidden p-1.5"
+              className="md:hidden absolute top-full left-5 right-5 mt-2 bg-white dark:bg-neutral-900 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-2xl overflow-hidden p-1.5"
             >
               {navItems.map((item, idx) => {
                 const Icon = item.icon
@@ -271,7 +283,7 @@ const LampNavbar = () => {
                 whileHover={reduce ? undefined : { scale: 1.06 }}
                 whileTap={reduce ? undefined : { scale: 0.94 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors duration-100 hover-underline ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors duration-100 ${
                   activeTab === item.name
                     ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
                     : 'text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
@@ -295,7 +307,7 @@ const LampNavbar = () => {
                       whileHover={reduce ? undefined : { scale: 1.06 }}
                       whileTap={reduce ? undefined : { scale: 0.94 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
                       style={{ animationDelay: `${(idx + 3) * 30}ms` }}
                     >
                       <Icon size={16} />
@@ -314,7 +326,7 @@ const LampNavbar = () => {
                       target="_blank" 
                       rel="noopener noreferrer"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] hover-underline transition-colors duration-100"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-black/70 dark:text-white/70 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-colors duration-100"
                       style={{ animationDelay: `${(idx + 6) * 30}ms` }}
                     >
                       <Icon size={16} />

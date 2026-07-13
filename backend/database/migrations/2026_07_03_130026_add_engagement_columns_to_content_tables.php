@@ -16,11 +16,6 @@ return new class extends Migration
             $table->integer('save_count')->default(0)->after('love_count');
         });
 
-        Schema::table('articles', function (Blueprint $table) {
-            $table->integer('love_count')->default(0)->after('read_time');
-            $table->integer('save_count')->default(0)->after('love_count');
-        });
-
         Schema::table('events', function (Blueprint $table) {
             $table->integer('love_count')->default(0)->after('capacity');
             $table->integer('save_count')->default(0)->after('love_count');
@@ -38,10 +33,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('news', function (Blueprint $table) {
-            $table->dropColumn(['love_count', 'save_count']);
-        });
-
-        Schema::table('articles', function (Blueprint $table) {
             $table->dropColumn(['love_count', 'save_count']);
         });
 

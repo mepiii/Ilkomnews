@@ -36,9 +36,11 @@ class PruneChatHistory extends Command
             ->where('created_at', '<', $cutoffDate)
             ->delete();
 
-        // Delete old conversations
+        // Delete old conversations (use created_at to match the message cutoff —
+        // updated_at is now touched on every message write, but the seed date
+        // of the conversation is the only column both share with messages).
         $conversationsDeleted = DB::table('chat_conversations')
-            ->where('updated_at', '<', $cutoffDate)
+            ->where('created_at', '<', $cutoffDate)
             ->delete();
 
         $this->info("Deleted {$messagesDeleted} messages and {$conversationsDeleted} conversations.");

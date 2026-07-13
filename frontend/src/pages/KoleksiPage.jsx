@@ -107,16 +107,17 @@ const KoleksiPage = () => {
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setCurrentPage(1) }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
+                  aria-label={tab.label}
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
                     activeTab === tab.id
                       ? 'bg-[var(--accent)] text-white shadow-md'
                       : 'bg-theme-secondary text-theme-muted hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
                   }`}
                 >
                   <Icon size={14} />
-                  {tab.label}
+                  <span className="hidden sm:inline">{tab.label}</span>
                   {counts[tab.id] > 0 && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full hidden sm:inline ${
                       activeTab === tab.id ? 'bg-white/20' : 'bg-[var(--accent)]/10 text-[var(--accent)]'
                     }`}>
                       {counts[tab.id]}
@@ -133,7 +134,7 @@ const KoleksiPage = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveType(tab.id); setCurrentPage(1) }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${
+                className={`flex-1 sm:flex-none text-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${
                   activeType === tab.id
                     ? 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20'
                     : 'text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/5'
@@ -160,9 +161,9 @@ const KoleksiPage = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {paginatedItems.filter(hasRequiredData).map(item => (
-                  <div key={`${item.type}-${item.id}`} className="relative">
+                  <div key={`${item.type}-${item.id}`} className="relative min-w-0">
                     {item.type === 'project' ? (
                       <ProjectExpandableCard project={item} />
                     ) : (
@@ -174,7 +175,7 @@ const KoleksiPage = () => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                     <button
                       key={page}

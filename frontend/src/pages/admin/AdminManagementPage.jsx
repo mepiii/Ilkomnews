@@ -258,9 +258,9 @@ export default function AdminManagementPage() {
         {admins.length === 0 ? (
           <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada admin terdaftar</div>
         ) : (
-          admins.map((admin) => (
+          admins.map((admin, idx) => (
             <div key={admin.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 dark:border-neutral-800 last:border-0 items-center hover:bg-gray-50 dark:bg-[#141414]/50 transition-colors">
-              <div className="col-span-1 text-sm text-gray-500 dark:text-gray-400">#{admin.id}</div>
+              <div className="col-span-1 text-sm text-gray-500 dark:text-gray-400">#{idx + 1}</div>
               <div className="col-span-4 text-sm font-medium text-gray-900 dark:text-gray-100">{admin.name}</div>
               <div className="col-span-5 text-sm text-gray-500 dark:text-gray-400">{admin.email}</div>
               <div className="col-span-2 flex justify-end gap-2">

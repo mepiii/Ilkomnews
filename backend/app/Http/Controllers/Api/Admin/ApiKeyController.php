@@ -14,6 +14,10 @@ class ApiKeyController extends Controller
      */
     public function index()
     {
+        $geminiRaw = config('services.gemini.api_key');
+        $geminiKeys = preg_split('/[\s,]+/', (string) $geminiRaw, -1, PREG_SPLIT_NO_EMPTY);
+        $geminiKeys = array_values(array_filter(array_map('trim', $geminiKeys)));
+
         return response()->json([
             'azure' => [
                 'configured' => !empty(config('services.azure.openai_api_key')),
@@ -23,8 +27,10 @@ class ApiKeyController extends Controller
                 'embedding_deployment' => config('services.azure.embedding_deployment'),
             ],
             'gemini' => [
-                'configured' => !empty(config('services.gemini.api_key')),
-                'key_masked' => $this->maskKey(config('services.gemini.api_key')),
+                'configured' => count($geminiKeys) > 0,
+                'key_count' => count($geminiKeys),
+                'key_masked' => $this->maskKey($geminiKeys[0] ?? ''),
+                'keys_masked' => array_map([$this, 'maskKey'], $geminiKeys),
                 'chat_model' => config('services.gemini.chat_model'),
                 'embedding_model' => config('services.gemini.embedding_model'),
             ],
@@ -61,7 +67,10 @@ class ApiKeyController extends Controller
     }
 
     /**
-     * Update Gemini API key (encrypted in .env)
+     * Update Gemini API keys (encrypted in .env).
+     * Accepts one key or many — comma / newline / whitespace separated — and
+     * stores them as a single delimited GEMINI_API_KEY value. The service
+     * rotates across the pool to spread the free-tier quota.
      */
     public function updateGemini(Request $request)
     {
@@ -75,15 +84,26 @@ class ApiKeyController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Normalize the incoming blob into a de-duped, comma-joined pool.
+        $keys = preg_split('/[\s,]+/', (string) $request->api_key, -1, PREG_SPLIT_NO_EMPTY);
+        $keys = array_values(array_unique(array_filter(array_map('trim', $keys))));
+
+        if (empty($keys)) {
+            return response()->json(['errors' => ['api_key' => ['No valid API key provided']]], 422);
+        }
+
+        $joined = implode(',', $keys);
+
         $this->updateEnv([
-            'GEMINI_API_KEY' => $request->api_key,
+            'GEMINI_API_KEY' => $joined,
             'GEMINI_CHAT_MODEL' => $request->chat_model ?? 'gemini-2.5-flash',
-            'GEMINI_EMBEDDING_MODEL' => $request->embedding_model ?? 'text-embedding-004',
+            'GEMINI_EMBEDDING_MODEL' => $request->embedding_model ?? 'gemini-embedding-001',
         ]);
 
         return response()->json([
             'message' => 'Gemini API configuration updated successfully',
-            'key_masked' => $this->maskKey($request->api_key),
+            'key_count' => count($keys),
+            'key_masked' => $this->maskKey($keys[0]),
         ]);
     }
 
@@ -173,7 +193,11 @@ class ApiKeyController extends Controller
             }
         }
 
-        file_put_contents($envPath, $envContent);
+        // ponytail: atomic write via temp file + rename so a concurrent admin
+        // edit (or crash mid-write) can never leave a half-written .env.
+        $tmpPath = $envPath . '.' . getmypid() . '.tmp';
+        file_put_contents($tmpPath, $envContent);
+        rename($tmpPath, $envPath);
 
         // Clear config cache
         \Artisan::call('config:clear');

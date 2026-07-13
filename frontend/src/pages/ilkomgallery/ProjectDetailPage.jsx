@@ -7,11 +7,15 @@ import {
 } from 'lucide-react'
 import { FaGithub, FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { motion } from 'framer-motion'
+import { WordBounce } from '../../components/ui/WordBounce'
 
 import { API_BASE } from '../../services/api'
+import { normalizeItem, normalizeList } from '../../services/normalize'
 import Breadcrumb from '../../components/common/Breadcrumb'
 import { formatNumber, generateSlug } from '../../utils/formatters'
 import ImageWithFallback from '../../components/ui/ImageWithFallback'
+import ProjectExpandableCard from '../../components/cards/ProjectExpandableCard'
+import { GlowCard } from '../../components/ui/GlowCard'
 import { useEngagement } from '../../context/EngagementContext'
 import { shareItem } from '../../lib/share'
 import { useToast } from '../../components/ui/Toast'
@@ -45,13 +49,13 @@ const ProjectDetailPage = () => {
         let foundProject = null
         if (!isNaN(id)) {
           const res = await fetch(`${API_BASE}/projects/${id}`)
-          if (res.ok) foundProject = await res.json()
-          else throw new Error('Project not found')
+          if (res.ok) {
+            foundProject = normalizeItem(await res.json())
+          } else throw new Error('Project not found')
         } else {
           const res = await fetch(`${API_BASE}/projects`)
           if (!res.ok) throw new Error('Failed to fetch')
-          const data = await res.json()
-          const projects = data.data || data
+          const projects = normalizeList(await res.json())
           foundProject = projects.find(p => generateSlug(p.title) === slug) || projects.find(p => p.id.toString() === slug)
           if (!foundProject) throw new Error('Project not found')
         }
@@ -60,8 +64,8 @@ const ProjectDetailPage = () => {
         recordView('project', foundProject.id, foundProject)
         const allRes = await fetch(`${API_BASE}/projects`)
         if (allRes.ok) {
-          const allData = await allRes.json()
-          setRelatedProjects((allData.data || allData).filter(p => p.id !== foundProject.id && p.category === foundProject.category).slice(0, 3))
+          const allProjects = normalizeList(await allRes.json())
+          setRelatedProjects(allProjects.filter(p => p.id !== foundProject.id && p.category === foundProject.category).slice(0, 2))
         }
       } catch (err) { setError(err.message) } finally { setLoading(false) }
     }
@@ -163,7 +167,7 @@ const ProjectDetailPage = () => {
           <div className="mb-10">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
               <Brain size={18} style={{ color: 'var(--accent)' }} />
-              Deskripsi
+              <WordBounce text="Deskripsi" />
             </h2>
             <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-secondary)' }}>
               {project.description}
@@ -174,7 +178,7 @@ const ProjectDetailPage = () => {
         {/* Tech Stack */}
         {techStack.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Tech Stack</h2>
+            <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}><WordBounce text="Tech Stack" /></h2>
             <div className="flex flex-wrap gap-2">
               {techStack.map((tech, i) => (
                 <motion.span 
@@ -210,7 +214,7 @@ const ProjectDetailPage = () => {
 
         {/* Team */}
         <div className="border-t pt-8" style={{ borderColor: 'var(--border-color)' }}>
-          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Tim Pengembang</h2>
+          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}><WordBounce text="Tim Pengembang" /></h2>
           <div className="space-y-3">
             {/* Creator */}
             {project.creator_name && (
@@ -319,33 +323,16 @@ const ProjectDetailPage = () => {
           className="mt-12 mb-8"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold font-heading" style={{ color: 'var(--text-primary)' }}>Proyek Terkait</h2>
+            <h2 className="text-xl font-bold font-heading" style={{ color: 'var(--text-primary)' }}><WordBounce text="Proyek Terkait" /></h2>
             <Link to="/ilkomgallery" className="text-xs font-medium flex items-center gap-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--accent)' }}>
               Lihat Semua <ChevronRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-5 items-stretch">
             {relatedProjects.map(item => (
-              <Link 
-                key={item.id} 
-                to={`/ilkomgallery/project/${item.id}`} 
-                className="group rounded-xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg" 
-                style={{ background: 'var(--bg-secondary)' }}
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <ImageWithFallback 
-                    src={item.thumbnail_url || item.thumbnail} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    fallbackText="No Image" 
-                  />
-                </div>
-                <div className="p-4">
-                  <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{getCategoryDisplay(item.category)}</p>
-                  <h3 className="text-sm font-bold line-clamp-2 mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
-                  <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{item.description || 'Tidak ada deskripsi'}</p>
-                </div>
-              </Link>
+              <GlowCard key={item.id} glowColor="purple" className="rounded-2xl h-full min-w-0">
+                <ProjectExpandableCard project={item} />
+              </GlowCard>
             ))}
           </div>
         </motion.div>

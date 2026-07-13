@@ -26,7 +26,10 @@ class AdminSeeder extends Seeder
         ];
 
         // Reset: remove any admin accounts no longer in the canonical list.
-        $keepEmails = collect($admins)->pluck('email');
+        // ponytail: keep the admin seeded by DatabaseSeeder so it isn't wiped
+        // by the whereNotIn cleanup below.
+        $keepEmails = collect($admins)->pluck('email')
+            ->push('admin@fasilkom.unsri.ac.id');
         User::where('is_admin', true)->whereNotIn('email', $keepEmails)->delete();
 
         foreach ($admins as $admin) {

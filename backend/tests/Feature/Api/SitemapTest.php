@@ -24,7 +24,6 @@ class SitemapTest extends TestCase
         $content = $response->getContent();
 
         $this->assertStringContainsString('/news', $content);
-        $this->assertStringContainsString('/articles', $content);
         $this->assertStringContainsString('/events', $content);
         $this->assertStringContainsString('/gallery', $content);
         $this->assertStringContainsString('/submit', $content);

@@ -240,7 +240,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce }}">
 // ponytail: debounce + auto-submit, stdlib only
 const searchInput = document.getElementById('search');
 const statusSelect = document.getElementById('status');

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Plus, Edit, Trash2, Newspaper, GripVertical, RefreshCw } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Newspaper, RefreshCw } from 'lucide-react'
 import { adminNews } from '../../services/adminApi'
 import ErrorState from '../../components/admin/ui/ErrorState'
 import { ADMIN_BASE } from '../../config/admin'
@@ -29,41 +29,11 @@ export default function NewsListPage() {
   const status = searchParams.get('status') || ''
 
   const [searchInput, setSearchInput] = useState(search)
-  const [draggedIndex, setDraggedIndex] = useState(null)
   const [backgroundLoading, setBackgroundLoading] = useState(false)
   const abortRef = useRef(null)
   const isFirstLoad = useRef(true)
   const debounceRef = useRef(null)
   const reduce = useReducedMotionSafe()
-
-  const handleDragStart = (e, index) => {
-    setDraggedIndex(index)
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null)
-  }
-
-  const handleDrop = async (e, dropIndex) => {
-    e.preventDefault()
-    if (draggedIndex === null || draggedIndex === dropIndex) return
-    const reordered = [...items]
-    const [removed] = reordered.splice(draggedIndex, 1)
-    reordered.splice(dropIndex, 0, removed)
-    setItems(reordered)
-    setDraggedIndex(null)
-    try {
-      await adminNews.reorder(reordered.map((item) => item.id))
-    } catch {
-      fetchNews()
-    }
-  }
 
   const fetchNews = useCallback(() => {
     abortRef.current?.abort()
@@ -123,9 +93,11 @@ export default function NewsListPage() {
 
   const handleToggleHidden = async (id) => {
     try {
-      await adminNews.toggleHidden(id)
+      const res = await adminNews.toggleHidden(id)
+      // Use the authoritative published flag from the API, not a local flip.
+      const published = res?.data?.published
       setItems((prev) => prev.map((item) =>
-        item.id === id ? { ...item, published: !item.published } : item
+        item.id === id ? { ...item, published: published ?? !item.published } : item
       ))
     } catch (err) {
       alert('Gagal mengubah status: ' + err.message)
@@ -225,7 +197,7 @@ export default function NewsListPage() {
 
       {/* Error */}
       {error && (
-        <ErrorState message={error} onRetry={() => { setError(''); setLoading(true); /* re-fetch triggered by state change */ }} />
+        <ErrorState message={error} onRetry={() => { setError(''); setLoading(true); fetchNews() }} />
       )}
 
       {/* Table */}
@@ -243,7 +215,6 @@ export default function NewsListPage() {
               <table className="w-full text-sm">
                 <thead>
                 <tr className="border-b border-gray-200 dark:border-neutral-800 text-left text-gray-500 dark:text-gray-400">
-                    <th className="px-2 py-3 w-10"></th>
                     <th className="px-5 py-3 font-medium">Judul</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Pembuat</th>
                     <th className="px-5 py-3 font-medium hidden md:table-cell">Kategori</th>
@@ -254,17 +225,8 @@ export default function NewsListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
-                  {items.map((item, index) => (
-                    <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors ${draggedIndex === index ? 'opacity-50' : ''}`}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDragEnd={handleDragEnd}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <td className="px-2 py-3 text-gray-500 dark:text-gray-400 cursor-grab">
-                        <GripVertical size={16} />
-                      </td>
+                  {items.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
                       <td className="px-5 py-3 max-w-[250px]">
                         {(() => {
                           const thumb = item.image_url || (item.image ? (item.image.startsWith('http') ? item.image : '/storage/' + item.image) : null)
@@ -288,9 +250,9 @@ export default function NewsListPage() {
                           return (
                             <div className="flex items-center gap-2">
                               {authorAvatar ? (
-                                <img src={authorAvatar} alt={item.author || 'Penulis'} className="w-8 h-8 rounded-full object-cover bg-gray-200 dark:bg-neutral-800" />
+                                <img src={authorAvatar} alt={item.author || 'Penulis'} className="avatar-sm object-cover bg-gray-200 dark:bg-neutral-800" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs font-semibold">
+                                <div className="avatar-sm bg-gray-200 dark:bg-neutral-800 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs font-semibold">
                                   {(item.author || '?').charAt(0).toUpperCase()}
                                 </div>
                               )}

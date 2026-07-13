@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExpandableCard } from '../ui/ExpandableCard'
 import { generateSlug, formatDate } from '../../utils/formatters'
 import { ArrowRight } from 'lucide-react'
+import { WordBounce } from '../ui/WordBounce'
 
 const categoryThemes = {
   Workshop: '220 60% 35%',
@@ -40,7 +41,7 @@ const NewsExpandableCard = ({ article }) => {
                   {(article.author || 'A').charAt(0)}
                 </div>
               )}
-              <span className="truncate max-w-[80px]">{article.author || 'Penulis'}</span>
+              <span className="truncate">{article.author || 'Penulis'}</span>
             </div>
           )}
           {article.date && <><span className="shrink-0">·</span><span className="truncate">{formatDate(article.date)}</span></>}
@@ -50,7 +51,7 @@ const NewsExpandableCard = ({ article }) => {
       <div className="w-full space-y-3 overflow-hidden">
         {(article.author || article.author_image) && (
           <div className="overflow-hidden">
-            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-2">Penulis</h4>
+            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-2"><WordBounce text="Penulis" /></h4>
             <div className="flex items-center gap-3">
               {article.author_image ? (
                 <img src={article.author_image_url || article.author_image} alt={article.author} className="w-7 h-7 rounded-full object-cover shrink-0" />
@@ -70,7 +71,7 @@ const NewsExpandableCard = ({ article }) => {
         )}
         {article.content && (
           <div className="overflow-hidden">
-            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-1.5">Konten</h4>
+            <h4 className="text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider mb-1.5"><WordBounce text="Konten" /></h4>
             <p className="text-sm leading-relaxed break-words overflow-hidden" style={{ color: 'var(--text-secondary)' }}>
               {(article.content || '').substring(0, 400)}{article.content?.length > 400 ? '...' : ''}
             </p>

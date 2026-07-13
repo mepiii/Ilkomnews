@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { headingHover } from '../../lib/animations'
 import heroImage from '../../assets/gedungfasilkom.jpg'
 
 const fadeUp = (delay = 0) => ({
@@ -22,7 +23,7 @@ const HeroSection = () => {
   const newsLetters = 'NEWS'.split('')
 
   return (
-    <div className="relative -mt-20 min-h-[90vh] w-full flex items-center justify-center overflow-hidden">
+    <div className="relative -mt-20 min-h-[calc(100vh-2.5rem)] w-full flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <motion.div
         className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -44,14 +45,22 @@ const HeroSection = () => {
             animate="visible"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 sm:mb-12 leading-[1.1] tracking-tight">
-              <motion.span 
-                className="text-white block mb-2 text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-              >
-                Selamat Datang Di
-              </motion.span>
+              <span className="block mb-2 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
+                {'Selamat Datang Di'.split('').map((ch, i) =>
+                  ch === ' ' ? ' ' : (
+                    <motion.span
+                      key={i}
+                      className="inline-block text-white"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.1 + i * 0.03 }}
+                      whileHover={headingHover}
+                    >
+                      {ch}
+                    </motion.span>
+                  )
+                )}
+              </span>
               <span className="block whitespace-nowrap">
                <span className="mr-3 inline-block font-heading" style={{ letterSpacing: '-0.02em' }}>
                  {ilkomLetters.map((letter, i) => (
@@ -61,11 +70,11 @@ const HeroSection = () => {
                       variants={letterAnimation}
                       initial="hidden"
                       animate="visible"
-                      whileHover={{ y: [-2, -12, 0], transition: { type: 'spring', stiffness: 500, damping: 10 } }}
+                      whileHover={headingHover}
                       className="inline-block"
-                       style={{ color: '#8B5CF6' }}
                     >
-                      {letter}
+                      {/* gradient on inner glyph → moves with bounce, no clip-vanish */}
+                      <span className="inline-block hero-gradient-text">{letter}</span>
                     </motion.span>
                  ))}
                </span>
@@ -77,11 +86,10 @@ const HeroSection = () => {
                       variants={letterAnimation}
                       initial="hidden"
                       animate="visible"
-                      whileHover={{ y: [-2, -12, 0], transition: { type: 'spring', stiffness: 500, damping: 10 } }}
+                      whileHover={headingHover}
                       className="inline-block"
-                       style={{ color: '#A78BFA' }}
                     >
-                      {letter}
+                      <span className="inline-block hero-gradient-text">{letter}</span>
                     </motion.span>
                  ))}
                </span>
@@ -98,13 +106,13 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/news"
-                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
+                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
                 <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Jelajahi Berita</span>
               </Link>
               <Link
                 to="/ilkomgallery"
-                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[rgb(122,71,166)] hover:border-[rgb(122,71,166)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
+                className="group relative px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
                 <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Ilkom Gallery</span>
               </Link>

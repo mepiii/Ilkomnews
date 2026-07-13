@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useEngagement } from '../../context/EngagementContext'
 import { GradientPlaceholder } from '../ui/ExpandableCard'
+import { WordBounce } from '../ui/WordBounce'
 import { formatNumber } from '../../utils/formatters'
 
 /**
@@ -44,7 +45,7 @@ export default function ProjectDetailLayout({
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center">
             <Tag size={32} className="text-[var(--text-muted)]" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Proyek Tidak Ditemukan</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2"><WordBounce text="Proyek Tidak Ditemukan" /></h1>
           <p className="text-[var(--text-secondary)] mb-6">Proyek yang Anda cari tidak tersedia.</p>
           <Link 
             to={backPath}
@@ -71,12 +72,13 @@ export default function ProjectDetailLayout({
           <img
             src={project.banner || project.thumbnail}
             alt={project.title}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (
           <GradientPlaceholder themeColor="270 50% 40%" title={project.title} className="w-full h-full" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-900/40 to-transparent" />
         
         {/* Back Button */}
         <div className="absolute top-4 left-4 z-10">
@@ -85,7 +87,7 @@ export default function ProjectDetailLayout({
             whileHover={reduce ? undefined : { scale: 1.06 }}
             whileTap={reduce ? undefined : { scale: 0.94 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className="flex items-center gap-2 px-4 py-2 bg-black/50 text-white rounded-lg hover:bg-black/70 transition-colors duration-200 backdrop-blur-sm text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-neutral-900/50 text-white rounded-lg hover:bg-neutral-900/70 transition-colors duration-200 backdrop-blur-sm text-sm font-medium"
           >
             <ArrowLeft size={18} />
             <span>Kembali</span>
@@ -104,13 +106,9 @@ export default function ProjectDetailLayout({
             </div>
             
             {/* Title */}
-            <motion.h1
-              whileHover={reduce ? undefined : { scale: 1.02 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="text-3xl md:text-5xl font-bold text-white mb-3 leading-tight max-w-4xl"
-            >
-              {project.title}
-            </motion.h1>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-3 leading-tight max-w-4xl">
+              <WordBounce text={project.title} />
+            </h1>
 
             {/* Metrics Row */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-white/80 mb-5">
@@ -241,10 +239,10 @@ export default function ProjectDetailLayout({
             )}
 
             {/* Description */}
-            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6 shadow-lg dark:shadow-black/40">
               <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2 text-lg">
                 <Tag size={18} className="text-[var(--accent)]" />
-                Deskripsi
+                <WordBounce text="Deskripsi" />
               </h3>
               <p className="text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">
                 {project.description || 'Tidak ada deskripsi'}
@@ -253,10 +251,10 @@ export default function ProjectDetailLayout({
             
             {/* Tech Stack */}
             {techStack.length > 0 && (
-              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6">
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6 shadow-lg dark:shadow-black/40">
                 <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2 text-lg">
                   <Code2 size={18} className="text-[var(--accent)]" />
-                  Tech Stack
+                  <WordBounce text="Tech Stack" />
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {techStack.map((tech, idx) => (
@@ -272,27 +270,27 @@ export default function ProjectDetailLayout({
           {/* Right: Sidebar */}
           <div className="space-y-6">
             {/* Creator */}
-            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6 shadow-lg dark:shadow-black/40">
               <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2 text-lg">
                 <User size={18} />
-                Pembuat
+                <WordBounce text="Pembuat" />
               </h3>
               
               <div className="flex items-center gap-4">
                 {creatorAvatar ? (
-                  <img 
-                    src={creatorAvatar} 
+                  <img
+                    src={creatorAvatar}
                     alt={project.creator || project.creator_name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-[var(--accent)]/20"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-[var(--accent)]/20 shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-600 flex items-center justify-center text-white text-lg font-bold shrink-0">
                     {(project.creator || project.creator_name || '?').charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-[var(--text-primary)] text-lg truncate">
-                    {project.creator || project.creator_name || 'Unknown'}
+                    <WordBounce text={project.creator || project.creator_name || 'Unknown'} />
                   </h4>
                   {project.jurusan && (
                     <p className="text-[var(--text-muted)] text-sm truncate">{project.jurusan}</p>
@@ -313,10 +311,10 @@ export default function ProjectDetailLayout({
             
             {/* Collaborators */}
             {collaborators.length > 0 && (
-              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6">
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-6 shadow-lg dark:shadow-black/40">
                 <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2 text-lg">
                   <Users size={18} />
-                  Kolaborator
+                  <WordBounce text="Kolaborator" />
                 </h3>
                 <div className="space-y-3">
                   {collaborators.map((collab, idx) => {
@@ -327,9 +325,9 @@ export default function ProjectDetailLayout({
                     return (
                       <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition">
                         {avatar ? (
-                          <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
+                          <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover shrink-0" />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold">
+                          <div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg font-bold shrink-0">
                             {name.charAt(0)}
                           </div>
                         )}
@@ -351,7 +349,7 @@ export default function ProjectDetailLayout({
               <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/20 p-6">
                 <h3 className="font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2 text-lg">
                   <Award size={18} className="text-amber-500" />
-                  Penghargaan
+                  <WordBounce text="Penghargaan" />
                 </h3>
                 <p className="text-amber-600 font-medium">{project.award}</p>
               </div>
