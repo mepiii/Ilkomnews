@@ -5,7 +5,8 @@ import { useThemeMode } from '../../hooks/useThemeMode'
 // ponytail: all tabs always render in the scroll strip (icon-only below lg),
 // no mobile dropdown — fits every tab on small screens without hiding any.
 
-const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
+const SmoothTabs = ({ tabs, activeTab, onTabChange, className, variant = 'line' }) => {
+  const pill = variant === 'pill'
   const [hoveredIndex, setHoveredIndex] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverStyle, setHoverStyle] = useState({})
@@ -50,7 +51,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
     <div className={cn('relative', className)}>
       <div className="relative">
         <div
-          className="absolute h-[30px] transition-all duration-300 ease-out rounded-[6px]"
+          className={cn('absolute h-[30px] transition-all duration-300 ease-out rounded-[6px]', pill && 'hidden')}
           style={{
             ...hoverStyle,
             opacity: hoveredIndex !== null ? 1 : 0,
@@ -58,7 +59,7 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
           }}
         />
         <div
-          className="absolute bottom-[-6px] h-[2px] transition-all duration-300 ease-out"
+          className={cn('absolute bottom-[-6px] h-[2px] transition-all duration-300 ease-out', pill && 'hidden')}
           style={{
             ...activeStyle,
             backgroundColor: isDark ? 'var(--accent)' : 'var(--accent)',
@@ -69,10 +70,26 @@ const SmoothTabs = ({ tabs, activeTab, onTabChange, className }) => {
             <div
               key={tab.id}
               ref={el => (tabRefs.current[index] = el)}
-              className="px-3 py-2 cursor-pointer transition-colors duration-300 h-[30px] flex-shrink-0"
-              style={{
+              className={cn(
+                'cursor-pointer flex-shrink-0 transition-colors duration-300',
+                pill
+                  ? 'h-[34px] px-3.5 rounded-full border'
+                  : 'h-[30px] px-3'
+              )}
+              style={pill ? {
+                borderColor: index === activeIndex
+                  ? 'var(--accent)'
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(26,26,46,0.12)'),
+                backgroundColor: index === activeIndex
+                  ? 'var(--accent)'
+                  : (isDark ? 'rgba(255,255,255,0.04)' : 'color-mix(in srgb, var(--accent) 10%, transparent)'),
                 color: index === activeIndex
-                  ? (isDark ? 'var(--accent)' : 'var(--accent)')
+                  ? '#fff'
+                  : (isDark ? 'rgba(255,255,255,0.6)' : 'var(--accent)'),
+                fontWeight: index === activeIndex ? 600 : 500,
+              } : {
+                color: index === activeIndex
+                  ? 'var(--accent)'
                   : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(26,26,46,0.5)'),
                 fontWeight: index === activeIndex ? 600 : 500,
               }}

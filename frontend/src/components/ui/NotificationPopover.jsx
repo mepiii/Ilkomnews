@@ -171,7 +171,11 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
               animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
               exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: openUp ? 8 : -8, scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-              className={`absolute w-[440px] max-w-[calc(100vw-1rem)] bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-xl z-50 ${openUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${align === 'left' ? 'right-0 lg:left-0 lg:right-auto' : 'right-0'}`}
+              className={`bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-xl z-50
+                fixed left-2 right-2 top-[4.5rem] w-auto
+                md:absolute md:left-auto md:right-0 md:top-full md:mt-2 md:w-[440px] md:max-w-[calc(100vw-2rem)]
+                ${openUp ? 'md:bottom-full md:top-auto md:mt-0' : 'md:top-full md:mt-2'}
+                ${align === 'left' ? 'md:right-0 lg:left-0 lg:right-auto' : ''}`}
             >
               <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
                 <p className="text-sm font-semibold text-black dark:text-white">Notifikasi</p>

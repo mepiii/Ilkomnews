@@ -33,17 +33,19 @@ const PerformanceMonitor = () => {
     } catch { /* observer type not supported */ }
 
     try {
-      let clsValue = 0
-      const clsObserver = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value
-            console.log(`[Performance] CLS: ${clsValue}`)
-          }
+      if (PerformanceObserver.supportedEntryTypes?.includes('layout-shift')) {
+        let clsValue = 0
+        const clsObserver = new PerformanceObserver((list) => {
+          list.getEntries().forEach((entry) => {
+            if (!entry.hadRecentInput) {
+              clsValue += entry.value
+              console.log(`[Performance] CLS: ${clsValue}`)
+            }
+          })
         })
-      })
-      clsObserver.observe({ type: 'layout-shift', buffered: true })
-      observers.push(clsObserver)
+        clsObserver.observe({ type: 'layout-shift', buffered: true })
+        observers.push(clsObserver)
+      }
     } catch { /* observer type not supported */ }
 
     return () => observers.forEach((o) => o.disconnect())

@@ -19,6 +19,10 @@ class ChatConversationTest extends TestCase
     {
         parent::setUp();
 
+        // Prevent GEMINI_API_KEY from enabling native Gemini in tests
+        config(['services.gemini.api_key' => '']);
+        putenv('GEMINI_API_KEY=');
+
         // Seed published news so keyword fallback can find context for "ILKOM"
         News::factory()->create([
             'title' => 'ILKOM NEWS Terbuka',

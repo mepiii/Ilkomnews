@@ -118,6 +118,7 @@ const SubmitProjectPage = () => {
   const [extraFields, setExtraFields] = useState({})
   const [techStackTags, setTechStackTags] = useState([])
   const [selectedTech, setSelectedTech] = useState('')
+  const [customTechInput, setCustomTechInput] = useState('')
   const [collabName, setCollabName] = useState('')
   const [collabNim, setCollabNim] = useState('')
   const [collabMajor, setCollabMajor] = useState(MAJORS[0])
@@ -164,7 +165,7 @@ const SubmitProjectPage = () => {
     setExtraFields({})
     setTechStackTags([])
     setSelectedTech('')
-    setTechInput('')
+    setCustomTechInput('')
   }
 
   const addCollab = () => {
@@ -381,22 +382,27 @@ const SubmitProjectPage = () => {
           setShowConfirm(true)
         }} className="space-y-6">
           {/* Category */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+          <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
             <div className="flex items-center gap-2 mb-4">
-              <Layers size={14} className="text-neutral-400" />
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Kategori</h3>
+              <Layers size={16} className="text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Kategori Proyek</h3>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-3">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon
+                const isSelected = form.category === cat.id
                 return (
-                  <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-all ${
-                      form.category === cat.id
-                        ? 'tech-badge'
-                        : 'border border-white/20 dark:border-white/10 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-                    }`}>
-                    <Icon size={18} />
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl text-xs font-semibold transition-all ${
+                      isSelected
+                        ? 'bg-[var(--accent)] text-white shadow-md border-transparent scale-105'
+                        : 'bg-neutral-50/50 dark:bg-neutral-800/30 border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50'
+                    }`}
+                  >
+                    <Icon size={20} className={isSelected ? 'text-white' : 'text-neutral-400 dark:text-neutral-500'} />
                     <span>{cat.label}</span>
                   </button>
                 )
@@ -405,90 +411,148 @@ const SubmitProjectPage = () => {
           </div>
 
           {/* Project Details */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+          <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
             <div className="flex items-center gap-2 mb-4">
-              <Tag size={14} className="text-neutral-400" />
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Detail Proyek</h3>
+              <Tag size={16} className="text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Detail Proyek</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className={labelCls}>Judul *</label>
-                <input type="text" required value={form.title} onChange={e => update('title', e.target.value)} placeholder="Nama proyek" className={inputCls} />
+                <label className={labelCls}>Judul Proyek *</label>
+                <input type="text" required value={form.title} onChange={e => update('title', e.target.value)} placeholder="Masukkan nama proyek Anda" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Deskripsi *</label>
-                <textarea required rows={4} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Deskripsikan proyek Anda..." className={`${inputCls} resize-none`} />
+                <label className={labelCls}>Deskripsi Singkat *</label>
+                <textarea required rows={4} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Tuliskan penjelasan detail mengenai latar belakang, fitur, dan kegunaan proyek Anda..." className={`${inputCls} resize-none`} />
               </div>
               <div>
-                <label className={labelCls}>Thumbnail</label>
-                <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${form.thumbnail ? 'border-green-400 bg-green-50 dark:bg-green-900/10' : 'border-neutral-300 dark:border-neutral-600 hover:border-[var(--accent)]/50'}`}>
+                <label className={labelCls}>Thumbnail Proyek</label>
+                <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${form.thumbnail ? 'border-green-500 dark:border-green-400 bg-green-50/50 dark:bg-green-950/20' : 'border-neutral-300 dark:border-neutral-700 hover:border-[var(--accent)]/50'}`}>
                   <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" aria-label="Unggah thumbnail proyek" />
                   {form.thumbnail ? (
                     <>
-                      <img src={form.thumbnail} alt="Preview" loading="lazy" className="w-10 h-10 rounded-lg object-cover" />
-                      <span className="text-sm text-green-600 dark:text-green-400 font-medium">Terpilih</span>
+                      <img src={form.thumbnail} alt="Preview" loading="lazy" className="w-12 h-12 rounded-lg object-cover border border-green-500/20 shadow-sm" />
+                      <div>
+                        <span className="text-sm text-green-600 dark:text-green-400 font-semibold block">Thumbnail Dipilih</span>
+                        <span className="text-xs text-neutral-400 dark:text-neutral-500 font-normal">Klik untuk mengubah gambar</span>
+                      </div>
                     </>
                   ) : (
                     <>
-                      <ImageIcon size={16} className="text-neutral-400" />
-                      <span className="text-sm text-neutral-400">Klik atau seret gambar</span>
+                      <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+                        <ImageIcon size={18} className="text-neutral-400" />
+                      </div>
+                      <div>
+                        <span className="text-sm text-neutral-600 dark:text-neutral-300 font-medium block">Pilih Gambar atau Seret ke sini</span>
+                        <span className="text-xs text-neutral-400 dark:text-neutral-500">Mendukung format PNG, JPG, JPEG (Maks. 2MB)</span>
+                      </div>
                     </>
                   )}
                 </label>
-                <input type="url" value={form.thumbnail.startsWith('blob:') ? '' : form.thumbnail} onChange={e => update('thumbnail', e.target.value)} placeholder="Atau masukkan URL gambar" className={`${inputCls} mt-3`} />
+                <input type="url" value={form.thumbnail.startsWith('blob:') ? '' : form.thumbnail} onChange={e => update('thumbnail', e.target.value)} placeholder="Atau masukkan URL gambar langsung (misal: https://imgur.com/example.png)" className={`${inputCls} mt-3`} />
               </div>
             </div>
           </div>
 
           {/* Tech Stack - Rewritten for reliability */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+          <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
             <div className="flex items-center gap-2 mb-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
                 <Layers size={14} />
               </div>
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Teknologi <span className="text-red-500">*</span></h3>
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Teknologi yang Digunakan <span className="text-red-500">*</span></h3>
             </div>
-            <p className="text-xs text-neutral-400 mb-4 ml-9">Pilih minimal satu teknologi yang dipakai dalam proyek ini.</p>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <select
-                  value={selectedTech}
-                  onChange={handleTechSelect}
-                  className={`${inputCls} flex-1`}
-                >
-                  <option value="">Pilih teknologi...</option>
-                  {(TECH_STACK_OPTIONS[form.category] || [])
-                    .filter(t => !techStackTags.includes(t))
-                    .map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))
-                  }
-                </select>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-4 ml-9">Pilih dari daftar rekomendasi atau tambahkan teknologi kustom Anda sendiri.</p>
+
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Pilih dari Rekomendasi</label>
+                  <select
+                    value={selectedTech}
+                    onChange={handleTechSelect}
+                    className={inputCls}
+                  >
+                    <option value="">Pilih teknologi rekomendasi...</option>
+                    {(TECH_STACK_OPTIONS[form.category] || [])
+                      .filter(t => !techStackTags.includes(t))
+                      .map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Atau Tambah Kustom</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={customTechInput}
+                      onChange={e => setCustomTechInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const clean = customTechInput.trim()
+                          if (clean && !techStackTags.includes(clean)) {
+                            setTechStackTags(prev => [...prev, clean])
+                            setCustomTechInput('')
+                          }
+                        }
+                      }}
+                      placeholder="Ketik teknologi & tekan Enter (misal: SvelteKit)"
+                      className={inputCls}
+                    />
+                    {customTechInput.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const clean = customTechInput.trim()
+                          if (clean && !techStackTags.includes(clean)) {
+                            setTechStackTags(prev => [...prev, clean])
+                            setCustomTechInput('')
+                          }
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-[var(--accent)] text-white text-xs font-medium rounded-lg hover:brightness-110 transition-all"
+                      >
+                        Tambah
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Selected tech stack tags */}
-              {techStackTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <AnimatePresence>
-                    {techStackTags.map((tag) => (
-                      <motion.span
-                        key={tag}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="tech-badge inline-flex items-center gap-1.5 text-sm"
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTechTag(tag)}
-                          className="hover:text-red-500 transition-colors"
+              {techStackTags.length > 0 ? (
+                <div className="pt-2">
+                  <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Teknologi Terpilih:</label>
+                  <div className="flex flex-wrap gap-2.5">
+                    <AnimatePresence>
+                      {techStackTags.map((tag) => (
+                        <motion.span
+                          key={tag}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="tech-badge inline-flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-xl border border-[var(--accent)]/30 shadow-sm"
                         >
-                          <X size={12} />
-                        </button>
-                      </motion.span>
-                    ))}
-                  </AnimatePresence>
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTechTag(tag)}
+                            className="hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full p-0.5 transition-colors"
+                            aria-label={`Hapus ${tag}`}
+                          >
+                            <X size={10} />
+                          </button>
+                        </motion.span>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl">
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500">Belum ada teknologi terpilih</p>
                 </div>
               )}
             </div>
@@ -496,35 +560,35 @@ const SubmitProjectPage = () => {
 
           {/* Category-Specific Fields */}
           {activeFields.length > 0 && (
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+            <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
               <div className="flex items-center gap-2 mb-4">
-                <Layers size={14} className="text-neutral-400" />
-                <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                  {CATEGORIES.find(c => c.id === form.category)?.label} Links
+                <Layers size={16} className="text-[var(--accent)]" />
+                <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                  Link Tambahan ({CATEGORIES.find(c => c.id === form.category)?.label})
                 </h3>
               </div>
               <div className="space-y-4">
                 {activeFields.map(field => (
                   <div key={field.key}>
                     <label className={labelCls}>
-                      {field.label} {field.optional && <span className="text-neutral-400 font-normal">(opsional)</span>}
+                      {field.label} {field.optional && <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span>}
                     </label>
                     {field.type === 'select' ? (
-                      <select 
-                        value={extraFields[field.key] || ''} 
-                        onChange={e => updateExtra(field.key, e.target.value)} 
+                      <select
+                        value={extraFields[field.key] || ''}
+                        onChange={e => updateExtra(field.key, e.target.value)}
                         className={inputCls}
                       >
                         <option value="">Pilih...</option>
                         {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
                     ) : (
-                      <input 
-                        type={field.type || 'text'} 
-                        value={extraFields[field.key] || ''} 
-                        onChange={e => updateExtra(field.key, e.target.value)} 
-                        placeholder={field.placeholder} 
-                        className={inputCls} 
+                      <input
+                        type={field.type || 'text'}
+                        value={extraFields[field.key] || ''}
+                        onChange={e => updateExtra(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        className={inputCls}
                       />
                     )}
                   </div>
@@ -534,10 +598,10 @@ const SubmitProjectPage = () => {
           )}
 
           {/* Creator Info */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+          <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
             <div className="flex items-center gap-2 mb-4">
-              <User size={14} className="text-neutral-400" />
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Informasi Pembuat</h3>
+              <User size={16} className="text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Informasi Pembuat</h3>
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -546,12 +610,12 @@ const SubmitProjectPage = () => {
                   <input type="text" required value={form.creator_name} onChange={e => update('creator_name', e.target.value)} placeholder="Nama pembuat" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Tipe</label>
+                  <label className={labelCls}>Tipe Pembuat</label>
                   <div className="flex gap-2">
                     {CREATOR_TYPES.map(t => (
                       <button key={t.id} type="button" onClick={() => update('creator_type', t.id)}
-                        className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                          form.creator_type === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-500 border-neutral-200 dark:border-neutral-700'
+                        className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                          form.creator_type === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-850 text-neutral-500 border-neutral-200 dark:border-neutral-700'
                         }`}>
                         {t.label}
                       </button>
@@ -563,29 +627,29 @@ const SubmitProjectPage = () => {
                 {form.creator_type === 'dosen' ? (
                   <>
                     <div>
-                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={form.creator_nidn} onChange={e => update('creator_nidn', e.target.value)} placeholder="NIDN / NIDK" className={inputCls} />
                     </div>
                     <div>
-                      <label className={labelCls}>Jabatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Jabatan <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={form.creator_jabatan} onChange={e => update('creator_jabatan', e.target.value)} placeholder="Jabatan" className={inputCls} />
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
-                      <label className={labelCls}>NIM <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>NIM <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={form.creator_nim} onChange={e => update('creator_nim', e.target.value)} placeholder="NIM" className={inputCls} />
                     </div>
                     <div>
-                      <label className={labelCls}>Prodi <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Prodi <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <select value={form.creator_major} onChange={e => update('creator_major', e.target.value)} className={inputCls}>
                         <option value="">Pilih...</option>
                         {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Angkatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Angkatan <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="number" min={2000} max={2030} value={form.creator_year} onChange={e => update('creator_year', e.target.value)} placeholder="2024" className={inputCls} />
                     </div>
                   </>
@@ -598,10 +662,10 @@ const SubmitProjectPage = () => {
           </div>
 
           {/* Collaborators */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+          <div className="glass-card rounded-2xl p-6 shadow-lg border border-black/10 dark:border-white/10">
             <div className="flex items-center gap-2 mb-4">
-              <Users size={14} className="text-neutral-400" />
-              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Kolaborator <span className="text-neutral-400 font-normal">(opsional)</span></h3>
+              <Users size={16} className="text-[var(--accent)]" />
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Kolaborator <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></h3>
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -610,12 +674,12 @@ const SubmitProjectPage = () => {
                   <input type="text" value={collabName} onChange={e => setCollabName(e.target.value)} placeholder="Nama kolaborator" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Tipe</label>
+                  <label className={labelCls}>Tipe Kolaborator</label>
                   <div className="flex gap-2">
                     {COLLAB_TYPES.map(t => (
                       <button key={t.id} type="button" onClick={() => setCollabType(t.id)}
-                        className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                          collabType === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-500 border-neutral-200 dark:border-neutral-700'
+                        className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                          collabType === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-850 text-neutral-500 border-neutral-200 dark:border-neutral-700'
                         }`}>
                         {t.label}
                       </button>
@@ -627,29 +691,29 @@ const SubmitProjectPage = () => {
                 {collabType === 'dosen' ? (
                   <>
                     <div>
-                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>NIDN / NIDK <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={collabNidn} onChange={e => setCollabNidn(e.target.value)} placeholder="NIDN / NIDK" className={inputCls} />
                     </div>
                     <div>
-                      <label className={labelCls}>Jabatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Jabatan <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={collabJabatan} onChange={e => setCollabJabatan(e.target.value)} placeholder="Jabatan" className={inputCls} />
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
-                      <label className={labelCls}>NIM <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>NIM <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="text" value={collabNim} onChange={e => setCollabNim(e.target.value)} placeholder="NIM" className={inputCls} />
                     </div>
                     <div>
-                      <label className={labelCls}>Prodi <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Prodi <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <select value={collabMajor} onChange={e => setCollabMajor(e.target.value)} className={inputCls}>
                         <option value="">Pilih...</option>
                         {MAJORS.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Angkatan <span className="text-neutral-400 font-normal">(opsional)</span></label>
+                      <label className={labelCls}>Angkatan <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></label>
                       <input type="number" min={2000} max={2030} value={collabYear} onChange={e => setCollabYear(parseInt(e.target.value))} placeholder="2024" className={inputCls} />
                     </div>
                   </>
@@ -672,14 +736,14 @@ const SubmitProjectPage = () => {
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-100 dark:border-neutral-800"
                       >
                         {c.avatar ? <img src={c.avatar} alt="" className="w-9 h-9 rounded-full object-cover" /> : <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[var(--accent)]/60">{c.name.charAt(0)}</div>}
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium block truncate" style={{ color: 'var(--text-primary)' }}>{c.name}</span>
-                           <span className="text-[11px] text-neutral-400">{c.type === 'dosen' ? 'Dosen' : 'Mahasiswa'}{c.type !== 'dosen' && c.major ? ` · ${c.major}` : ''}{c.type === 'dosen' ? (c.nidn ? ` · ${c.nidn}` : '') : (c.nim ? ` · ${c.nim}` : '')}</span>
+                          <span className="text-sm font-semibold block truncate text-neutral-800 dark:text-neutral-200">{c.name}</span>
+                          <span className="text-[11px] text-neutral-400 dark:text-neutral-500">{c.type === 'dosen' ? 'Dosen' : 'Mahasiswa'}{c.type !== 'dosen' && c.major ? ` · ${c.major}` : ''}{c.type === 'dosen' ? (c.nidn ? ` · ${c.nidn}` : '') : (c.nim ? ` · ${c.nim}` : '')}</span>
                         </div>
-                        <button type="button" onClick={() => removeCollab(i)} className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg"><X size={12} className="text-neutral-400" /></button>
+                        <button type="button" onClick={() => removeCollab(i)} className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg"><X size={12} className="text-neutral-400" /></button>
                       </motion.div>
                     ))}
                   </AnimatePresence>
