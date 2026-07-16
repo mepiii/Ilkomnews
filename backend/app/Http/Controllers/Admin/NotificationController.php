@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\ProjectSubmission;
+use App\Notifications\SseRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -98,23 +99,75 @@ class NotificationController extends Controller
      */
     public function publicByTracking(string $trackingId): JsonResponse
     {
-        $payload = Cache::remember("public-notifications:{$trackingId}", 5, function () use ($trackingId) {
-            $notifications = Notification::where('tracking_id', $trackingId)
-                ->with('project:id,title,category,thumbnail,status,rejection_reason')
-                ->latest()
-                ->get()
-                ->map(function ($notif) {
-                    // Include rejection reason directly in the notification
-                    if ($notif->type === 'rejected' && $notif->project) {
-                        $notif->rejection_reason = $notif->project->rejection_reason;
-                    }
-                    return $notif;
-                });
-
-            return ['data' => $notifications];
-        });
+        try {
+            $payload = Cache::remember("public-notifications:{$trackingId}", 5, function () use ($trackingId) {
+                return ['data' => $this->publicNotifications($trackingId)];
+            });
+        } catch (\Throwable $e) {
+            // Cache is an optimization, never a hard dependency.
+            $payload = ['data' => $this->publicNotifications($trackingId)];
+        }
 
         return response()->json($payload);
+    }
+
+    /**
+     * SSE stream of public notifications for a tracking ID (event-driven, no polling).
+     * Sends an initial "init" frame from the DB, then pushes "notification" frames
+     * on each new Notification created for this trackingId.
+     */
+    public function stream(string $trackingId): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+            'Connection' => 'keep-alive',
+        ];
+
+        $stream = function () use ($trackingId) {
+            ignore_user_abort(true);
+
+            // Initial frame from DB (NO cache layer).
+            $init = ['data' => $this->publicNotifications($trackingId)];
+            echo "event: init\ndata: " . json_encode($init) . "\n\n";
+            flush();
+
+            $registry = SseRegistry::register($trackingId, function ($notification) {
+                echo "event: notification\ndata: " . json_encode($notification) . "\n\n";
+                flush();
+            });
+
+            while (!connection_aborted()) {
+                // Heartbeat comment to keep the connection alive.
+                echo ": heartbeat\n";
+                flush();
+                sleep(1);
+            }
+
+            SseRegistry::unregister($trackingId, $registry);
+        };
+
+        return response()->stream($stream, 200, $headers);
+    }
+
+    /**
+     * Shared DB query for public notifications by tracking ID.
+     * Used by publicByTracking (with cache fallback) and stream (no cache).
+     */
+    private function publicNotifications(string $trackingId): \Illuminate\Database\Eloquent\Collection
+    {
+        return Notification::where('tracking_id', $trackingId)
+            ->with('project:id,title,category,thumbnail,status,rejection_reason')
+            ->latest()
+            ->get()
+            ->map(function ($notif) {
+                // Include rejection reason directly in the notification
+                if ($notif->type === 'rejected' && $notif->project) {
+                    $notif->rejection_reason = $notif->project->rejection_reason;
+                }
+                return $notif;
+            });
     }
 
     /**

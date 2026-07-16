@@ -40,7 +40,8 @@ Route::middleware('throttle:api')->group(function () {
 
     // Notifications (public - by tracking ID)
     Route::get('/notifications/{trackingId}', [NotificationController::class, 'publicByTracking']);
-    Route::post('/notifications/{trackingId}/{id}/read', [NotificationController::class, 'publicMarkRead']);
+    Route::get('/notifications/stream/{trackingId}', [NotificationController::class, 'stream'])->middleware('throttle:10,1');
+    Route::post('/notifications/{trackingId}/{id}/read', [NotificationController::class, 'publicMarkRead'])->middleware('throttle:60,1');
 
     // Submissions (public, rate limited)
     Route::post('/submissions', [ProjectSubmissionController::class, 'store'])->middleware('throttle:5,1');

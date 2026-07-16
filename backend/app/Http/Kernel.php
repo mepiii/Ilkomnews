@@ -35,6 +35,9 @@ class Kernel extends HttpKernel
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            // Emit XSRF-TOKEN cookie before auth/CSRF so the SPA always has a
+            // token to send (otherwise unauth 401 / failed 419 never set it).
+            \App\Http\Middleware\EmitCsrfCookie::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

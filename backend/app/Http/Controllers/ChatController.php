@@ -40,6 +40,11 @@ class ChatController extends Controller
 
     private const MAX_MESSAGES_PER_SESSION = 20;
 
+    // ponytail: chatbot latency budget. Per-provider cap bounds a single slow
+    // LLM; total cap stops the N-provider fallback loop from hanging 15s×N.
+    private const CHATBOT_PROVIDER_TIMEOUT_SEC = 8;
+    private const CHATBOT_TOTAL_TIMEOUT_SEC = 12;
+
     private const STOPWORDS = [
         'yang', 'di', 'ke', 'dari', 'dan', 'atau', 'untuk', 'dengan', 'pada',
         'ada', 'ini', 'itu', 'adalah', 'apa', 'bisa', 'saya', 'mau', 'tolong',
@@ -354,7 +359,16 @@ PROMPT;
                     }
                 }
 
+                // ponytail: overall wall-clock budget so a slow/down provider set can't
+                // hang the request for 15s×N. 12s still allows 1-2 provider attempts;
+                // after that, degrade to the friendly "assistant unavailable" message.
+                $chatDeadline = time() + self::CHATBOT_TOTAL_TIMEOUT_SEC;
                 foreach ($providers as $provider) {
+                    if (time() >= $chatDeadline) {
+                        \Log::warning('Chatbot LLM: overall latency budget exceeded, stopping fallback.');
+
+                        break;
+                    }
                     // SSRF guard: never send the provider's API key to a private /
                     // internal / metadata address. base_url is admin-supplied; if it
                     // resolves to a non-public target, skip this provider entirely.
@@ -404,7 +418,7 @@ PROMPT;
                             ];
                         }
 
-                        $response = Http::timeout(15)
+                        $response = Http::timeout(self::CHATBOT_PROVIDER_TIMEOUT_SEC)
                             ->withHeaders($headers)
                             ->post($resolvedUrl ?? $provider->base_url, $payload);
 
@@ -611,7 +625,7 @@ PROMPT;
      */
     private function streamGeminiReply(string $prompt, int $maxTokens, string $sessionId, string $userMessage, string $context, string $ip)
     {
-        $out = new StreamedResponse(function () use ($prompt, $maxTokens, $sessionId, $userMessage, $context, $ip) {
+        $out = new StreamedResponse(function () use ($prompt, $maxTokens, $sessionId, $userMessage, $context, $ip, $conversation) {
             $gemini = new GeminiService;
             $full = '';
             $limitHit = false;
@@ -658,7 +672,7 @@ PROMPT;
             }
 
             ChatMessage::create([
-                'conversation_id' => ChatConversation::where('session_id', $sessionId)->first()?->id,
+                'conversation_id' => $conversation->id,
                 'role' => 'assistant',
                 'content' => $full,
             ]);
@@ -946,18 +960,23 @@ PROMPT;
         // M: Only surface ACCEPTED (moderated) submissions to anonymous chat —
         // pending rows carry unmoderated submitter PII. Drop tracking_id from
         // the result set so the internal tracking identifier never leaks.
-        $results = ProjectSubmission::where('status', 'accepted')
-            ->where(function ($q) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    $escaped = addcslashes($keyword, '%_');
-                    $q->orWhere('title', 'LIKE', "%{$escaped}%");
-                    $q->orWhere('description', 'LIKE', "%{$escaped}%");
-                    $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
-                }
-            })
-            ->latest()
-            ->limit(3)
-            ->get(['title', 'category', 'status', 'creator_name', 'description', 'tech_stack']);
+        // ponytail: degrade to empty on DB outage so chat never 500s.
+        try {
+            $results = ProjectSubmission::where('status', 'accepted')
+                ->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $keyword) {
+                        $escaped = addcslashes($keyword, '%_');
+                        $q->orWhere('title', 'LIKE', "%{$escaped}%");
+                        $q->orWhere('description', 'LIKE', "%{$escaped}%");
+                        $q->orWhere('creator_name', 'LIKE', "%{$escaped}%");
+                    }
+                })
+                ->latest()
+                ->limit(3)
+                ->get(['title', 'category', 'status', 'creator_name', 'description', 'tech_stack']);
+        } catch (\Throwable $e) {
+            return '';
+        }
 
         if ($results->isEmpty()) {
             return '';
@@ -1006,15 +1025,20 @@ PROMPT;
      */
     private function recentContext(): string
     {
-        $news = News::published()
-            ->latest('date')
-            ->limit(3)
-            ->get(['title', 'summary', 'category', 'date']);
+        // ponytail: degrade to empty on DB outage so chat never 500s.
+        try {
+            $news = News::published()
+                ->latest('date')
+                ->limit(3)
+                ->get(['title', 'summary', 'category', 'date']);
 
-        $projects = ProjectSubmission::where('status', 'accepted')
-            ->latest()
-            ->limit(3)
-            ->get(['title', 'category', 'creator_name']);
+            $projects = ProjectSubmission::where('status', 'accepted')
+                ->latest()
+                ->limit(3)
+                ->get(['title', 'category', 'creator_name']);
+        } catch (\Throwable $e) {
+            return '';
+        }
 
         $lines = [];
         foreach ($news as $n) {

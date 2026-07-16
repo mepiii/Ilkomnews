@@ -5,37 +5,41 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\News;
 use App\Models\ProjectSubmission;
+use Illuminate\Database\Eloquent\Collection;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $stats = [
-            'total_news' => News::count(),
-            'published_news' => News::where('published', true)->count(),
-            'draft_news' => News::where('published', false)->count(),
-            'total_views' => News::sum('views'),
-            'total_projects' => ProjectSubmission::count(),
-            'pending_projects' => ProjectSubmission::pending()->count(),
-            'accepted_projects' => ProjectSubmission::accepted()->count(),
-            'rejected_projects' => ProjectSubmission::rejected()->count(),
-        ];
-
-        // Both "Tayang" (published) and "Draft" news are intentionally included.
-        $recent_news = News::latest('date')->take(5)->get();
-        $recent_projects = ProjectSubmission::latest()->take(5)->get();
+        $data = $this->safeDashboardData();
 
         return view('admin.dashboard', [
-            'stats' => $stats,
-            'recent_news' => $recent_news,
-            'recent_projects' => $recent_projects,
+            'stats' => $data['stats'],
+            'recent_news' => $data['recent_news'],
+            'recent_projects' => $data['recent_projects'],
         ]);
     }
 
     public function apiStats()
     {
+        $data = $this->safeDashboardData();
+
         return response()->json([
-            'stats' => [
+            'stats' => $data['stats'],
+            'recent_news' => $data['recent_news'],
+            'recent_projects' => $data['recent_projects'],
+        ]);
+    }
+
+    /**
+     * Build dashboard stats + recent lists. Degrades to zeros/empty on a DB
+     * outage so the admin panel never 500s when MySQL is briefly unavailable.
+     * ponytail: resilient but not retried; a down DB simply shows "—".
+     */
+    private function safeDashboardData(): array
+    {
+        try {
+            $stats = [
                 'total_news' => News::count(),
                 'published_news' => News::where('published', true)->count(),
                 'draft_news' => News::where('published', false)->count(),
@@ -44,10 +48,30 @@ class DashboardController extends Controller
                 'pending_projects' => ProjectSubmission::pending()->count(),
                 'accepted_projects' => ProjectSubmission::accepted()->count(),
                 'rejected_projects' => ProjectSubmission::rejected()->count(),
-            ],
+            ];
+
             // Both "Tayang" (published) and "Draft" news are intentionally included.
-            'recent_news' => News::latest('date')->take(5)->get(),
-            'recent_projects' => ProjectSubmission::latest()->take(5)->get(),
-        ]);
+            $recent_news = News::latest('date')->take(5)->get();
+            $recent_projects = ProjectSubmission::latest()->take(5)->get();
+        } catch (\Throwable $e) {
+            $stats = [
+                'total_news' => 0,
+                'published_news' => 0,
+                'draft_news' => 0,
+                'total_views' => 0,
+                'total_projects' => 0,
+                'pending_projects' => 0,
+                'accepted_projects' => 0,
+                'rejected_projects' => 0,
+            ];
+            $recent_news = new Collection();
+            $recent_projects = new Collection();
+        }
+
+        return [
+            'stats' => $stats,
+            'recent_news' => $recent_news,
+            'recent_projects' => $recent_projects,
+        ];
     }
 }
