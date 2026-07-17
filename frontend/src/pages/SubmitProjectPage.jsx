@@ -32,7 +32,7 @@ const COLLAB_TYPES = [
   { id: 'dosen', label: 'Dosen' },
 ]
 
-import { API_BASE } from '../services/api'
+import { API_BASE, LONG_REQUEST_TIMEOUT_MS } from '../services/api'
 
 const baseForm = {
   title: '', category: 'web', description: '', thumbnail: '', thumbnailFile: null,
@@ -282,7 +282,7 @@ const SubmitProjectPage = () => {
       }
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      const timeoutId = setTimeout(() => controller.abort(), LONG_REQUEST_TIMEOUT_MS)
       const res = await fetch(`${API_BASE}/submissions`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' },

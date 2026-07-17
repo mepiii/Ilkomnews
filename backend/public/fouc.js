@@ -10,5 +10,7 @@
     } else {
       document.documentElement.classList.remove('dark');
     }
-  } catch (e) {}
+  } catch {
+    // localStorage may be unavailable (private mode); theme stays default
+  }
 })();

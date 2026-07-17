@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, Bell, BellRing, Users } from 'lucide-react'
@@ -7,7 +7,8 @@ import Breadcrumb from '../components/common/Breadcrumb'
 import { PageHeader } from '../components/ui/PageHeader'
 import { PageBackground } from '../components/ui/PageBackground'
 
-import { API_BASE } from '../services/api'
+import { API_BASE, REQUEST_TIMEOUT_MS } from '../services/api'
+import { openNotificationStream } from '../lib/notificationsStream'
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-[rgba(122,71,166,0.12)] dark:bg-[rgba(122,71,166,0.18)]', border: 'border-[rgba(122,71,166,0.35)]', label: 'Menunggu Peninjauan' },
@@ -22,15 +23,22 @@ const TrackPage = () => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const notifStreamRef = useRef(null)
 
   const track = useCallback(async (id) => {
     if (!id.trim()) return
+    // Tear down any prior stream first so a failed fetch (which jumps to
+    // catch before the old close() ran) can't leak the previous EventSource.
+    if (notifStreamRef.current) {
+      notifStreamRef.current.close()
+      notifStreamRef.current = null
+    }
     setLoading(true)
     setError(null)
     setResult(null)
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
       const res = await fetch(`${API_BASE}/submissions/track/${id.trim()}`, {
         signal: controller.signal,
       })
@@ -47,11 +55,13 @@ const TrackPage = () => {
         }
       } catch { /* ignore storage errors */ }
       window.dispatchEvent(new Event('notifications:refresh'))
-      // Fetch notifications for this tracking ID
-      fetch(`${API_BASE}/notifications/${id.trim()}`)
-        .then(r => r.json())
-        .then(data => setNotifications(data.data || []))
-        .catch(() => setNotifications([]))
+      // Subscribe to live notifications for this tracking ID (replaces the
+      // one-shot fetch). Prior stream already closed at the top of track().
+      notifStreamRef.current = openNotificationStream(id.trim(), {
+        onInit: (payload) => setNotifications(payload?.data || []),
+        onNotification: (notif) =>
+          setNotifications((prev) => [notif, ...prev.filter((n) => n.id !== notif.id)]),
+      })
     } catch (err) {
       if (err.name === 'AbortError') setError('Request timeout')
       else setError(err.message)
@@ -63,6 +73,7 @@ const TrackPage = () => {
   useEffect(() => {
     const id = searchParams.get('id')
     if (id) { setTrackingId(id); track(id) }
+    return () => { if (notifStreamRef.current) notifStreamRef.current.close() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (e) => { e.preventDefault(); track(trackingId) }
@@ -129,12 +140,12 @@ const TrackPage = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">ID PELACAKAN</p>
-                      <p className="font-mono text-xl text-[var(--accent)] font-bold mt-1">{result.tracking_id}</p>
+                      <p className="font-mono text-xl text-[var(--accent)] font-bold mt-1 break-words-force">{result.tracking_id}</p>
                     </div>
                     <div className="h-px bg-theme" />
                     <div>
                       <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">JUDUL PROYEK</p>
-                      <p className="text-theme-primary font-semibold mt-1">{result.title}</p>
+                      <p className="text-theme-primary font-semibold mt-1 break-words">{result.title}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -143,7 +154,7 @@ const TrackPage = () => {
                       </div>
                       <div>
                         <p className="text-xs text-theme-muted uppercase tracking-wider font-semibold">DIKIRIM</p>
-                        <p className="text-theme-primary mt-1">{new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                        <p className="text-theme-primary mt-1">{result.created_at ? new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
                       </div>
                     </div>
                     {result.reviewed_at && (

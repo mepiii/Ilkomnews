@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { User, Lock, Save, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { adminAuth } from '../../services/adminApi'
+import { useAdminAuth } from '../../context/AdminAuthContext'
 import { springPreset, pageContainer, pageItem, useReducedMotionSafe } from '../../lib/animations'
 
 export default function SettingsPage() {
@@ -15,6 +16,8 @@ export default function SettingsPage() {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(() => {
     return !localStorage.getItem('password_prompt_dismissed')
   })
+  const { user } = useAdminAuth()
+  const adminId = user?.id
   const reduce = useReducedMotionSafe()
   const containerVariants = reduce
     ? { hidden: {}, show: {} }
@@ -23,20 +26,21 @@ export default function SettingsPage() {
     ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0 } } }
     : pageItem
 
-  async function fetchProfile() {
+  const fetchProfile = useCallback(async () => {
+    if (!adminId) return
     try {
-      const data = await adminAuth.getProfile()
+      const data = await adminAuth.getProfile(adminId)
       setProfile({ name: data.name || '', email: data.email || '' })
     } catch {
       setMessage({ type: 'error', text: 'Gagal memuat profil' })
     } finally {
       setLoading(false)
     }
-  }
+  }, [adminId])
 
   useEffect(() => {
     fetchProfile()
-  }, [])
+  }, [fetchProfile, adminId])
 
   const handleProfileChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }))
@@ -54,7 +58,7 @@ export default function SettingsPage() {
     setMessage({ type: '', text: '' })
     
     try {
-      await adminAuth.updateProfile(profile)
+      await adminAuth.updateProfile(adminId, profile)
       setMessage({ type: 'success', text: 'Profil berhasil diperbarui' })
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Gagal memperbarui profil' })
@@ -81,7 +85,7 @@ export default function SettingsPage() {
     setMessage({ type: '', text: '' })
     
     try {
-      await adminAuth.updatePassword(passwords)
+      await adminAuth.updatePassword(adminId, passwords)
       setMessage({ type: 'success', text: 'Password berhasil diperbarui' })
       setPasswords({ current_password: '', password: '', password_confirmation: '' })
     } catch (err) {

@@ -214,7 +214,7 @@ export default function AdminManagementPage() {
       transition={reduce ? { duration: 0 } : springPreset}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Manajemen Admin</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola akun administrator sistem</p>
@@ -262,7 +262,7 @@ export default function AdminManagementPage() {
             <div key={admin.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 dark:border-neutral-800 last:border-0 items-center hover:bg-gray-50 dark:bg-[#141414]/50 transition-colors">
               <div className="col-span-1 text-sm text-gray-500 dark:text-gray-400">#{idx + 1}</div>
               <div className="col-span-4 text-sm font-medium text-gray-900 dark:text-gray-100">{admin.name}</div>
-              <div className="col-span-5 text-sm text-gray-500 dark:text-gray-400">{admin.email}</div>
+              <div className="col-span-5 text-sm text-gray-500 dark:text-gray-400 break-words-force">{admin.email}</div>
               <div className="col-span-2 flex justify-end gap-2">
                 <button onClick={() => handleEdit(admin)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:bg-[#141414] rounded-lg transition" title="Edit">
                   <User size={14} />

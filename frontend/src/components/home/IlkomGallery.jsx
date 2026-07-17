@@ -8,7 +8,7 @@ import { FlowButton } from '../ui/FlowButton'
 import { GlowCard } from '../ui/GlowCard'
 import { SmoothTabs } from '../ui/SmoothTabs'
 import ProjectExpandableCard from '../cards/ProjectExpandableCard'
-import { projectsService } from '../../services/api'
+import { projectsService, REQUEST_TIMEOUT_MS } from '../../services/api'
 import { normalizeList } from '../../services/normalize'
 import { container, itemVariant } from '../../lib/animations'
 
@@ -42,7 +42,7 @@ const IlkomGallery = () => {
     }
     setError(null)
 
-    const timeout = setTimeout(() => controller.abort(), 10000)
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     const params = tab === 'all' ? {} : { category: tab }
 
     projectsService.getAll(params, { signal: controller.signal })

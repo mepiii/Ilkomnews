@@ -6,6 +6,7 @@ import { ArrowLeft, Check, X, ExternalLink, GitFork, User, Calendar, FolderOpen,
 import { adminProjects } from '../../services/adminApi'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
+import { safeHref } from '../../lib/safeHref'
 
 function RejectModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState('')
@@ -195,26 +196,26 @@ export default function ProjectDetailPage() {
             {/* Links */}
             {(project.live_demo || project.github_link || project.download_link || project.figma_link) && (
               <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
-                {project.live_demo && (
-                  <a href={project.live_demo} target="_blank" rel="noopener noreferrer"
+                {safeHref(project.live_demo) && (
+                  <a href={safeHref(project.live_demo)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-900 dark:bg-white/10 text-white dark:text-gray-100 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-900 dark:bg-white/20 transition-colors">
                     <ExternalLink size={12} className="sm:w-3.5 sm:h-3.5" /> Demo
                   </a>
                 )}
-                {project.github_link && (
-                  <a href={project.github_link} target="_blank" rel="noopener noreferrer"
+                {safeHref(project.github_link) && (
+                  <a href={safeHref(project.github_link)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-50 dark:bg-[#141414] text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors">
                     <GitFork size={12} className="sm:w-3.5 sm:h-3.5" /> GitHub
                   </a>
                 )}
-                {project.download_link && (
-                  <a href={project.download_link} target="_blank" rel="noopener noreferrer"
+                {safeHref(project.download_link) && (
+                  <a href={safeHref(project.download_link)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-50 dark:bg-[#141414] text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors">
                     <ExternalLink size={12} className="sm:w-3.5 sm:h-3.5" /> Download
                   </a>
                 )}
-                {project.figma_link && (
-                  <a href={project.figma_link} target="_blank" rel="noopener noreferrer"
+                {safeHref(project.figma_link) && (
+                  <a href={safeHref(project.figma_link)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gray-50 dark:bg-[#141414] text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-50 dark:bg-[#141414] transition-colors">
                     <ExternalLink size={12} className="sm:w-3.5 sm:h-3.5" /> Figma
                   </a>
@@ -294,6 +295,9 @@ export default function ProjectDetailPage() {
                 <div className="flex flex-wrap gap-2 mt-1">
                   {project.creator_nim && (
                     <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{project.creator_type === 'dosen' ? 'NIP' : 'NIM'}: {project.creator_nim}</span>
+                  )}
+                  {project.creator_nidn && (
+                    <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">NIDN: {project.creator_nidn}{project.creator_jabatan ? ` · ${project.creator_jabatan}` : ''}</span>
                   )}
                 </div>
                 {project.creator_major && (

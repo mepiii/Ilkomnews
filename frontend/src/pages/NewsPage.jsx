@@ -104,7 +104,7 @@ const NewsPage = () => {
 
           {/* Tabs */}
           <div className="flex justify-center mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} variant="pill" />
+            <SmoothTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
           {/* Search + Filters */}

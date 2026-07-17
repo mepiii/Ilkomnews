@@ -336,6 +336,13 @@
 }
 
 @layer utilities {
+  /* Aggressive 2-line title wrap (long titles wrap instead of clipping) */
+  .clamp-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* Balanced text wrapping for headings/paragraphs */
+  .text-balance { text-wrap: balance; }
+  /* Force long words (URLs, tokens) to break so they never overflow the viewport */
+  .break-words-force { overflow-wrap: anywhere; word-break: break-word; }
+
   .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

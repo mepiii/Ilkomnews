@@ -1,4 +1,4 @@
-import { API_BASE } from './api'
+import { API_BASE, LONG_REQUEST_TIMEOUT_MS } from './api'
 
 // Admin API is mounted at `${API_BASE}/admin/*` (see routes/api.php). All admin
 // endpoints below are prefixed with `/admin`, so the single API_BASE covers both
@@ -50,7 +50,7 @@ export async function fetchAdmin(endpoint, options = {}, isFormData = false, ret
       if (options.signal.aborted) controller.abort()
       options.signal.addEventListener('abort', () => controller.abort(), { once: true })
     }
-    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    const timeoutId = setTimeout(() => controller.abort(), LONG_REQUEST_TIMEOUT_MS)
 
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -287,20 +287,28 @@ export const adminApiKeys = {
   },
 }
 
-// Admin profile management
-adminAuth.getProfile = function() {
-  return fetchAdmin('/admin/profile')
+// Admin profile management — wired to the id-based backend endpoints
+// (routes/api.php: /admin/admins/{id}/name|email|password). The id is the
+// logged-in admin sourced from the session-held user object (AdminAuthContext).
+adminAuth.getProfile = function(id) {
+  return fetchAdmin(`/admin/admins/${id}`)
 }
 
-adminAuth.updateProfile = function(data) {
-  return fetchAdmin('/admin/profile', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  })
+adminAuth.updateProfile = function(id, data) {
+  return Promise.all([
+    fetchAdmin(`/admin/admins/${id}/name`, {
+      method: 'PUT',
+      body: JSON.stringify({ name: data.name }),
+    }),
+    fetchAdmin(`/admin/admins/${id}/email`, {
+      method: 'PUT',
+      body: JSON.stringify({ email: data.email }),
+    }),
+  ])
 }
 
-adminAuth.updatePassword = function(data) {
-  return fetchAdmin('/admin/profile/password', {
+adminAuth.updatePassword = function(id, data) {
+  return fetchAdmin(`/admin/admins/${id}/password`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })

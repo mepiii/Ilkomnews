@@ -419,6 +419,7 @@ PROMPT;
                         }
 
                         $response = Http::timeout(self::CHATBOT_PROVIDER_TIMEOUT_SEC)
+                            ->withoutRedirecting()
                             ->withHeaders($headers)
                             ->post($resolvedUrl ?? $provider->base_url, $payload);
 
@@ -617,13 +618,13 @@ PROMPT;
             'content' => $userMessage,
         ]);
 
-        return $this->streamGeminiReply($geminiPrompt, $maxTokens, $sessionId, $userMessage, $context, $ip);
+        return $this->streamGeminiReply($geminiPrompt, $maxTokens, $sessionId, $userMessage, $context, $ip, $conversation);
     }
 
     /**
      * Open an SSE response and stream Gemini tokens, enforcing output limits.
      */
-    private function streamGeminiReply(string $prompt, int $maxTokens, string $sessionId, string $userMessage, string $context, string $ip)
+    private function streamGeminiReply(string $prompt, int $maxTokens, string $sessionId, string $userMessage, string $context, string $ip, $conversation)
     {
         $out = new StreamedResponse(function () use ($prompt, $maxTokens, $sessionId, $userMessage, $context, $ip, $conversation) {
             $gemini = new GeminiService;

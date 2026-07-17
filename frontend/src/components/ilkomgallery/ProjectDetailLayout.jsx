@@ -11,6 +11,7 @@ import { useEngagement } from '../../context/EngagementContext'
 import { GradientPlaceholder } from '../ui/ExpandableCard'
 import { WordBounce } from '../ui/WordBounce'
 import { formatNumber } from '../../utils/formatters'
+import { safeHref } from '../../lib/safeHref'
 
 /**
  * Shared layout for gallery detail pages.
@@ -220,18 +221,18 @@ export default function ProjectDetailLayout({
             {/* Quick Links Bar */}
             {(project.live_demo || project.github_link || project.githubLink || project.figma_link || project.figmaLink) && (
               <div className="flex flex-wrap gap-3 p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                {project.live_demo && (
-                  <a href={project.live_demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] rounded-lg text-sm font-medium hover:bg-[var(--accent)]/20 transition">
+                {safeHref(project.live_demo) && (
+                  <a href={safeHref(project.live_demo)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] rounded-lg text-sm font-medium hover:bg-[var(--accent)]/20 transition">
                     <Globe size={16} /> Live Demo
                   </a>
                 )}
-                {(project.github_link || project.githubLink) && (
-                  <a href={project.github_link || project.githubLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-[var(--text-primary)] rounded-lg text-sm font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition">
+                {safeHref(project.github_link || project.githubLink) && (
+                  <a href={safeHref(project.github_link || project.githubLink)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-[var(--text-primary)] rounded-lg text-sm font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition">
                     <GitFork size={16} /> GitHub
                   </a>
                 )}
-                {(project.figma_link || project.figmaLink) && (
-                  <a href={project.figma_link || project.figmaLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition">
+                {safeHref(project.figma_link || project.figmaLink) && (
+                  <a href={safeHref(project.figma_link || project.figmaLink)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition">
                     <ExternalLink size={16} /> Figma
                   </a>
                 )}

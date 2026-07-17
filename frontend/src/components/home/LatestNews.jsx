@@ -8,7 +8,7 @@ import { GlowCard } from '../ui/GlowCard'
 import { WordBounce } from '../ui/WordBounce'
 import { SectionPill } from '../ui/SectionPill'
 import { SmoothTabs } from '../ui/SmoothTabs'
-import { newsService } from '../../services/api'
+import { newsService, REQUEST_TIMEOUT_MS } from '../../services/api'
 import { parseTags } from '../../utils/parsers'
 import { isNotExpired } from '../../utils/expiry'
 import AnimatedFilterDropdown from '../shared/AnimatedFilterDropdown'
@@ -46,7 +46,7 @@ const LatestNews = () => {
     }
     setError(null)
 
-    const timeout = setTimeout(() => controller.abort(), 10000)
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
     newsService.getLatest(8, { signal: controller.signal })
       .then(response => {

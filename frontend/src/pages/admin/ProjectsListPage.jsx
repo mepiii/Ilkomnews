@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Eye, Trash2, FolderOpen, RefreshCw } from 'lucide-react'
 import { adminProjects } from '../../services/adminApi'
+import { REQUEST_TIMEOUT_MS } from '../../services/api'
 import StatusBadge from '../../components/admin/ui/StatusBadge'
 import ErrorState from '../../components/admin/ui/ErrorState'
 import { ADMIN_BASE } from '../../config/admin'
@@ -71,7 +72,7 @@ export default function ProjectsListPage() {
     }
     setError('')
 
-    const timeout = setTimeout(() => controller.abort(), 10000)
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     const params = { page, limit: PAGE_SIZE }
     if (search) params.search = search
     if (status) params.status = status

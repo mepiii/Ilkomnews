@@ -45,7 +45,10 @@ const TalkingMascot = () => {
     setIsTalking(true); setCurrentMascot(mascotTalking)
     talkTimeoutRef.current = setTimeout(() => { setIsTalking(false); setCurrentMascot(mascotIdle) }, duration)
   }
-  useEffect(() => () => { [talkTimeoutRef, typingIntervalRef, idleResetRef].forEach(r => { if (r.current) clearTimeout(r.current) }) }, [])
+  useEffect(() => () => {
+    [talkTimeoutRef, idleResetRef].forEach(r => { if (r.current) clearTimeout(r.current) })
+    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+  }, [])
   const handleClick = () => {
     const text = facts[Math.floor(Math.random() * facts.length)]; const dur = calculateDuration(text)
     ;[talkTimeoutRef, typingIntervalRef, idleResetRef].forEach(r => { if (r.current) clearTimeout(r.current) })
@@ -70,7 +73,7 @@ const TalkingMascot = () => {
             <div className="bg-theme-card border border-theme rounded-2xl px-3 py-1"><span className="text-xs font-semibold uppercase tracking-wider">Kenali Maskot Kami</span></div>
             <p className="pr-3 text-xs text-theme-muted">Wolfy</p>
           </div>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 font-header">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 font-header break-words text-balance">
             <WordBounce text="Sapa " gradient /><WordBounce text="ArkaWolf" gradient />
           </h2>
           <div className="w-12 h-[2px] bg-gray-300 dark:bg-gray-700 mx-auto rounded-full mb-4" />

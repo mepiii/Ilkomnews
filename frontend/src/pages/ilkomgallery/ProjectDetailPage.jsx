@@ -19,6 +19,7 @@ import { GlowCard } from '../../components/ui/GlowCard'
 import { useEngagement } from '../../context/EngagementContext'
 import { shareItem } from '../../lib/share'
 import { useToast } from '../../components/ui/Toast'
+import { safeHref } from '../../lib/safeHref'
 
 const getCategoryDisplay = (category) => ({
   web: 'Web Development', mobile: 'Mobile App', uiux: 'UI/UX Design',
@@ -199,13 +200,13 @@ const ProjectDetailPage = () => {
         {/* Links */}
         {(project.live_demo || project.github_link) && (
           <div className="flex flex-wrap gap-3 mb-10">
-            {project.live_demo && (
-              <a href={project.live_demo} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:shadow-lg" style={{ background: 'var(--accent)' }}>
+            {safeHref(project.live_demo) && (
+              <a href={safeHref(project.live_demo)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:shadow-lg" style={{ background: 'var(--accent)' }}>
                 <Play size={16} /> Live Demo
               </a>
             )}
-            {project.github_link && (
-              <a href={project.github_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:bg-neutral-100 dark:hover:bg-neutral-800" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+            {safeHref(project.github_link) && (
+              <a href={safeHref(project.github_link)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:bg-neutral-100 dark:hover:bg-neutral-800" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
                 <FaGithub size={16} /> GitHub
               </a>
             )}

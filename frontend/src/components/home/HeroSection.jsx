@@ -44,8 +44,8 @@ const HeroSection = () => {
             initial="hidden"
             animate="visible"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 sm:mb-12 leading-[1.1] tracking-tight">
-              <span className="block mb-2 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 sm:mb-12 leading-[1.1] tracking-tight break-words text-balance">
+              <span className="block mb-2 text-2xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
                 {'Selamat Datang Di'.split('').map((ch, i) =>
                   ch === ' ' ? ' ' : (
                     <motion.span
@@ -61,8 +61,8 @@ const HeroSection = () => {
                   )
                 )}
               </span>
-              <span className="block whitespace-nowrap">
-               <span className="mr-3 inline-block font-heading" style={{ letterSpacing: '-0.02em' }}>
+              <span className="block">
+               <span className="mr-3 inline-block font-heading break-words" style={{ letterSpacing: '-0.02em' }}>
                  {ilkomLetters.map((letter, i) => (
                     <motion.span
                       key={i}

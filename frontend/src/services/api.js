@@ -2,9 +2,13 @@
 // ponytail: single source of truth for API base URL — all consumers import from here
 export const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+// Shared request timeouts so the abort duration lives in one place.
+export const REQUEST_TIMEOUT_MS = 10000
+export const LONG_REQUEST_TIMEOUT_MS = 15000
+
 const API_CONFIG = {
   baseURL: API_BASE,
-  timeout: 10000,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   }
