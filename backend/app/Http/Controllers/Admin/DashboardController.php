@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\News;
 use App\Models\ProjectSubmission;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -35,20 +36,24 @@ class DashboardController extends Controller
      * Build dashboard stats + recent lists. Degrades to zeros/empty on a DB
      * outage so the admin panel never 500s when MySQL is briefly unavailable.
      * ponytail: resilient but not retried; a down DB simply shows "—".
+     * The eight counts are wrapped in a 60s cache (was 9+ uncached queries
+     * per dashboard load). Keeps the original per-column counts for correctness.
      */
     private function safeDashboardData(): array
     {
         try {
-            $stats = [
-                'total_news' => News::count(),
-                'published_news' => News::where('published', true)->count(),
-                'draft_news' => News::where('published', false)->count(),
-                'total_views' => (int) News::sum('views'),
-                'total_projects' => ProjectSubmission::count(),
-                'pending_projects' => ProjectSubmission::pending()->count(),
-                'accepted_projects' => ProjectSubmission::accepted()->count(),
-                'rejected_projects' => ProjectSubmission::rejected()->count(),
-            ];
+            $stats = Cache::remember('admin:dashboard:stats', 60, function () {
+                return [
+                    'total_news' => News::count(),
+                    'published_news' => News::where('published', true)->count(),
+                    'draft_news' => News::where('published', false)->count(),
+                    'total_views' => (int) News::sum('views'),
+                    'total_projects' => ProjectSubmission::count(),
+                    'pending_projects' => ProjectSubmission::pending()->count(),
+                    'accepted_projects' => ProjectSubmission::accepted()->count(),
+                    'rejected_projects' => ProjectSubmission::rejected()->count(),
+                ];
+            });
 
             // Both "Tayang" (published) and "Draft" news are intentionally included.
             $recent_news = News::latest('date')->take(5)->get();

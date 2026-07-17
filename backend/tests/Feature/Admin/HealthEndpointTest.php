@@ -6,6 +6,7 @@ use App\Models\News;
 use App\Models\ProjectSubmission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -19,6 +20,7 @@ class HealthEndpointTest extends TestCase
     {
         parent::setUp();
 
+        Cache::flush();
         $this->admin = User::factory()->admin()->create();
     }
 

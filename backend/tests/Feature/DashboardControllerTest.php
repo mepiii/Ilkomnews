@@ -6,11 +6,18 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Models\News;
 use App\Models\ProjectSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class DashboardControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Cache::flush();
+    }
 
     private function dashboardStats(): array
     {

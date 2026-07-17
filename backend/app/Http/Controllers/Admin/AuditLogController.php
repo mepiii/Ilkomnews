@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AuditLogController extends Controller
 {
@@ -24,11 +25,19 @@ class AuditLogController extends Controller
 
     public function summary()
     {
+        // ponytail: scalar + action-breakdown cached 60s; by_user kept live
+        // (carries nested user objects, already a single query).
+        $cached = Cache::remember('admin:audit:summary', 60, function () {
+            return [
+                'total' => AuditLog::count(),
+                'today' => AuditLog::whereDate('created_at', today())->count(),
+                'this_week' => AuditLog::whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
+                'by_action' => AuditLog::selectRaw('action, count(*) as count')->groupBy('action')->orderByDesc('count')->take(10)->get(),
+            ];
+        });
+
         return response()->json([
-            'total' => AuditLog::count(),
-            'today' => AuditLog::whereDate('created_at', today())->count(),
-            'this_week' => AuditLog::whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
-            'by_action' => AuditLog::selectRaw('action, count(*) as count')->groupBy('action')->orderByDesc('count')->take(10)->get(),
+            ...$cached,
             'by_user' => AuditLog::selectRaw('user_id, count(*) as count')->with('user:id,name,email')->groupBy('user_id')->orderByDesc('count')->get(),
         ]);
     }

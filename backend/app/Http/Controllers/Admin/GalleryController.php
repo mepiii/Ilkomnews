@@ -59,11 +59,18 @@ class GalleryController extends Controller
             return response()->json($projects);
         }
 
-        // Stats for the view (only computed for Blade, not JSON)
-        $total_projects = ProjectSubmission::count();
-        $pending_count = ProjectSubmission::where('status', 'pending')->count();
-        $accepted_count = ProjectSubmission::where('status', 'accepted')->count();
-        $rejected_count = ProjectSubmission::where('status', 'rejected')->count();
+        // Stats for the view (only computed for Blade, not JSON).
+        // ponytail: cached 60s via the already-declared STATS_CACHE_KEY.
+        [$total_projects, $pending_count, $accepted_count, $rejected_count] = Cache::remember(
+            self::STATS_CACHE_KEY,
+            self::STATS_CACHE_TTL,
+            fn () => [
+                ProjectSubmission::count(),
+                ProjectSubmission::where('status', 'pending')->count(),
+                ProjectSubmission::where('status', 'accepted')->count(),
+                ProjectSubmission::where('status', 'rejected')->count(),
+            ]
+        );
 
         return view('admin.projects.index', compact('projects', 'total_projects', 'pending_count', 'accepted_count', 'rejected_count'));
     }
