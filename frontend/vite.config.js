@@ -27,6 +27,9 @@ export default defineConfig({
   build: {
     outDir: '../backend/public',
     sourcemap: false,
+    cssCodeSplit: true,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks(id) {

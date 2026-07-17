@@ -3,7 +3,7 @@ import { createPortal } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import { Heart, Bookmark, Share2, X, Eye } from "lucide-react"
 import { cn } from "../../lib/utils"
-import { useEngagement } from "../../context/EngagementContext"
+import { useEngagement, useEngagementItem } from "../../context/EngagementContext"
 import { lockScroll, unlockScroll, resetScrollLock } from "../../lib/scrollLock"
 import { shareItem } from "../../lib/share"
 import { useToast } from "../../components/ui/Toast"
@@ -191,11 +191,9 @@ function ExpandableCard({
   const expandedCloseRef = React.useRef(null)
   const id = React.useId()
 
-  const { get, ensure, toggleLike, toggleSave, recordView, recordShare } = useEngagement()
+  const { ensure, toggleLike, toggleSave, recordView, recordShare } = useEngagement()
   const { showToast } = useToast()
-  const eng = itemId
-    ? get(itemType, itemId)
-    : { liked: false, saved: false, views: 0, likes: 0, saves: 0, shares: 0, loaded: false }
+  const eng = useEngagementItem(itemType, itemId)
   const liked = eng.liked
   const saved = eng.saved
   const counts = React.useMemo(() => ({
@@ -259,7 +257,6 @@ function ExpandableCard({
     scrollPositionRef.current = window.scrollY
     isExpandedRef.current = true
     lockScroll()
-    document.body.classList.add("scroll-locked")
     setActive(true)
     if (itemId) {
       recordView(itemType, itemId, getItemData())
@@ -317,7 +314,7 @@ function ExpandableCard({
         onClick={handleExpand}
         className={cn(
           "group cursor-pointer overflow-hidden rounded-xl relative flex flex-col",
-          "min-h-[24rem] sm:min-h-[28rem] h-full",
+          "min-h-[18rem] sm:min-h-[24rem] lg:min-h-[28rem] h-full",
           "bg-white dark:bg-neutral-900",
           "border border-neutral-200 dark:border-[var(--border-color)]",
           "transition-[transform,border-color,box-shadow] duration-300",

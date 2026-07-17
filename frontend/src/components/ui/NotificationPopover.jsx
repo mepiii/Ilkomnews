@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, CheckCircle, XCircle, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE } from '../../services/api'
+import { openNotificationStream } from '../../lib/notificationsStream'
+import { lockScroll, resetScrollLock } from '../../lib/scrollLock'
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
@@ -30,7 +32,7 @@ function getTrackingIds() {
 const NotificationPopover = ({ align = 'right', openUp = false }) => {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [selectedNotification, setSelectedNotification] = useState(null)
   const ref = useRef(null)
   // Last-good notifications per tracking ID. Kept in a ref so a transient
@@ -41,54 +43,75 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
   // Derived during render — never stored separately, so it cannot desync.
   const unreadCount = notifications.filter((n) => !n.read).length
 
-  const fetchNotifications = useCallback(async () => {
+  // Merge all per-ID caches into the sorted, deduped list shown to the user.
+  const mergeNotifications = useCallback(() => {
+    const merged = Object.values(cacheRef.current)
+      .flat()
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .filter((n, i, self) => i === self.findIndex((x) => x.id === n.id))
+    setNotifications(merged)
+  }, [])
+
+  // (Re)open one EventSource per tracked ID. Closes any existing streams first.
+  const sourcesRef = useRef([])
+  const openStreams = useCallback(() => {
+    // close any existing streams before re-opening
+    sourcesRef.current.forEach((es) => es.close())
+    sourcesRef.current = []
+
     const trackingIds = getTrackingIds()
     if (trackingIds.length === 0) {
       cacheRef.current = {}
       setNotifications([])
       return
     }
-    setLoading(true)
-    try {
-      // Fetch every tracked ID. Update the per-ID cache only on success; a
-      // failed request leaves that ID's previous data untouched (no flicker).
-      await Promise.all(
-        trackingIds.map(async (id) => {
-          try {
-            const res = await fetch(`${API_BASE}/notifications/${id}`)
-            if (!res.ok) return
-            const json = await res.json()
-            cacheRef.current[id] = (json.data || []).filter(
-              (n) => n && n.tracking_id != null && n.type !== 'admin'
-            )
-          } catch {
-            // network error — keep last-good data for this ID
+
+    trackingIds.forEach((id) => {
+      const es = openNotificationStream(id, {
+        onInit: (payload) => {
+          cacheRef.current[id] = (payload?.data || []).filter(
+            (n) => n && n.tracking_id != null && n.type !== 'admin'
+          )
+          // Drop cached entries for IDs no longer tracked.
+          const active = new Set(getTrackingIds())
+          for (const key of Object.keys(cacheRef.current)) {
+            if (!active.has(key)) delete cacheRef.current[key]
           }
-        })
-      )
-
-      // Drop cached entries for IDs the user no longer tracks.
-      const active = new Set(trackingIds)
-      for (const key of Object.keys(cacheRef.current)) {
-        if (!active.has(key)) delete cacheRef.current[key]
-      }
-
-      const merged = Object.values(cacheRef.current)
-        .flat()
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .filter((n, i, self) => i === self.findIndex((x) => x.id === n.id))
-
-      setNotifications(merged)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+          mergeNotifications()
+        },
+        onNotification: (notif) => {
+          if (!notif || notif.tracking_id == null || notif.type === 'admin') return
+          const list = cacheRef.current[notif.tracking_id] || []
+          // Dedupe by id, then prepend the new one.
+          cacheRef.current[notif.tracking_id] = [
+            notif,
+            ...list.filter((n) => n.id !== notif.id),
+          ]
+          mergeNotifications()
+        },
+      })
+      sourcesRef.current.push(es)
+    })
+  }, [mergeNotifications])
 
   useEffect(() => {
-    fetchNotifications()
-    const intervalId = setInterval(fetchNotifications, 10000)
-    return () => clearInterval(intervalId)
-  }, [fetchNotifications])
+    openStreams()
+    return () => sourcesRef.current.forEach((es) => es.close())
+  }, [openStreams])
+
+  // Pause streams while the tab is hidden; keep last-good data. Reopen on return.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) {
+        sourcesRef.current.forEach((es) => es.close())
+        sourcesRef.current = []
+      } else {
+        openStreams()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [openStreams])
 
   useEffect(() => {
     const handler = (e) => {
@@ -98,19 +121,18 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Refetch when the app signals new notifications, when a tracking ID is added
-  // in another tab, or when the window regains focus.
+  // Re-open streams when the app signals new notifications or a tracking ID
+  // is added in another tab. visibilitychange covers refocus without the
+  // redundant reconnect churn of a 'focus' listener. No timed polling.
   useEffect(() => {
-    const onRefresh = () => fetchNotifications()
+    const onRefresh = () => openStreams()
     window.addEventListener('notifications:refresh', onRefresh)
     window.addEventListener('storage', onRefresh)
-    window.addEventListener('focus', onRefresh)
     return () => {
       window.removeEventListener('notifications:refresh', onRefresh)
       window.removeEventListener('storage', onRefresh)
-      window.removeEventListener('focus', onRefresh)
     }
-  }, [fetchNotifications])
+  }, [openStreams])
 
   const markRead = async (notification) => {
     // Optimistic update; reconciles on the next fetch if the request fails.
@@ -140,7 +162,7 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
     if (notification.type === 'accepted' && notification.project_id) {
       navigate(`/ilkomgallery/project/${notification.project_id}`)
     } else if (notification.type === 'rejected') {
-      document.body.classList.add('scroll-locked')
+      lockScroll()
       setSelectedNotification(notification)
     } else if (notification.type === 'submitted' && notification.tracking_id) {
       navigate(`/track?id=${notification.tracking_id}`)
@@ -151,7 +173,7 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
     <>
       <div className="relative" ref={ref}>
         <motion.button
-          onClick={() => { const next = !open; setOpen(next); if (next) fetchNotifications() }}
+          onClick={() => { const next = !open; setOpen(next); if (next) openStreams() }}
           whileTap={{ scale: 0.92 }}
           className="relative p-2 rounded-full hover:bg-black/[0.04] dark:hover:bg-white/[0.1] transition-colors"
           aria-label="Notifikasi"
@@ -233,12 +255,12 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
 
       {/* Rejection Reason Modal — portaled to body for proper centering */}
       {selectedNotification && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => { resetScrollLock(); setSelectedNotification(null) }}>
           <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
               <p className="text-sm font-semibold text-black dark:text-white">Alasan Penolakan</p>
               <button
-                onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}
+                onClick={() => { resetScrollLock(); setSelectedNotification(null) }}
                 className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <X size={16} className="text-neutral-500" />
@@ -265,7 +287,7 @@ const NotificationPopover = ({ align = 'right', openUp = false }) => {
                 </p>
               </div>
               <button
-                onClick={() => { document.body.classList.remove('scroll-locked'); setSelectedNotification(null) }}
+                onClick={() => { resetScrollLock(); setSelectedNotification(null) }}
                 className="mt-4 w-full px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-lg text-sm font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Tutup

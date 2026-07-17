@@ -32,6 +32,12 @@ function getGridDims(tileSize) {
 export function Tiles({ className, tileSize = 'md' }) {
   const size = tileSizeConfig[tileSize]?.size || 48
   const [dims, setDims] = useState(() => getGridDims(tileSize))
+  // ponytail: skip the JS hover-ripple (per-tile DOM writes on every mousemove)
+  // when the user prefers reduced motion — render a static grid instead.
+  const [reduced] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
   const gridRef = useRef(null)
   const lastHoveredIdx = useRef(-1)
   const lastHighlighted = useRef([])
@@ -120,8 +126,8 @@ export function Tiles({ className, tileSize = 'md' }) {
           WebkitMaskRepeat: 'no-repeat',
           WebkitMaskSize: '100% 100%',
         }}
-        onMouseOver={handleMouseOver}
-        onMouseLeave={handleMouseLeave}
+        onMouseOver={reduced ? undefined : handleMouseOver}
+        onMouseLeave={reduced ? undefined : handleMouseLeave}
       >
         {Array.from({ length: dims.rows * dims.cols }, (_, i) => {
           const row = Math.floor(i / dims.cols)

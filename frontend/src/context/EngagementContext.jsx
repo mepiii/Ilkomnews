@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useVisitorId } from '../hooks/useVisitorId'
 import {
   getGlobalStats,
@@ -28,6 +28,11 @@ function writeLocal(data) {
 }
 
 const EMPTY = { liked: false, saved: false, viewed: false, shared: false, views: 0, likes: 0, saves: 0, shares: 0, loaded: false }
+
+// Module-scope mirror of the provider's state, so the per-key selector hook
+// (useEngagementItem) can read the live value without subscribing to the
+// whole context value. Kept in sync from inside EngagementProvider.
+const providerStateRef = { current: {} }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function keyOf(type, id) {
@@ -69,6 +74,7 @@ export function EngagementProvider({ children }) {
   const stateRef = useRef(state)
   useEffect(() => {
     stateRef.current = state
+    providerStateRef.current = state
   }, [state])
 
   const inFlight = useRef(new Set())
@@ -81,6 +87,7 @@ export function EngagementProvider({ children }) {
       mirrorToLocal(type, id, merged)
       return { ...prev, [key]: merged }
     })
+    notifyKey(keyOf(type, id))
   }, [])
 
   const get = useCallback((type, id) => {
@@ -227,6 +234,30 @@ export function EngagementProvider({ children }) {
   return <EngagementContext.Provider value={value}>{children}</EngagementContext.Provider>
 }
 
+// Per-key subscription store so a card re-renders only when ITS entry changes,
+// not on every state update. Without this the flat `state` object in `value`
+// churns `useEngagement()` consumers app-wide on each card's mount/fetch.
+// notifyKey is called from update() above; subscribers read stateRef via the
+// selector hook. ponytail: one global listener Map, per-key getSnapshot.
+const engagementSubs = new Map() // key -> Set<callback>
+
+const subscribeKey = (key, cb) => {
+  let set = engagementSubs.get(key)
+  if (!set) {
+    set = new Set()
+    engagementSubs.set(key, set)
+  }
+  set.add(cb)
+  return () => {
+    set.delete(cb)
+    if (set.size === 0) engagementSubs.delete(key)
+  }
+}
+
+const notifyKey = (key) => {
+  engagementSubs.get(key)?.forEach((cb) => cb())
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useEngagement() {
   const ctx = useContext(EngagementContext)
@@ -234,4 +265,18 @@ export function useEngagement() {
     throw new Error('useEngagement must be used within an EngagementProvider')
   }
   return ctx
+}
+
+// Selector hook: subscribe to one item only. Used by ExpandableCard so a
+// like/save/view on card A never re-renders card B. getSnapshot reads the same
+// `stateRef` the provider writes, so it always returns the live value.
+// eslint-disable-next-line react-refresh/only-export-components
+export function useEngagementItem(type, id) {
+  const key = keyOf(type, id)
+  const snapshot = useSyncExternalStore(
+    useCallback((cb) => subscribeKey(key, cb), [key]),
+    () => providerStateRef.current[keyOf(type, id)] || EMPTY,
+    () => EMPTY
+  )
+  return snapshot
 }

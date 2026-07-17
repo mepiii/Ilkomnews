@@ -54,7 +54,7 @@ function AppContent() {
       {!isAdminRoute && <GlobalSearch />}
       <main className={`relative z-0 flex-grow ${isAdminRoute ? '' : 'pt-20 pb-16'}`}>
         <Suspense fallback={<PageLoader />}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage />} />
               <Route path="/news" element={<NewsPage />} />

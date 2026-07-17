@@ -67,16 +67,6 @@ const FAQ_CATEGORIES = [
   },
 ]
 
-// Text animation variants
-const textVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.03, duration: 0.3, ease: 'easeOut' }
-  })
-}
-
 const WolfyWidget = () => {
   const [view, setView] = useState('closed') // 'closed' | 'faq' | 'chat'
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -176,9 +166,11 @@ const WolfyWidget = () => {
         )}
         style={{ background: 'transparent', boxShadow: 'none', border: 'none' }}
       >
-        <img 
-          src="/assets/wolfy-avatar.png" 
-          alt="Wolfy" 
+        <img
+          src="/assets/wolfy-avatar.png"
+          alt="Wolfy"
+          loading="lazy"
+          decoding="async"
           className="w-11 h-11 rounded-full object-cover"
           onError={(e) => {
             e.target.style.display = 'none'
@@ -386,12 +378,14 @@ const WolfyWidget = () => {
                       >
                         {msg.role === 'assistant' && (
                           <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 flex items-center justify-center">
-                            <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
+                            <img src="/assets/wolfy-avatar.png" alt="Wolfy" loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
                             <Bot size={14} className="hidden text-[var(--accent)]" />
                           </div>
                         )}
                         <motion.div
                           whileHover={{ scale: 1.01 }}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
                           className="max-w-[80%] px-3.5 py-2.5 text-sm leading-relaxed"
                           style={{
                             background: msg.role === 'user'
@@ -402,18 +396,7 @@ const WolfyWidget = () => {
                             border: msg.role === 'user' ? 'none' : `1px solid ${isDark ? darkBorder : 'rgba(0,0,0,0.04)'}`,
                           }}
                         >
-                          {msg.content.split('').map((char, charIndex) => (
-                            <motion.span
-                              key={charIndex}
-                              custom={charIndex}
-                              variants={textVariants}
-                              initial="hidden"
-                              animate="visible"
-                              style={{ display: 'inline' }}
-                            >
-                              {char}
-                            </motion.span>
-                          ))}
+                          {msg.content}
                         </motion.div>
                         {msg.role === 'user' && (
                           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ring-1 ring-purple-500/10" style={{ background: accentLight }}>
@@ -425,7 +408,7 @@ const WolfyWidget = () => {
                     {loading && (
                       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 justify-start">
                         <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 flex items-center justify-center">
-                          <img src="/assets/wolfy-avatar.png" alt="Wolfy" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
+                          <img src="/assets/wolfy-avatar.png" alt="Wolfy" loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; const sib = e.target.nextElementSibling; if (sib) sib.style.display = 'flex' }} />
                           <Bot size={14} className="hidden text-[var(--accent)]" />
                         </div>
                         <div className="px-4 py-3 rounded-2xl" style={{ background: isDark ? darkSurface : 'rgba(255,255,255,0.7)', borderRadius: '16px 16px 16px 4px' }}>
