@@ -16,6 +16,11 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // ILKOM: security headers prepended globally (was $middleware->prepend in L11).
         \App\Http\Middleware\SecurityHeaders::class,
+        // ponytail: global so the XSRF cookie is attached to EVERY response,
+        // including 401/419/500 produced by the exception handler. Its
+        // terminate() runs in Http\Kernel::terminate() after the response
+        // is final, so it survives exception paths. (See middleware doc.)
+        \App\Http\Middleware\EmitCsrfCookie::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -35,16 +40,14 @@ class Kernel extends HttpKernel
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            // Emit XSRF-TOKEN cookie before auth/CSRF so the SPA always has a
-            // token to send (otherwise unauth 401 / failed 419 never set it).
-            \App\Http\Middleware\EmitCsrfCookie::class,
-            \App\Http\Middleware\VerifyCsrfToken::class,
+\App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
         'api' => [
             // ILKOM admin routes opt into the 'web' group inline for session
             // cookie (Sanctum SPA) auth; the public API stays stateless.
+            \App\Http\Middleware\SanitizeApiInput::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
@@ -73,5 +76,6 @@ class Kernel extends HttpKernel
 
         // ── ILKOM custom aliases ──
         'admin' => \App\Http\Middleware\AdminOnly::class,
+        'sanitize.input' => \App\Http\Middleware\SanitizeApiInput::class,
     ];
 }

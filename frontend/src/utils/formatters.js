@@ -11,14 +11,29 @@ export const formatDate = (date) => {
 }
 
 /**
- * Format relative time (misal: 2 jam yang lalu)
- * @param {string|Date} date
- * @returns {string}
+ * Format relative time (misal: 2 jam yang lalu).
+ *
+ * Pure function so the caller can recompute it on a timer; for a
+ * self-updating label use <RelativeTime /> from formatters.jsx.
+ *
+ * Returns a localized Indonesian phrase, not a static "Baru saja" that
+ * would never advance. The previous implementation was correct but
+ * the caller never re-rendered it, so the label froze at "Baru saja"
+ * or "5 menit yang lalu" forever — that's the "news timer doesn't
+ * display correctly" symptom.
  */
 export const formatRelativeTime = (date) => {
   if (!date) return '-'
-  const diff = new Date() - new Date(date)
-  const minutes = Math.floor(diff / 60000)
+  const target = new Date(date)
+  if (Number.isNaN(target.getTime())) return '-'
+  const diff = new Date() - target
+  if (diff < 0) {
+    // Future date (e.g. scheduled publish). Show absolute date instead
+    // so the timer doesn't say "-5 menit yang lalu".
+    return target.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
   const weeks = Math.floor(days / 7)
@@ -31,7 +46,9 @@ export const formatRelativeTime = (date) => {
   if (days > 0) return `${days} hari yang lalu`
   if (hours > 0) return `${hours} jam yang lalu`
   if (minutes > 0) return `${minutes} menit yang lalu`
-  return 'Baru saja'
+  // <60s: show actual seconds so the label visibly advances each second,
+  // which is what the user expects from a "timer".
+  return `${seconds} detik yang lalu`
 }
 
 /**

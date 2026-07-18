@@ -77,6 +77,9 @@ chatbot/logs/
 admin_credentials.md
 admin-credentials.md
 **/admin_credentials.md
+AUDIT.MD
+PRODUCT.MD
+ADMIN_CREDENTIALS.md
 
 # ---------------- Local databases ----------------
 *.sqlite
@@ -105,6 +108,8 @@ frontend/frontend_prod.zip
 .claude/plans/
 *.sh
 db-reset.sh
+setup-database.sh
+start-dev.sh
 setup.sh
 AUDIT.md
 PRODUCT.md

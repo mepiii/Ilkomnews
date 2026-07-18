@@ -43,21 +43,43 @@ class DashboardController extends Controller
     {
         try {
             $stats = Cache::remember('admin:dashboard:stats', 60, function () {
+                $newsStats = News::query()
+                    ->selectRaw('COUNT(*) as total_news')
+                    ->selectRaw('SUM(CASE WHEN published = 1 THEN 1 ELSE 0 END) as published_news')
+                    ->selectRaw('SUM(CASE WHEN published = 0 THEN 1 ELSE 0 END) as draft_news')
+                    ->selectRaw('COALESCE(SUM(views), 0) as total_views')
+                    ->first();
+
+                $projectStats = ProjectSubmission::query()
+                    ->selectRaw('COUNT(*) as total_projects')
+                    ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_projects")
+                    ->selectRaw("SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted_projects")
+                    ->selectRaw("SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_projects")
+                    ->first();
+
                 return [
-                    'total_news' => News::count(),
-                    'published_news' => News::where('published', true)->count(),
-                    'draft_news' => News::where('published', false)->count(),
-                    'total_views' => (int) News::sum('views'),
-                    'total_projects' => ProjectSubmission::count(),
-                    'pending_projects' => ProjectSubmission::pending()->count(),
-                    'accepted_projects' => ProjectSubmission::accepted()->count(),
-                    'rejected_projects' => ProjectSubmission::rejected()->count(),
+                    'total_news' => (int) ($newsStats?->total_news ?? 0),
+                    'published_news' => (int) ($newsStats?->published_news ?? 0),
+                    'draft_news' => (int) ($newsStats?->draft_news ?? 0),
+                    'total_views' => (int) ($newsStats?->total_views ?? 0),
+                    'total_projects' => (int) ($projectStats?->total_projects ?? 0),
+                    'pending_projects' => (int) ($projectStats?->pending_projects ?? 0),
+                    'accepted_projects' => (int) ($projectStats?->accepted_projects ?? 0),
+                    'rejected_projects' => (int) ($projectStats?->rejected_projects ?? 0),
                 ];
             });
 
             // Both "Tayang" (published) and "Draft" news are intentionally included.
-            $recent_news = News::latest('date')->take(5)->get();
-            $recent_projects = ProjectSubmission::latest()->take(5)->get();
+            $recent_news = News::query()
+                ->select(['id', 'title', 'slug', 'category', 'date', 'author', 'published', 'views'])
+                ->latest('date')
+                ->take(5)
+                ->get();
+            $recent_projects = ProjectSubmission::query()
+                ->select(['id', 'tracking_id', 'title', 'category', 'creator_name', 'status', 'created_at'])
+                ->latest()
+                ->take(5)
+                ->get();
         } catch (\Throwable $e) {
             $stats = [
                 'total_news' => 0,

@@ -40,25 +40,40 @@ class ProjectSubmission extends Model
         });
 
         // F3: Keep knowledge embeddings fresh when source content changes.
-        // Only accepted/pending submissions are indexed; non-indexed ones have
-        // their embeddings removed.
+        // The embedding call hits Gemini — it can stall for tens of seconds
+        // on a slow/blocked network, and previously ran inside the HTTP
+        // request, hanging every public project submission and admin
+        // accept/reject. Now deferred via dispatchAfterResponse so the
+        // client is unblocked immediately and the embedding runs after the
+        // response is flushed. Only ACCEPTED projects feed the RAG corpus;
+        // pending is private until moderation, embeddings cleared on save.
         static::saved(function (ProjectSubmission $submission) {
-            try {
-                if (! in_array($submission->status, ['accepted', 'pending'], true)) {
-                    app(VectorSearchService::class)
-                        ->deleteEmbeddings('project', $submission->id);
-
-                    return;
+            $reindex = function () use ($submission) {
+                try {
+                    if ($submission->status !== 'accepted') {
+                        app(VectorSearchService::class)
+                            ->deleteEmbeddings('project', $submission->id);
+                        return;
+                    }
+                    $text = ($submission->title ?? '')."\n\n"
+                        .($submission->description ?? '')."\n\nTech: "
+                        .implode(', ', $submission->tech_stack ?? []);
+                    app(KnowledgeIndexer::class)
+                        ->indexContent('project', $submission->id, $submission->title ?? '', $text);
+                } catch (\Throwable $e) {
+                    \Log::warning('Failed to reindex project submission embedding: '.$e->getMessage());
                 }
-
-                $text = ($submission->title ?? '')."\n\n"
-                    .($submission->description ?? '')."\n\nTech: "
-                    .implode(', ', $submission->tech_stack ?? []);
-
-                app(KnowledgeIndexer::class)
-                    ->indexContent('project', $submission->id, $submission->title ?? '', $text);
-            } catch (\Throwable $e) {
-                \Log::warning('Failed to reindex project submission embedding: '.$e->getMessage());
+            };
+            // Defer the embedding so the HTTP request is unblocked. The
+            // Bus\\Dispatcher's dispatchAfterResponse requires a Job; for a
+            // plain closure, app()->terminating() registers a callback that
+            // runs in Http\\Kernel::terminate(), after the response is
+            // flushed. No queue worker required, no client latency.
+            // Outside an HTTP request (console, tinker) run inline.
+            if (function_exists('app') && app()->runningInConsole() === false) {
+                app()->terminating($reindex);
+            } else {
+                $reindex();
             }
         });
 

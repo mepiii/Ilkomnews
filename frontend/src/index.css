@@ -179,15 +179,33 @@
     transform: translateY(1px) scale(0.98);
   }
 
-  /* Dark mode: remove light borders on cards/tables/containers.
-     Also catches arbitrary `border-[var(--accent)]/opacity` utilities, which
-     Tailwind can't apply alpha to and which otherwise fall back to the
-     preflight default (gray-200) — a visible light border on dark surfaces. */
+  /* Dark mode: kill any hard-coded light-color bleed that lacks a dark:
+     sibling. Targets the most common Tailwind utilities that show up as
+     light text/background on a dark surface. Each rule is scoped to .dark
+     so it never affects light mode. Uses !important only as a last-resort
+     override for inline class strings (Tailwind classes are equal
+     specificity, !important is required to win the cascade). */
   .dark .glass-card,
   .dark [class*="border-gray-200"],
   .dark [class*="border-white"],
   .dark [class*="border-[var(--accent)]"] {
     border-color: var(--border-color) !important;
+  }
+
+  /* Header/footer gradients that hard-code white in light mode should
+     match the dark footer gradient on dark surfaces. */
+  .dark footer,
+  .dark [class*="bg-white"] {
+    background-color: var(--bg-primary) !important;
+  }
+
+  /* Inputs/selects that use bg-white with no dark: counterpart fall back
+     to a dark surface so the focus ring remains visible. */
+  .dark input:not([class*="dark:bg-"]),
+  .dark textarea:not([class*="dark:bg-"]),
+  .dark select:not([class*="dark:bg-"]) {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
   }
 }
 

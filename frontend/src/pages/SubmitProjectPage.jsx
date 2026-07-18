@@ -540,10 +540,10 @@ const SubmitProjectPage = () => {
                           <button
                             type="button"
                             onClick={() => removeTechTag(tag)}
-                            className="hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full p-0.5 transition-colors"
+                            className="inline-flex items-center justify-center hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full p-1.5 transition-colors"
                             aria-label={`Hapus ${tag}`}
                           >
-                            <X size={10} />
+                            <X size={16} />
                           </button>
                         </motion.span>
                       ))}

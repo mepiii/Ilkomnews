@@ -15,7 +15,9 @@ class GeminiService
 
     protected string $embeddingModel;
 
-    protected int $timeout = 10;
+    // ponytail: 8s (was 10). Aligns with ChatController's per-provider cap so a
+    // slow Gemini call can't exceed the request's overall latency budget.
+    protected int $timeout = 8;
 
     public function __construct()
     {

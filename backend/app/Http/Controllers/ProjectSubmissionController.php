@@ -224,13 +224,28 @@ class ProjectSubmissionController extends Controller
         ]));
 
         $payload = Cache::remember($cacheKey, 60, function () use ($request) {
-            $query = ProjectSubmission::where('status', 'accepted');
+            $query = ProjectSubmission::query()
+                ->select([
+                    'id',
+                    'tracking_id',
+                    'title',
+                    'category',
+                    'description',
+                    'thumbnail',
+                    'tech_stack',
+                    'creator_name',
+                    'creator_type',
+                    'creator_major',
+                    'creator_avatar',
+                    'created_at',
+                ])
+                ->where('status', 'accepted');
 
             if ($request->has('category') && $request->category !== 'all') {
                 $query->where('category', $request->category);
             }
 
-            if ($request->has('search')) {
+            if ($request->has('search') && $request->search !== '') {
                 $search = addcslashes($request->search, '%_');
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
@@ -249,7 +264,8 @@ class ProjectSubmissionController extends Controller
     {
         $version = Cache::get('public-projects:version', 1);
         $payload = Cache::remember("public-projects:show:{$version}:{$id}", 120, function () use ($id) {
-            return ProjectSubmission::where('id', $id)
+            return ProjectSubmission::query()
+                ->where('id', $id)
                 ->where('status', 'accepted')
                 ->firstOrFail()
                 ->toArray();

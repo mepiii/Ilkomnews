@@ -7,7 +7,8 @@ import {
 } from 'lucide-react'
 import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { motion, useReducedMotion } from 'framer-motion'
-import { formatDate, formatRelativeTime, formatNumber } from '../../utils/formatters'
+import { formatDate, formatNumber } from '../../utils/formatters'
+import RelativeTime from '../../utils/RelativeTime'
 import { useEngagement } from '../../context/EngagementContext'
 import ImageWithFallback from '../ui/ImageWithFallback'
 import { GradientPlaceholder } from '../ui/ExpandableCard'
@@ -111,7 +112,7 @@ const NewsDetail = ({ news, relatedNews = [] }) => {
             ><WordBounce text={news.title} /></motion.h1>
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
             <span className="flex items-center gap-1"><Calendar size={12} /> {formatDate(news.date)}</span>
-            <span className="flex items-center gap-1"><Clock size={12} /> {formatRelativeTime(news.date)}</span>
+            <span className="flex items-center gap-1"><Clock size={12} /> <RelativeTime date={news.date} /></span>
             {news.author && (
               <span className="flex items-center gap-1"><User size={12} /> {news.author}</span>
             )}

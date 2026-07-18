@@ -117,18 +117,23 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Remember me: a clickable <label> wrapping the checkbox
+                (instead of htmlFor) gives the whole row a proper hit target,
+                removes the focus/click mismatch some users reported, and
+                keeps the same accessibility semantics. */}
+            <label
+              htmlFor="login-remember"
+              className="flex items-center gap-2.5 cursor-pointer select-none text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
               <input
                 type="checkbox"
-                id="remember"
+                id="login-remember"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-gray-900 dark:accent-white"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 accent-[var(--accent)] dark:accent-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-1 dark:focus:ring-offset-[#141414] transition"
               />
-              <label htmlFor="remember" className="text-sm text-gray-500 dark:text-gray-400">
-                Ingat saya
-              </label>
-            </div>
+              <span>Ingat saya</span>
+            </label>
 
             <motion.button
               type="submit"

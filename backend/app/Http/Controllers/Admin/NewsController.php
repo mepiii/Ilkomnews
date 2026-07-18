@@ -7,14 +7,21 @@ use App\Models\AuditLog;
 use App\Models\News;
 use App\Services\ImageCompressionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class NewsController extends Controller
 {
+    private const STATS_CACHE_KEY = 'admin:news:stats';
+    private const STATS_CACHE_TTL = 60;
+
     public function index(Request $request)
     {
-        $query = News::query();
+        $query = News::query()->select([
+            'id', 'title', 'slug', 'summary', 'category', 'date', 
+            'author', 'image', 'views', 'published', 'created_at', 'updated_at'
+        ]);
 
         if ($request->has('status') && $request->status !== '') {
             $query->where('published', $request->status === 'published');
@@ -56,7 +63,7 @@ class NewsController extends Controller
             'author_institution' => 'nullable|string|max:255',
             'author_position' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240', // 10MB max
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:10240',
             'expires_at' => 'nullable|date|after:now',
         ]);
 
@@ -93,7 +100,6 @@ class NewsController extends Controller
             if (json_last_error() === JSON_ERROR_NONE) {
                 $validated['tags'] = $tagsDecoded;
             } else {
-                // fallback if it's just a comma separated string
                 $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
             }
         }
@@ -109,6 +115,9 @@ class NewsController extends Controller
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
+
+        // Flush relevant caches
+        $this->flushNewsCache();
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $news], 201);
@@ -217,6 +226,9 @@ class NewsController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        // Flush relevant caches
+        $this->flushNewsCache();
+
         if ($request->expectsJson()) {
             return response()->json(['data' => $news->fresh()]);
         }
@@ -244,6 +256,9 @@ class NewsController extends Controller
 
         $news->forceDelete();
 
+        // Flush relevant caches
+        $this->flushNewsCache();
+
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Artikel berita berhasil dihapus!']);
         }
@@ -266,16 +281,44 @@ class NewsController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
+        // Flush relevant caches
+        $this->flushNewsCache();
+
         return response()->json(['data' => ['id' => $news->id, 'published' => $news->published]]);
     }
 
     public function stats()
     {
-        return response()->json([
-            'total' => News::count(),
-            'published' => News::where('published', true)->count(),
-            'draft' => News::where('published', false)->count(),
-            'total_views' => News::sum('views'),
-        ]);
+        // ponytail: use the default cache store (file/redis/db) — the prior
+        // hard-coded 'redis' store threw on file-cached projects and turned
+        // /admin/news/stats into a 500 every time it was called.
+        $stats = Cache::remember(self::STATS_CACHE_KEY, self::STATS_CACHE_TTL, function () {
+            $row = News::query()
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('SUM(CASE WHEN published = 1 THEN 1 ELSE 0 END) as published_count')
+                ->selectRaw('SUM(CASE WHEN published = 0 THEN 1 ELSE 0 END) as draft_count')
+                ->selectRaw('COALESCE(SUM(views), 0) as total_views')
+                ->first();
+
+            return [
+                'total' => (int) ($row?->total ?? 0),
+                'published' => (int) ($row?->published_count ?? 0),
+                'draft' => (int) ($row?->draft_count ?? 0),
+                'total_views' => (int) ($row?->total_views ?? 0),
+            ];
+        });
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Flush news-related caches.
+     */
+    private function flushNewsCache(): void
+    {
+        Cache::forget(self::STATS_CACHE_KEY);
+        Cache::forget('admin:dashboard:stats');
+        
+        // Model's boot method handles the rest via flushModelCache
     }
 }

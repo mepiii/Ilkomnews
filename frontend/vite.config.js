@@ -15,6 +15,13 @@ export default defineConfig({
       // `localhost` can resolve to ::1 (IPv6) and get ECONNREFUSED.
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/sanctum': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      // Storage proxy: lets the SPA at :5173 load /storage/* (uploaded
+      // images, project thumbnails, news author avatars) through the
+      // backend in dev. Without this, relative /storage/foo.png 404s on
+      // the Vite dev server and the same-origin absolute URL from
+      // asset() hits CORS/CSP. In prod the SPA is served from :8000 so
+      // this proxy is a no-op (Vite dev only).
+      '/storage': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
   resolve: {

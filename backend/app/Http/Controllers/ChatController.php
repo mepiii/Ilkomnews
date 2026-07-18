@@ -215,10 +215,21 @@ PROMPT;
                 ]);
             }
 
+            // ponytail: single wall-clock budget for the whole LLM attempt,
+            // set BEFORE any external call (RAG embedding + Gemini + fallback)
+            // so they can't stack past it. Skips the RAG embedding round-trip
+            // when the budget is already mostly burned.
+            $chatDeadline = time() + self::CHATBOT_TOTAL_TIMEOUT_SEC;
+
             // Retrieve context (RAG)
             // RAG pipeline (vector search) with keyword LIKE fallback
-            $rag = app(RAGPipeline::class);
-            $vectorContext = $rag->retrieveOnly($userMessage);
+            $vectorContext = null;
+            if (time() < $chatDeadline - 2) {
+                $rag = app(RAGPipeline::class);
+                $vectorContext = $rag->retrieveOnly($userMessage);
+            } else {
+                \Log::warning('Chatbot LLM: latency budget nearly exhausted, skipping RAG retrieval.');
+            }
 
             // F4: If vector retrieval is unavailable (no embedding-capable
             // provider configured, or no vector match), we silently fall back
@@ -359,10 +370,8 @@ PROMPT;
                     }
                 }
 
-                // ponytail: overall wall-clock budget so a slow/down provider set can't
-                // hang the request for 15s×N. 12s still allows 1-2 provider attempts;
-                // after that, degrade to the friendly "assistant unavailable" message.
-                $chatDeadline = time() + self::CHATBOT_TOTAL_TIMEOUT_SEC;
+                // ponytail: reuse the single $chatDeadline set before RAG above;
+                // no second declaration, so the RAG embedding time counts too.
                 foreach ($providers as $provider) {
                     if (time() >= $chatDeadline) {
                         \Log::warning('Chatbot LLM: overall latency budget exceeded, stopping fallback.');

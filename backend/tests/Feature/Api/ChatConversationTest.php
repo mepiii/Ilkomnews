@@ -37,6 +37,7 @@ class ChatConversationTest extends TestCase
         $mock->shouldReceive('retrieveOnly')
             ->andReturn('[Berita] ILKOM NEWS Terbuka - FASILKOM');
         $this->app->instance(RAGPipeline::class, $mock);
+        \Illuminate\Support\Facades\Cache::flush();
 
         // Clear rate limits
         RateLimiter::clear('chat:min:ip:127.0.0.1');
@@ -80,6 +81,9 @@ class ChatConversationTest extends TestCase
             'session_id' => 'session-aaa',
         ]);
 
+        RateLimiter::clear('chat:min:ip:127.0.0.1');
+        RateLimiter::clear('chat:hr:ip:127.0.0.1');
+        RateLimiter::clear('chat:day:ip:127.0.0.1');
         $this->postJson('/api/chat', [
             'message' => 'Apa itu ILKOM?',
             'session_id' => 'session-bbb',

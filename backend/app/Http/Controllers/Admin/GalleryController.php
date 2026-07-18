@@ -33,7 +33,17 @@ class GalleryController extends Controller
 
     public function index(Request $request)
     {
-        $query = ProjectSubmission::query();
+        $query = ProjectSubmission::query()->select([
+            'id',
+            'tracking_id',
+            'title',
+            'category',
+            'creator_name',
+            'creator_type',
+            'status',
+            'reviewed_at',
+            'created_at',
+        ]);
 
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
@@ -64,12 +74,21 @@ class GalleryController extends Controller
         [$total_projects, $pending_count, $accepted_count, $rejected_count] = Cache::remember(
             self::STATS_CACHE_KEY,
             self::STATS_CACHE_TTL,
-            fn () => [
-                ProjectSubmission::count(),
-                ProjectSubmission::where('status', 'pending')->count(),
-                ProjectSubmission::where('status', 'accepted')->count(),
-                ProjectSubmission::where('status', 'rejected')->count(),
-            ]
+            function () {
+                $stats = ProjectSubmission::query()
+                    ->selectRaw('COUNT(*) as total')
+                    ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending")
+                    ->selectRaw("SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted")
+                    ->selectRaw("SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected")
+                    ->first();
+
+                return [
+                    (int) ($stats?->total ?? 0),
+                    (int) ($stats?->pending ?? 0),
+                    (int) ($stats?->accepted ?? 0),
+                    (int) ($stats?->rejected ?? 0),
+                ];
+            }
         );
 
         return view('admin.projects.index', compact('projects', 'total_projects', 'pending_count', 'accepted_count', 'rejected_count'));
@@ -238,17 +257,31 @@ class GalleryController extends Controller
 
     public function stats()
     {
-        $stats = Cache::remember(self::STATS_CACHE_KEY, self::STATS_CACHE_TTL, fn () => [
-            'total' => ProjectSubmission::count(),
-            'pending' => ProjectSubmission::pending()->count(),
-            'accepted' => ProjectSubmission::accepted()->count(),
-            'rejected' => ProjectSubmission::rejected()->count(),
-            'web' => ProjectSubmission::where('category', 'web')->count(),
-            'mobile' => ProjectSubmission::where('category', 'mobile')->count(),
-            'uiux' => ProjectSubmission::where('category', 'uiux')->count(),
-            'game' => ProjectSubmission::where('category', 'game')->count(),
-            'ai' => ProjectSubmission::where('category', 'ai')->count(),
-        ]);
+        $stats = Cache::remember(self::STATS_CACHE_KEY, self::STATS_CACHE_TTL, function () {
+            $row = ProjectSubmission::query()
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending")
+                ->selectRaw("SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted")
+                ->selectRaw("SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected")
+                ->selectRaw("SUM(CASE WHEN category = 'web' THEN 1 ELSE 0 END) as web")
+                ->selectRaw("SUM(CASE WHEN category = 'mobile' THEN 1 ELSE 0 END) as mobile")
+                ->selectRaw("SUM(CASE WHEN category = 'uiux' THEN 1 ELSE 0 END) as uiux")
+                ->selectRaw("SUM(CASE WHEN category = 'game' THEN 1 ELSE 0 END) as game")
+                ->selectRaw("SUM(CASE WHEN category = 'ai' THEN 1 ELSE 0 END) as ai")
+                ->first();
+
+            return [
+                'total' => (int) ($row?->total ?? 0),
+                'pending' => (int) ($row?->pending ?? 0),
+                'accepted' => (int) ($row?->accepted ?? 0),
+                'rejected' => (int) ($row?->rejected ?? 0),
+                'web' => (int) ($row?->web ?? 0),
+                'mobile' => (int) ($row?->mobile ?? 0),
+                'uiux' => (int) ($row?->uiux ?? 0),
+                'game' => (int) ($row?->game ?? 0),
+                'ai' => (int) ($row?->ai ?? 0),
+            ];
+        });
 
         return response()->json($stats);
     }

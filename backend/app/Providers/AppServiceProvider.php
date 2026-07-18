@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,6 +12,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        Model::preventLazyLoading(true);
+
         // Public API: bumped 60 → 300/min/IP.
         // The home page fires news + projects + interactions in parallel,
         // and the notification popover polls every 60s. 60/min exhausted
@@ -41,6 +44,16 @@ class AppServiceProvider extends ServiceProvider
         // in ChatController only when a non-FAQ question reaches the LLM.
         RateLimiter::for('chatbot-ai-daily', fn (Request $request) => [
             Limit::perDay(5)->by($request->ip()),
+        ]);
+
+        // Heavy admin analytics endpoints (dashboard/security/chat/audit summary).
+        RateLimiter::for('admin-heavy', fn (Request $request) => [
+            Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()),
+        ]);
+
+        // High-traffic public read endpoints with aggressive caching.
+        RateLimiter::for('public-read', fn (Request $request) => [
+            Limit::perMinute(180)->by($request->ip()),
         ]);
     }
 }

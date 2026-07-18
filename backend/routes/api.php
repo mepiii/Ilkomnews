@@ -21,39 +21,48 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/ping', [Admin\HealthController::class, 'ping']);
 
     // News
-    Route::get('/news', [NewsController::class, 'index']);
-    Route::get('/news/latest', [NewsController::class, 'latest']);
-    Route::get('/news/categories', [NewsController::class, 'categories']);
-    Route::get('/news/{id}', [NewsController::class, 'show']);
+    Route::get('/news', [NewsController::class, 'index'])->middleware('throttle:public-read');
+    Route::get('/news/latest', [NewsController::class, 'latest'])->middleware('throttle:public-read');
+    Route::get('/news/categories', [NewsController::class, 'categories'])->middleware('throttle:public-read');
+    Route::get('/news/{id}', [NewsController::class, 'show'])->middleware('throttle:public-read');
 
     // Events
-    Route::get('/events', [EventController::class, 'index']);
-    Route::get('/events/upcoming', [EventController::class, 'upcoming']);
-    Route::get('/events/categories', [EventController::class, 'categories']);
-    Route::get('/events/{id}', [EventController::class, 'show']);
+    Route::get('/events', [EventController::class, 'index'])->middleware('throttle:public-read');
+    Route::get('/events/upcoming', [EventController::class, 'upcoming'])->middleware('throttle:public-read');
+    Route::get('/events/categories', [EventController::class, 'categories'])->middleware('throttle:public-read');
+    Route::get('/events/{id}', [EventController::class, 'show'])->middleware('throttle:public-read');
 
     // Careers
-    Route::get('/careers', [CareerController::class, 'index']);
-    Route::get('/careers/types', [CareerController::class, 'types']);
-    Route::get('/careers/locations', [CareerController::class, 'locations']);
-    Route::get('/careers/{id}', [CareerController::class, 'show']);
+    Route::get('/careers', [CareerController::class, 'index'])->middleware('throttle:public-read');
+    Route::get('/careers/types', [CareerController::class, 'types'])->middleware('throttle:public-read');
+    Route::get('/careers/locations', [CareerController::class, 'locations'])->middleware('throttle:public-read');
+    Route::get('/careers/{id}', [CareerController::class, 'show'])->middleware('throttle:public-read');
 
     // Notifications (public - by tracking ID)
-    Route::get('/notifications/{trackingId}', [NotificationController::class, 'publicByTracking']);
-    Route::get('/notifications/stream/{trackingId}', [NotificationController::class, 'stream'])->middleware('throttle:10,1');
-    Route::post('/notifications/{trackingId}/{id}/read', [NotificationController::class, 'publicMarkRead'])->middleware('throttle:60,1');
+    Route::get('/notifications/{trackingId}', [NotificationController::class, 'publicByTracking'])
+        ->where('trackingId', '[A-Za-z0-9\-]{6,64}');
+    Route::get('/notifications/stream/{trackingId}', [NotificationController::class, 'stream'])
+        ->middleware('throttle:10,1')
+        ->where('trackingId', '[A-Za-z0-9\-]{6,64}');
+    Route::post('/notifications/{trackingId}/{id}/read', [NotificationController::class, 'publicMarkRead'])
+        ->middleware('throttle:60,1')
+        ->where('trackingId', '[A-Za-z0-9\-]{6,64}')
+        ->whereNumber('id');
 
     // Submissions (public, rate limited)
     Route::post('/submissions', [ProjectSubmissionController::class, 'store'])->middleware('throttle:5,1');
-    Route::get('/submissions/track/{trackingId}', [ProjectSubmissionController::class, 'track']);
+    Route::get('/submissions/track/{trackingId}', [ProjectSubmissionController::class, 'track'])
+        ->where('trackingId', '[A-Za-z0-9\-]{6,64}');
     Route::get('/upload-quota', function (\Illuminate\Http\Request $request) {
         $service = new \App\Services\UploadQuotaService();
         return response()->json($service->getStatus($request));
     });
 
     // Public projects (accepted only)
-    Route::get('/projects', [ProjectSubmissionController::class, 'publicIndex']);
-    Route::get('/projects/{id}', [ProjectSubmissionController::class, 'publicShow']);
+    Route::get('/projects', [ProjectSubmissionController::class, 'publicIndex'])->middleware('throttle:public-read');
+    Route::get('/projects/{id}', [ProjectSubmissionController::class, 'publicShow'])
+        ->middleware('throttle:public-read')
+        ->whereNumber('id');
 
     // Chatbot (Wolfy) — rate limited separately
     Route::post('/chat', [ChatController::class, 'chat'])->middleware('throttle:chatbot');
@@ -84,7 +93,7 @@ Route::prefix('admin')->middleware('web')->group(function () {
     Route::middleware(['auth', 'admin', 'throttle:admin'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
-        Route::get('/dashboard', [DashboardController::class, 'apiStats']);
+        Route::get('/dashboard', [DashboardController::class, 'apiStats'])->middleware('throttle:admin-heavy');
 
         // File upload
         Route::post('/upload', [\App\Http\Controllers\UploadController::class, 'store'])->middleware('throttle:10,1');
@@ -116,16 +125,16 @@ Route::prefix('admin')->middleware('web')->group(function () {
 
         // Audit logs
         Route::get('/audit-logs', [Admin\AuditLogController::class, 'index']);
-        Route::get('/audit-logs/summary', [Admin\AuditLogController::class, 'summary']);
+        Route::get('/audit-logs/summary', [Admin\AuditLogController::class, 'summary'])->middleware('throttle:admin-heavy');
 
         // Chat stats
-        Route::get('/chat-stats', [Admin\ChatStatsController::class, 'index']);
+        Route::get('/chat-stats', [Admin\ChatStatsController::class, 'index'])->middleware('throttle:admin-heavy');
 
         // Health
         Route::get('/health', [Admin\HealthController::class, 'index']);
 
         // Security
-        Route::get('/security/login-attempts', [Admin\SecurityController::class, 'index']);
+        Route::get('/security/login-attempts', [Admin\SecurityController::class, 'index'])->middleware('throttle:admin-heavy');
 
         // Chatbot API config
         Route::get('/chatbot-api', [Admin\ChatbotApiController::class, 'index']);

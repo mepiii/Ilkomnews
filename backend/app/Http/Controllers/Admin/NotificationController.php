@@ -12,16 +12,26 @@ use Illuminate\Support\Facades\Cache;
 
 class NotificationController extends Controller
 {
+    private const UNREAD_COUNT_CACHE_KEY = 'admin:notifications:unread_count';
+
+    private const UNREAD_COUNT_CACHE_TTL = 10;
+
     /**
      * Get all notifications for admin
      */
     public function index(Request $request): JsonResponse
     {
-        $notifications = Notification::with('project:id,title,category,thumbnail,status,rejection_reason')
+        $notifications = Notification::query()
+            ->select(['id', 'tracking_id', 'project_id', 'type', 'title', 'message', 'read', 'created_at'])
+            ->with('project:id,title,category,thumbnail,status,rejection_reason')
             ->latest()
             ->paginate(min((int) $request->input('per_page', 20), 100));
 
-        $unreadCount = Notification::where('read', false)->count();
+        $unreadCount = Cache::remember(
+            self::UNREAD_COUNT_CACHE_KEY,
+            self::UNREAD_COUNT_CACHE_TTL,
+            fn () => Notification::where('read', false)->count()
+        );
 
         return response()->json([
             'data' => $notifications->items(),
@@ -56,6 +66,7 @@ class NotificationController extends Controller
             'project_id' => $validated['project_id'] ?? null,
             'read' => false,
         ]);
+        Cache::forget(self::UNREAD_COUNT_CACHE_KEY);
 
         return response()->json([
             'message' => 'Notification created',
@@ -69,7 +80,11 @@ class NotificationController extends Controller
     public function unreadCount(): JsonResponse
     {
         return response()->json([
-            'count' => Notification::where('read', false)->count(),
+            'count' => Cache::remember(
+                self::UNREAD_COUNT_CACHE_KEY,
+                self::UNREAD_COUNT_CACHE_TTL,
+                fn () => Notification::where('read', false)->count()
+            ),
         ]);
     }
 
@@ -80,6 +95,7 @@ class NotificationController extends Controller
     {
         $notification = Notification::findOrFail($id);
         $notification->update(['read' => true]);
+        Cache::forget(self::UNREAD_COUNT_CACHE_KEY);
 
         return response()->json(['message' => 'Notification marked as read']);
     }
@@ -90,6 +106,7 @@ class NotificationController extends Controller
     public function markAllRead(): JsonResponse
     {
         Notification::where('read', false)->update(['read' => true]);
+        Cache::forget(self::UNREAD_COUNT_CACHE_KEY);
 
         return response()->json(['message' => 'All notifications marked as read']);
     }
@@ -182,6 +199,7 @@ class NotificationController extends Controller
         $notification->update(['read' => true]);
 
         Cache::forget("public-notifications:{$trackingId}");
+        Cache::forget(self::UNREAD_COUNT_CACHE_KEY);
 
         return response()->json(['message' => 'Notification marked as read']);
     }

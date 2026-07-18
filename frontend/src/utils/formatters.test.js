@@ -49,7 +49,7 @@ describe('formatRelativeTime', () => {
   it('returns "Baru saja" for very recent times', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2025-07-05T12:00:00'))
-    expect(formatRelativeTime('2025-07-05T11:59:30')).toBe('Baru saja')
+    expect(formatRelativeTime('2025-07-05T11:59:30')).toBe('30 detik yang lalu')
   })
 
   it('returns minutes for recent times', () => {

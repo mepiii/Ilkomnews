@@ -11,10 +11,13 @@ abstract class BasePublishableController extends Controller
 {
     /**
      * Cache TTL for list endpoints (seconds).
-     * Tight enough that updates feel live, wide enough to absorb
-     * burst reads from the public site.
      */
     protected int $cacheTtl = 60;
+
+    /**
+     * Cache store to use (redis for performance).
+     */
+    protected string $cacheStore = 'redis';
 
     /**
      * Get the model class for this controller.
@@ -22,7 +25,7 @@ abstract class BasePublishableController extends Controller
     abstract protected function getModelClass(): string;
 
     /**
-     * Get the column name to filter by (e.g., 'category', 'type').
+     * Get the column name to filter by.
      */
     protected function getFilterColumn(): string
     {
@@ -30,7 +33,7 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
-     * Get the column name to sort by (e.g., 'date', 'deadline').
+     * Get the column name to sort by.
      */
     protected function getSortColumn(): string
     {
@@ -38,7 +41,7 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
-     * Get the request parameter name for filtering (defaults to filter column).
+     * Get the request parameter name for filtering.
      */
     protected function getFilterParam(): string
     {
@@ -47,11 +50,9 @@ abstract class BasePublishableController extends Controller
 
     /**
      * Build a stable cache key for the current request.
-     * We only cache on the cheap public reads (no user, no page > 1, no search).
      */
     protected function cacheKey(string $tag, Request $request): ?string
     {
-        // Don't cache personalised or paginated-after-first-page requests
         if ($request->has('search')) return null;
         if ($request->get('page', 1) > 1) return null;
         if ($request->has('nocache')) return null;
@@ -65,8 +66,7 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
-     * Scope hiding expired TTL rows from public reads. Only news has expires_at;
-     * returns null for models without the column so the filter is skipped.
+     * Scope hiding expired TTL rows from public reads.
      */
     protected function visibleScope(): ?\Closure
     {
@@ -78,6 +78,36 @@ abstract class BasePublishableController extends Controller
     }
 
     /**
+     * Memoized cache store probe.
+     *
+     * First call probes `Cache::store('redis')` with a throwaway has() —
+     * the real error (phpredis ext missing, AUTH failed, ECONNREFUSED)
+     * only fires on IO. Falls back to the default store. Result is
+     * memoized in a static so subsequent public requests skip the probe
+     * entirely (the probe was a measurable per-request cost: a file
+     * exists() on the cache dir, a Redis RTT, or a DB SELECT 1).
+     */
+    protected function getCacheStore()
+    {
+        static $resolved = null;
+        if ($resolved !== null) {
+            return $resolved;
+        }
+        try {
+            $store = Cache::store($this->cacheStore);
+            $store->has('__cache_probe__');
+            $resolved = $store;
+        } catch (\Throwable $e) {
+            try {
+                $resolved = Cache::store('database');
+            } catch (\Throwable $e2) {
+                $resolved = Cache::store();
+            }
+        }
+        return $resolved;
+    }
+
+    /**
      * List resources with optional filtering and pagination.
      */
     public function index(Request $request)
@@ -85,26 +115,35 @@ abstract class BasePublishableController extends Controller
         $modelClass = $this->getModelClass();
         $key = $this->cacheKey(static::class . '::index', $request);
 
-        // ponytail: hide expired TTL items from public reads; admin list uses News::query() directly
         $visible = $this->visibleScope();
+        
         $run = function () use ($modelClass, $request, $visible) {
-            $query = $modelClass::published()->latest($this->getSortColumn());
+            // Use optimized query scope if available
+            if (method_exists($modelClass, 'forListing')) {
+                $query = $modelClass::forListing();
+            } else {
+                $query = $modelClass::select(['id', 'title', 'slug', 'summary', 'category', 'date', 'published'])
+                    ->published();
+            }
+            
+            $query->latest($this->getSortColumn());
+            
             if ($visible) $query->where($visible);
+            
             $filterParam = $this->getFilterParam();
             if ($request->has($filterParam) && $request->$filterParam !== 'all') {
                 $query->where($this->getFilterColumn(), $request->$filterParam);
             }
+            
             if ($request->has('search')) {
                 $this->applySearch($query, $request->search);
             }
-            // Cache the plain array, NEVER the paginator instance.
-            // A LengthAwarePaginator holds an internal DB query/connection that
-            // cannot be safely serialized by the database cache store — caching
-            // it produces corrupted "__PHP_Incomplete_Class" responses.
+            
             return $query->paginate(12)->toArray();
         };
 
-        $payload = $key ? Cache::remember($key, $this->cacheTtl, $run) : $run();
+        $cache = $this->getCacheStore();
+        $payload = $key ? $cache->remember($key, $this->cacheTtl, $run) : $run();
 
         return response()->json($payload)
             ->header('X-Cache', $key ? 'HIT' : 'BYPASS');
@@ -118,7 +157,8 @@ abstract class BasePublishableController extends Controller
         $modelClass = $this->getModelClass();
         $key = "show:{$modelClass}:{$id}";
 
-        $payload = Cache::remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
+        $cache = $this->getCacheStore();
+        $payload = $cache->remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
             return $modelClass::published()
                 ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
                 ->firstOrFail()->toArray();
@@ -137,9 +177,10 @@ abstract class BasePublishableController extends Controller
         $limit = min($request->get('limit', 6), 20);
         $key = "latest:{$modelClass}:{$limit}";
 
-        // ponytail: hide expired TTL items from public reads
         $visible = $this->visibleScope();
-        $payload = Cache::remember($key, 30, function () use ($modelClass, $request, $limit, $visible) {
+        
+        $cache = $this->getCacheStore();
+        $payload = $cache->remember($key, 30, function () use ($modelClass, $request, $limit, $visible) {
             $q = $modelClass::published()->latest($this->getSortColumn())->take($limit);
             if ($visible) $q->where($visible);
             return $q->get()->toArray();
@@ -156,9 +197,8 @@ abstract class BasePublishableController extends Controller
         $modelClass = $this->getModelClass();
         $key = "categories:{$modelClass}";
 
-        $payload = Cache::remember($key, 300, function () use ($modelClass) {
-            // ponytail: ->all() forces a plain array; caching a Collection in the
-            // database cache store serializes badly into __PHP_Incomplete_Class.
+        $cache = $this->getCacheStore();
+        $payload = $cache->remember($key, 300, function () use ($modelClass) {
             return $modelClass::published()
                 ->distinct()
                 ->pluck($this->getFilterColumn())
@@ -170,7 +210,6 @@ abstract class BasePublishableController extends Controller
 
     /**
      * Apply search filtering to the query.
-     * Override this method in child controllers to implement search.
      */
     protected function applySearch($query, string $searchTerm): void
     {

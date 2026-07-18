@@ -10,6 +10,14 @@ class ChatApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        RateLimiter::clear('chat:min:ip:127.0.0.1');
+        RateLimiter::clear('chat:hr:ip:127.0.0.1');
+        RateLimiter::clear('chat:day:ip:127.0.0.1');
+    }
+
     public function test_chat_with_valid_message_returns_response_structure()
     {
         // Chatbot requires Gemini API key, so without it we get 503 service unavailable.
