@@ -34,8 +34,8 @@
     --accent-hover: rgb(72, 22, 120);
     --text-header: rgb(48, 11, 85);
     --text-header-secondary: rgb(80, 30, 120);
-    --tile: rgba(122, 71, 166, 0.02);
-    --tile-border: rgba(122, 71, 166, 0.05);
+    --tile: rgba(0, 0, 0, 0.015);
+    --tile-border: rgba(0, 0, 0, 0.035);
     --glass-highlight: rgba(255, 255, 255, 0.55);  /* inner top-edge sheen */
     --gradient-from: rgb(48, 11, 85);
     --gradient-to: rgb(122, 71, 166);
@@ -47,33 +47,32 @@
   }
 
   .dark {
-    /* Dark Mode — near-black glass surfaces, WCAG-AA text */
-    --bg-primary: #050506;
-    --bg-secondary: #0b0b0d;
-    --bg-card: rgba(22, 22, 26, 0.72);
-    --bg-card-hover: rgba(30, 30, 36, 0.82);
-    --text-primary: #f4f4f6;
-    --text-secondary: #c4c4cc;   /* was #a0a0a0 — lifted for readability */
-    --text-muted: #9a9aa5;       /* was #606060 (failed AA) — now ~6:1 on bg */
-    --border-color: rgba(255, 255, 255, 0.12);
-    --border-glass: rgba(255, 255, 255, 0.14);
-    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.55);
-    --glass-blur: blur(28px) saturate(180%);
-    --glass-bg: rgba(24, 24, 30, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-highlight: rgba(255, 255, 255, 0.10);  /* inner top-edge sheen */
-    --nav-bg: rgba(10, 10, 12, 0.72);
-    --nav-scrolled-bg: rgba(10, 10, 12, 0.85);
-    --footer-bg: linear-gradient(135deg, #0a0a0c 0%, #050506 50%, #000000 100%);
-    /* Dark accent: brand purple (no neon) */
+    /* Dark Mode — TRUE BLACK surfaces, purple brand accent (no purple grey wash) */
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0b;
+    --bg-card: rgba(14, 14, 16, 0.78);
+    --bg-card-hover: rgba(22, 22, 26, 0.88);
+    --text-primary: #f5f5f7;
+    --text-secondary: #c8c8cf;
+    --text-muted: #8f8f99;
+    --border-color: rgba(255, 255, 255, 0.10);
+    --border-glass: rgba(255, 255, 255, 0.12);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.7);
+    --glass-blur: blur(28px) saturate(160%);
+    --glass-bg: rgba(18, 18, 22, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-highlight: rgba(255, 255, 255, 0.06);
+    --nav-bg: rgba(0, 0, 0, 0.72);
+    --nav-scrolled-bg: rgba(0, 0, 0, 0.88);
+    --footer-bg: linear-gradient(135deg, #050505 0%, #000000 50%, #000000 100%);
+    /* Brand purple accent (kept) */
     --accent: rgb(122, 71, 166);
-    --accent-hover: rgb(150, 95, 200);   /* lifted brand for hover affordance */
-    --text-header: #f4f4f6;
-    --text-header-secondary: #d6d6de;
-    --tile: rgba(122, 71, 166, 0.02);       /* barely visible, like light mode */
-    --tile-border: rgba(122, 71, 166, 0.06);
-    /* Brand gradient sweep for headings (no neon) — deep→lighter purple,
-       mirrors light mode's range so dark headings keep light/dark contrast */
+    --accent-hover: rgb(150, 95, 200);
+    --text-header: #f5f5f7;
+    --text-header-secondary: #d8d8df;
+    --tile: rgba(255, 255, 255, 0.008);
+    --tile-border: rgba(255, 255, 255, 0.025);
+    /* Heading gradient: deep→lighter purple (brand, no grey wash) */
     --gradient-from: rgb(48, 11, 85);
     --gradient-to: rgb(170, 120, 225);
   }
@@ -412,6 +411,8 @@
   /* Hero sits on a dark image overlay in BOTH themes. Uses the brand
      gradient vars so it follows the active theme (light = deep purple,
      dark = lighter purple). */
+  .hero-text { color: var(--text-header); }
+
   .hero-gradient-text {
     background-image: linear-gradient(135deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
     -webkit-background-clip: text;
@@ -578,4 +579,36 @@ textarea,
 select,
 [contenteditable='true'] {
   cursor: auto !important;
+}
+
+/* ── Global elevation pass (user-requested "shadow on everything") ──
+   Tiered so hierarchy survives: containers get a soft base shadow,
+   interactive elements lift on hover. Uses existing --shadow-glass token.
+   ponytail: one blanket rule; if a specific element looks wrong, override it locally. */
+@layer utilities {
+  main section,
+  article,
+  .card,
+  [class*='card'],
+  [class*='panel'],
+  button,
+  a[class*='btn'],
+  input,
+  textarea,
+  select,
+  img[class*='rounded'] {
+    box-shadow: var(--shadow-glass);
+  }
+
+  button:hover,
+  a[class*='btn']:hover,
+  .card:hover,
+  [class*='card']:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  /* Never shadow these — kills readability / already handled */
+  nav, header nav, footer, svg, [class*='tile'], h1, h2, h3, h4, p, span, label {
+    box-shadow: none;
+  }
 }

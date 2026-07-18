@@ -119,10 +119,10 @@ export function Tiles({ className, tileSize = 'md' }) {
           display: 'grid',
           gridTemplateColumns: `repeat(${dims.cols}, ${size}px)`,
           gridTemplateRows: `repeat(${dims.rows}, ${size}px)`,
-          maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+          maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 22%, transparent 90%)',
           maskRepeat: 'no-repeat',
           maskSize: '100% 100%',
-          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 22%, transparent 90%)',
           WebkitMaskRepeat: 'no-repeat',
           WebkitMaskSize: '100% 100%',
         }}

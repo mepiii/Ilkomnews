@@ -160,7 +160,7 @@ const SlideButton = forwardRef(({ className, onSubmit, children, disabled, compl
       style={{ touchAction: 'none' }}
       animate={completed ? { width: '10rem' } : { width: '100%' }}
       transition={ANIMATION_CONFIG.spring}
-      className="relative flex h-14 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 mx-auto select-none"
+      className="relative flex h-14 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-900 mx-auto select-none"
     >
       {!completed && (
         <motion.div

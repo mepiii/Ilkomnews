@@ -117,7 +117,7 @@ const NewsPage = () => {
           </div>
 
           {/* Count */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-4">
             <p className="text-neutral-500 dark:text-neutral-400 text-sm">
               <span className="font-semibold text-[var(--accent)]">{filtered.length}</span> berita ditemukan
             </p>

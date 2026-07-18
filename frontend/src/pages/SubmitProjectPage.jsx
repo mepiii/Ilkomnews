@@ -615,7 +615,7 @@ const SubmitProjectPage = () => {
                     {CREATOR_TYPES.map(t => (
                       <button key={t.id} type="button" onClick={() => update('creator_type', t.id)}
                         className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                          form.creator_type === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-850 text-neutral-500 border-neutral-200 dark:border-neutral-700'
+                          form.creator_type === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700'
                         }`}>
                         {t.label}
                       </button>
@@ -679,7 +679,7 @@ const SubmitProjectPage = () => {
                     {COLLAB_TYPES.map(t => (
                       <button key={t.id} type="button" onClick={() => setCollabType(t.id)}
                         className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                          collabType === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-850 text-neutral-500 border-neutral-200 dark:border-neutral-700'
+                          collabType === t.id ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700'
                         }`}>
                         {t.label}
                       </button>
@@ -736,7 +736,7 @@ const SubmitProjectPage = () => {
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-100 dark:border-neutral-800"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800"
                       >
                         {c.avatar ? <img src={c.avatar} alt="" className="w-9 h-9 rounded-full object-cover" /> : <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[var(--accent)]/60">{c.name.charAt(0)}</div>}
                         <div className="flex-1 min-w-0">

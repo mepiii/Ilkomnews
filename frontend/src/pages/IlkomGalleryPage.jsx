@@ -116,7 +116,7 @@ const IlkomGalleryPage = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen relative z-0 pt-6 pb-20 bg-[radial-gradient(1200px_600px_at_50%_-100px,rgba(122,71,166,0.10),transparent_60%),linear-gradient(180deg,#fafafa_0%,#f3eef9_100%)] dark:bg-[radial-gradient(1000px_500px_at_15%_-10%,rgba(122,71,166,0.18),transparent_55%),radial-gradient(900px_500px_at_85%_110%,rgba(170,120,225,0.12),transparent_60%),linear-gradient(180deg,#08070b_0%,#0a090f_50%,#07060a_100%)]">
+      <div className="min-h-screen relative z-0 pt-6 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <Breadcrumb />
 
@@ -142,7 +142,7 @@ const IlkomGalleryPage = () => {
           </div>
 
           {/* Count */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-4">
             <p className="text-theme-muted text-sm">
               <span className="font-semibold text-accent">{filtered.length}</span> project ditemukan
             </p>
