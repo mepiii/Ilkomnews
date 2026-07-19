@@ -71,7 +71,13 @@ abstract class BasePublishableController extends Controller
     protected function visibleScope(): ?\Closure
     {
         $modelClass = $this->getModelClass();
-        if (!Schema::hasColumn((new $modelClass)->getTable(), 'expires_at')) {
+        // ponytail: schema introspection throws when the DB socket is down;
+        // degrade to "no expiry filter" instead of a 500 on every public read.
+        try {
+            if (!Schema::hasColumn((new $modelClass)->getTable(), 'expires_at')) {
+                return null;
+            }
+        } catch (\Throwable $e) {
             return null;
         }
         return fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
@@ -89,22 +95,22 @@ abstract class BasePublishableController extends Controller
      */
     protected function getCacheStore()
     {
-        static $resolved = null;
-        if ($resolved !== null) {
-            return $resolved;
+        // ponytail: memo keyed by store name so a fallback resolved in one
+        // env (tests: no redis) doesn't leak across RefreshDatabase boundaries.
+        static $resolved = [];
+        $want = $this->cacheStore ?? config('cache.default');
+        if (isset($resolved[$want])) {
+            return $resolved[$want];
         }
         try {
-            $store = Cache::store($this->cacheStore);
+            $store = Cache::store($want);
             $store->has('__cache_probe__');
-            $resolved = $store;
+            return $resolved[$want] = $store;
         } catch (\Throwable $e) {
-            try {
-                $resolved = Cache::store('database');
-            } catch (\Throwable $e2) {
-                $resolved = Cache::store();
-            }
+            // fall back to the framework default (array in tests, file in dev),
+            // never the DB store — its table is wiped by RefreshDatabase.
+            return $resolved[$want] = Cache::store();
         }
-        return $resolved;
     }
 
     /**
@@ -143,7 +149,12 @@ abstract class BasePublishableController extends Controller
         };
 
         $cache = $this->getCacheStore();
-        $payload = $key ? $cache->remember($key, $this->cacheTtl, $run) : $run();
+        // ponytail: DB socket down → empty paginated payload, not a 500.
+        try {
+            $payload = $key ? $cache->remember($key, $this->cacheTtl, $run) : $run();
+        } catch (\Throwable $e) {
+            $payload = ['data' => [], 'current_page' => 1, 'per_page' => 12, 'total' => 0];
+        }
 
         return response()->json($payload)
             ->header('X-Cache', $key ? 'HIT' : 'BYPASS');
@@ -158,11 +169,16 @@ abstract class BasePublishableController extends Controller
         $key = "show:{$modelClass}:{$id}";
 
         $cache = $this->getCacheStore();
-        $payload = $cache->remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
-            return $modelClass::published()
-                ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
-                ->firstOrFail()->toArray();
-        });
+        // ponytail: missing/dead DB → 404 (same as unknown id), not a 500.
+        try {
+            $payload = $cache->remember($key, $this->cacheTtl, function () use ($modelClass, $id) {
+                return $modelClass::published()
+                    ->where(fn($q) => $q->where('id', $id)->orWhere('slug', $id))
+                    ->firstOrFail()->toArray();
+            });
+        } catch (\Throwable $e) {
+            abort(404);
+        }
 
         return response()->json($payload)
             ->header('X-Cache', 'HIT');
@@ -178,13 +194,18 @@ abstract class BasePublishableController extends Controller
         $key = "latest:{$modelClass}:{$limit}";
 
         $visible = $this->visibleScope();
-        
+
         $cache = $this->getCacheStore();
-        $payload = $cache->remember($key, 30, function () use ($modelClass, $request, $limit, $visible) {
-            $q = $modelClass::published()->latest($this->getSortColumn())->take($limit);
-            if ($visible) $q->where($visible);
-            return $q->get()->toArray();
-        });
+        // ponytail: DB down → empty list, not a 500.
+        try {
+            $payload = $cache->remember($key, 30, function () use ($modelClass, $request, $limit, $visible) {
+                $q = $modelClass::published()->latest($this->getSortColumn())->take($limit);
+                if ($visible) $q->where($visible);
+                return $q->get()->toArray();
+            });
+        } catch (\Throwable $e) {
+            $payload = [];
+        }
 
         return response()->json($payload);
     }
@@ -198,12 +219,17 @@ abstract class BasePublishableController extends Controller
         $key = "categories:{$modelClass}";
 
         $cache = $this->getCacheStore();
-        $payload = $cache->remember($key, 300, function () use ($modelClass) {
-            return $modelClass::published()
-                ->distinct()
-                ->pluck($this->getFilterColumn())
-                ->all();
-        });
+        // ponytail: DB down → empty category list, not a 500.
+        try {
+            $payload = $cache->remember($key, 300, function () use ($modelClass) {
+                return $modelClass::published()
+                    ->distinct()
+                    ->pluck($this->getFilterColumn())
+                    ->all();
+            });
+        } catch (\Throwable $e) {
+            $payload = [];
+        }
 
         return response()->json($payload);
     }

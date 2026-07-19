@@ -154,14 +154,14 @@ const WolfyWidget = () => {
 
   return (
     <>
-      {/* Floating Button - Circular, no square */}
+      {/* Floating Button - free wolfy avatar, no circular backdrop */}
       <motion.button
         onClick={() => setView('faq')}
         whileHover={reduce ? undefined : { scale: 1.08 }}
         whileTap={reduce ? undefined : { scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
+          "fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center transition-all duration-300",
           isOpen && "opacity-0 pointer-events-none scale-90"
         )}
         style={{ background: 'transparent', boxShadow: 'none', border: 'none' }}
@@ -171,7 +171,7 @@ const WolfyWidget = () => {
           alt="Wolfy"
           loading="lazy"
           decoding="async"
-          className="w-11 h-11 rounded-full object-cover"
+          className="w-12 h-12 object-contain [filter:drop-shadow(0_10px_16px_rgba(124,58,237,0.45))]"
           onError={(e) => {
             e.target.style.display = 'none'
             const sib = e.target.nextElementSibling

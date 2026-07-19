@@ -64,7 +64,7 @@ export default function Footer() {
                     aria-label={link.label}
                     whileHover={{ y: -4 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 12 }}
-                    className={`inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-lg ${link.color}`}
+                    className={`inline-flex items-center justify-center h-10 w-10 rounded-xl border border-white/10 text-white/60 transition-all duration-300 hover:scale-110 hover:shadow-lg ${link.color}`}
                   >
                     <link.icon className="text-base" />
                   </motion.a>

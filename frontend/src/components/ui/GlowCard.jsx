@@ -103,8 +103,8 @@ const GlowCard = ({
       />
       )}
 
-      {/* Pointer-tracked sheen — appears softly on hover (glow mode, light only) */}
-      {glow && !isDark && (
+      {/* Pointer-tracked sheen — appears softly on hover (glow mode, both themes) */}
+      {glow && (
       <div
         aria-hidden="true"
         className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -113,7 +113,8 @@ const GlowCard = ({
           position: 'absolute',
           inset: 0,
           borderRadius: '16px',
-          background: `radial-gradient(420px circle at var(--glow-x) var(--glow-y), ${sheen}, transparent 45%)`,
+          // ponytail: lighter sheen in dark mode; same pointer-tracked glow.
+          background: `radial-gradient(420px circle at var(--glow-x) var(--glow-y), ${isDark ? sheen.replace(/0\.\d+\)/, '0.18)') : sheen}, transparent 45%)`,
           zIndex: 1,
         }}
       />

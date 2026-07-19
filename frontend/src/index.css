@@ -28,7 +28,7 @@
     --glass-border: rgba(0, 0, 0, 0.12);
     --nav-bg: rgba(255, 255, 255, 0.85);
     --nav-scrolled-bg: rgba(255, 255, 255, 0.98);
-    --footer-bg: linear-gradient(135deg, #1a0533 0%, #0d001a 50%, #0a0a0f 100%);
+    --footer-bg: linear-gradient(135deg, #300B55 0%, #1A0533 50%, #0d001a 100%);
     /* Light accent: deep purple */
     --accent: rgb(48, 11, 85);
     --accent-hover: rgb(72, 22, 120);
@@ -64,7 +64,7 @@
     --glass-highlight: rgba(255, 255, 255, 0.06);
     --nav-bg: rgba(0, 0, 0, 0.72);
     --nav-scrolled-bg: rgba(0, 0, 0, 0.88);
-    --footer-bg: linear-gradient(135deg, #050505 0%, #000000 50%, #000000 100%);
+    --footer-bg: linear-gradient(135deg, #300B55 0%, #1A0533 50%, #0d001a 100%);
     /* Brand purple accent (kept) */
     --accent: rgb(122, 71, 166);
     --accent-hover: rgb(150, 95, 200);
@@ -191,11 +191,27 @@
     border-color: var(--border-color) !important;
   }
 
-  /* Header/footer gradients that hard-code white in light mode should
-     match the dark footer gradient on dark surfaces. */
-  .dark footer,
-  .dark [class*="bg-white"] {
+  /* Light-mode white surfaces (header/footer/nav) repaint to the dark
+     surface in dark mode. Scoped to those containers only — the card
+     components carry their own dark:bg-* and must keep their rounded
+     glass look, so they are excluded. */
+  .dark header [class*="bg-white"],
+  .dark footer [class*="bg-white"],
+  .dark nav [class*="bg-white"] {
     background-color: var(--bg-primary) !important;
+  }
+
+  /* Hero CTA buttons are intentionally clear glass over the dark hero
+     overlay — opt out of the blanket bg-white repaint above. */
+  .dark .hero-glass {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Navbar theme toggle keeps its faint white pill in dark mode. */
+  .dark .theme-toggle {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
   }
 
   /* Inputs/selects that use bg-white with no dark: counterpart fall back
@@ -591,16 +607,33 @@ select,
   .card,
   [class*='card'],
   [class*='panel'],
-  button,
   a[class*='btn'],
-  input,
-  textarea,
-  select,
   img[class*='rounded'] {
     box-shadow: var(--shadow-glass);
+    border-radius: 12px;   /* ponytail: default radius so nothing renders square */
   }
 
-  button:hover,
+  /* Default radius on bare buttons too — so hover backgrounds (e.g. in
+     cards) never render square. No shadow here: see ponytail below. */
+  button { border-radius: 12px; }
+
+  /* ponytail: shadow off `button` — icon/ghost buttons carry their own
+     shadow classes; the global one painted a square halo on transparent
+     icon buttons (the "square on hover" look). */
+
+  /* Form fields opt out of the blanket radius+shadow — pill corners and
+     card shadows on inputs/textarea/select read as broken, not designed. */
+  input,
+  textarea,
+  select {
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  /* Larger radius for the obvious card/panel containers */
+  [class*='card'],
+  [class*='panel'] { border-radius: 16px; }
+
   a[class*='btn']:hover,
   .card:hover,
   [class*='card']:hover {

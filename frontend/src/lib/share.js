@@ -1,12 +1,38 @@
-// Dependency-free share helper. Uses the Web Share API when available and
-// falls back to copying the URL to the clipboard. Safe in any environment:
-// all failures are swallowed so callers never need a try/catch.
-export async function shareItem({ title, url } = {}) {
-  if (typeof navigator !== 'undefined' && navigator.share) {
-    return navigator.share({ title, url }).catch(() => {})
+// Dependency-free share helpers. Builds deep links for the common messaging
+// targets and falls back to the Web Share API / clipboard copy. All failures
+// are swallowed so callers never need a try/catch.
+
+export function buildShareLinks({ title, text, url }) {
+  const u = encodeURIComponent(url)
+  const t = encodeURIComponent(text || title || '')
+  return {
+    copy: url,
+    whatsapp: `https://wa.me/?text=${t}%20${u}`,
+    telegram: `https://t.me/share/url?url=${u}&text=${t}`,
+    twitter: `https://twitter.com/intent/tweet?url=${u}&text=${t}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
   }
+}
+
+export function safeCopy(text) {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    return navigator.clipboard.writeText(url).catch(() => {})
+    return navigator.clipboard.writeText(text).catch(() => {})
   }
-  // Nothing available: no-op, no throw.
+}
+
+// Returns true when a native share sheet was shown (so callers can skip UI).
+export async function nativeShare({ title, text, url }) {
+  if (typeof navigator !== 'undefined' && navigator.share) {
+    return navigator.share({ title, text: text || title, url }).then(
+      () => true,
+      () => false
+    )
+  }
+  return false
+}
+
+export async function shareItem({ title, text, url } = {}) {
+  if (await nativeShare({ title, text, url })) return
+  await safeCopy(url)
 }

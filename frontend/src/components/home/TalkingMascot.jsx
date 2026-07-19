@@ -92,8 +92,7 @@ const TalkingMascot = () => {
             </div>
           </div>
           <button onClick={handleClick} className="group relative focus:outline-none rounded-full transition-all">
-            <div className="absolute inset-0 rounded-full bg-accent/10 blur-xl scale-110 opacity-0 group-hover:opacity-100 transition-all duration-700" />
-            <div className="relative w-40 h-40 md:w-52 md:h-52 lg:w-64 lg:h-64"><img src={currentMascot} alt="Fasilkom Unsri Mascot - Wolfy" className="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 group-active:scale-95 cursor-pointer drop-shadow-2xl" /></div>
+            <div className="relative w-40 h-40 md:w-52 md:h-52 lg:w-64 lg:h-64"><img src={currentMascot} alt="Fasilkom Unsri Mascot - Wolfy" className="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 group-active:scale-95 cursor-pointer [filter:drop-shadow(0_18px_28px_rgba(122,71,166,0.45))]" /></div>
             <div className="absolute -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
               <motion.span 
                 whileHover={{ scale: 1.05 }}

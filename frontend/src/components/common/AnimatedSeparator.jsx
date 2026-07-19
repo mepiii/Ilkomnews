@@ -1,17 +1,18 @@
 import { ChevronRight, Newspaper, Radio, Bell } from 'lucide-react'
 
-const MarqueeContent = ({ children }) => (
+const MarqueeContent = ({ children, hidden = false }) => (
   <>
     <div className="flex items-center gap-4 px-6">{children}</div>
-    <div className="flex items-center gap-4 px-6">{children}</div>
-    <div className="flex items-center gap-4 px-6">{children}</div>
+    {/* ponytail: duplicate track for seamless loop; hidden from SR to avoid double-read */}
+    <div className="flex items-center gap-4 px-6" aria-hidden="true">{children}</div>
+    <div className="flex items-center gap-4 px-6" aria-hidden="true">{children}</div>
   </>
 )
 
 const AnimatedSeparator = ({ variant = 'purple' }) => {
   const textStyle = { fontFamily: 'CustomFont, sans-serif', letterSpacing: '1px' }
-  const iconColor = 'rgb(122, 71, 166)'
-  const fadeColor = 'rgba(122, 71, 166, 0.5)'
+  const iconColor = 'rgb(72, 22, 120)'
+  const fadeColor = 'rgba(72, 22, 120, 0.5)'
 
   if (variant === 'purple') {
     const text = (
@@ -29,13 +30,12 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
     )
 
     return (
-      <div className="relative w-full py-2.5 border-y border-theme">
-        <div className="absolute inset-0 w-full h-full">
-          <div className="absolute inset-0 bg-gradient-to-r from-[rgba(122,71,166,0.08)] via-transparent to-[rgba(122,71,166,0.08)] animate-shine" />
-        </div>
-        <div className="relative flex overflow-hidden">
-          <div className="flex animate-marquee whitespace-nowrap" style={{ width: 'fit-content' }}>
-            <MarqueeContent>{text}</MarqueeContent>
+      <div className="relative w-full h-0 pointer-events-none">
+        <div className="absolute inset-x-0 top-0 py-2 border-y border-theme">
+          <div className="relative flex overflow-hidden">
+            <div className="flex animate-marquee whitespace-nowrap" style={{ width: 'fit-content' }}>
+              <MarqueeContent>{text}</MarqueeContent>
+            </div>
           </div>
         </div>
       </div>
@@ -69,8 +69,8 @@ const AnimatedSeparator = ({ variant = 'purple' }) => {
 
   if (variant === 'line') {
     return (
-      <div className="relative w-full py-3">
-        <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-[rgb(122,71,166)] to-transparent" />
+      <div className="relative w-full h-0 pointer-events-none">
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[rgb(122,71,166)] to-transparent" />
       </div>
     )
   }

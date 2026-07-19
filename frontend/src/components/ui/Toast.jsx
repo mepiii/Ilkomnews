@@ -47,16 +47,16 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div
+      <ul
         role="status"
         aria-live="polite"
-        className="pointer-events-none fixed top-4 left-1/2 z-[100] flex -translate-x-1/2 flex-col items-center gap-2"
+        className="pointer-events-none fixed top-4 left-1/2 z-[100] flex -translate-x-1/2 list-none flex-col items-center gap-2 m-0 p-0"
       >
         <AnimatePresence initial={false}>
           {toasts.map((t) => {
             const style = TYPE_STYLES[t.type] || TYPE_STYLES.success
             return (
-              <motion.div
+              <motion.li
                 key={t.id}
                 initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
                 animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
@@ -71,11 +71,11 @@ export function ToastProvider({ children }) {
                   {style.icon}
                 </span>
                 <span>{t.message}</span>
-              </motion.div>
+              </motion.li>
             )
           })}
         </AnimatePresence>
-      </div>
+      </ul>
     </ToastContext.Provider>
   )
 }

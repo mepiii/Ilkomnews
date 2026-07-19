@@ -150,7 +150,13 @@ class News extends Model
      */
     public function scopeForListing($query)
     {
-        return $query->select(['id', 'title', 'slug', 'summary', 'category', 'date', 'author', 'image', 'views', 'published'])
+        // ponytail: include author profile fields so the Berita listing shows
+        // the same author/avatar as the Beranda "Berita Terkini" latest feed.
+        return $query->select([
+            'id', 'title', 'slug', 'summary', 'category', 'date', 'author',
+            'author_image', 'author_institution', 'author_position',
+            'image', 'tags', 'views', 'published',
+        ])
             ->published()
             ->notExpired();
     }

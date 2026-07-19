@@ -134,10 +134,10 @@ const KoleksiPage = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveType(tab.id); setCurrentPage(1) }}
-                className={`flex-1 sm:flex-none text-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${
+                className={`flex-1 sm:flex-none text-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 border ${
                   activeType === tab.id
-                    ? 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20'
-                    : 'text-theme-muted hover:text-[var(--accent)] hover:bg-[var(--accent)]/5'
+                    ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30 shadow-md'
+                    : 'bg-theme-secondary text-theme-muted border-theme shadow-sm hover:text-[var(--accent)] hover:bg-[var(--accent)]/5'
                 }`}
               >
                 {tab.label}

@@ -105,7 +105,7 @@ const TrackPage = () => {
                   placeholder="Masukkan ID pelacakan untuk memeriksa status pengajuan"
                   className="flex-1 px-4 py-3 bg-theme-secondary border border-theme rounded-xl text-theme-primary font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors" />
                 <button type="submit" disabled={loading || !trackingId.trim()}
-                  className="w-full sm:w-auto px-6 py-3 text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-semibold text-sm">
+                  className="w-full sm:w-auto px-7 py-3 text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] rounded-xl shadow-lg shadow-purple-950/20 hover:shadow-purple-950/40 ring-1 ring-white/10 hover:ring-white/20 transition-all disabled:opacity-50 disabled:shadow-none disabled:ring-0 flex items-center justify-center gap-2 font-semibold text-sm active:scale-[0.98]">
                   {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Search size={18} /> Lacak</>}
                 </button>
               </div>

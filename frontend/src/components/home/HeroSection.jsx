@@ -50,7 +50,7 @@ const HeroSection = () => {
                   ch === ' ' ? ' ' : (
                     <motion.span
                       key={i}
-                      className="inline-block hero-text"
+                      className="inline-block text-white"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.1 + i * 0.03 }}
@@ -106,13 +106,13 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/news"
-                className="group relative px-8 py-3 rounded-full text-sm font-semibold hero-text bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
+                className="group relative hero-glass px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/20 backdrop-blur-md border border-white/30 overflow-hidden transition-all duration-300 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
                 <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Jelajahi Berita</span>
               </Link>
               <Link
                 to="/ilkomgallery"
-                className="group relative px-8 py-3 rounded-full text-sm font-semibold hero-text bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden transition-all duration-300 hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
+                className="group relative hero-glass px-8 py-3 rounded-full text-sm font-semibold text-white bg-white/20 backdrop-blur-md border border-white/30 overflow-hidden transition-all duration-300 hover:bg-[rgb(48,11,85)] hover:border-[rgb(48,11,85)] hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
               >
                 <span className="relative z-10 transition-transform duration-200 group-hover:scale-105">Ilkom Gallery</span>
               </Link>

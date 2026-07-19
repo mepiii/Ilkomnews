@@ -56,8 +56,10 @@ const LampNavbar = () => {
   const handleScroll = useCallback(() => {
     const y = window.scrollY
     if (y < 50) { setIsVisible(true) }
-    else if (y > lastScrollY.current && y > 100) { setIsVisible(false); setDropdownOpen(false); setBemDropdownOpen(false); setMobileOpen(false) }
+    else if (y > lastScrollY.current && y > 100) { setIsVisible(mobileOpen); setDropdownOpen(false); setBemDropdownOpen(false) }
     else if (y < lastScrollY.current - 10) { setIsVisible(true) }
+    // ponytail: keep navbar visible while mobile menu open so it doesn't
+    // collapse the menu on scroll; menu closes on link tap / hamburger.
     lastScrollY.current = y
   }, [])
 

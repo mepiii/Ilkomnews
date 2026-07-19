@@ -39,11 +39,11 @@ const AnimatedFilterDropdown = ({ options, value, onChange, icon: Icon }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full mt-2 z-[60] min-w-[220px] rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden p-1.5"
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="absolute left-0 top-full mt-2 z-[60] min-w-[220px] rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden p-1.5 origin-top"
             role="listbox"
           >
             <div className="max-h-[300px] overflow-y-auto py-1 space-y-0.5">

@@ -76,7 +76,7 @@ const ProjectExpandableCard = ({ project }) => {
       itemId={project.id}
       themeColor={themeColor}
       badge={
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-[var(--accent)] text-white backdrop-blur-sm truncate max-w-full">
+        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-full bg-[var(--accent)] text-white backdrop-blur-sm truncate max-w-full">
           <CatIcon size={12} /> {categoryLabels[project.category] || project.category}
         </span>
       }

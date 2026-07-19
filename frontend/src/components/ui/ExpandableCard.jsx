@@ -1,11 +1,12 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { Heart, Bookmark, Share2, X, Eye } from "lucide-react"
+import { Heart, Bookmark, X, Eye } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { useEngagement, useEngagementItem } from "../../context/EngagementContext"
 import { lockScroll, unlockScroll, resetScrollLock } from "../../lib/scrollLock"
 import { shareItem } from "../../lib/share"
+import { ShareMenu } from "../../components/ui/ShareMenu"
 import { useToast } from "../../components/ui/Toast"
 import { generateSlug } from "../../utils/formatters"
 
@@ -72,6 +73,7 @@ const InteractionBar = React.memo(function InteractionBar({
   onLike,
   onSave,
   onShare,
+  shareMeta,
 }) {
   // Compact footer: each action shows its count right beside the icon, and
   // views is read-only — one icon per metric, no duplicate stat cluster.
@@ -107,17 +109,10 @@ const InteractionBar = React.memo(function InteractionBar({
           <Bookmark size={14} fill={saved ? "currentColor" : "none"} />
           <Count value={counts.saves} />
         </motion.button>
-        <motion.button
-          onClick={onShare}
-          aria-label="Share"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="flex items-center gap-1 p-1.5 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
-        >
-          <Share2 size={14} />
-          <Count value={counts.shares} />
-        </motion.button>
+        <ShareMenu compact {...shareMeta} onShared={onShare} />
+        {counts.shares > 0 && (
+          <span className="text-[11px] font-medium leading-none" style={{ color: 'var(--text-muted)' }}>{counts.shares}</span>
+        )}
       </div>
     )
   }
@@ -156,17 +151,10 @@ const InteractionBar = React.memo(function InteractionBar({
         <Bookmark size={compact ? 14 : 18} fill={saved ? "currentColor" : "none"} />
         <Count value={counts.saves} />
       </motion.button>
-      <motion.button
-        onClick={onShare}
-        aria-label="Share"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="flex items-center gap-1 p-2 rounded-lg text-[var(--text-muted)] hover:text-green-500 transition-colors duration-150"
-      >
-        <Share2 size={compact ? 14 : 18} />
-        <Count value={counts.shares} />
-      </motion.button>
+      <ShareMenu {...shareMeta} onShared={onShare} />
+      {counts.shares > 0 && (
+        <span className="text-xs font-medium leading-none" style={{ color: 'var(--text-muted)' }}>{counts.shares}</span>
+      )}
     </div>
   )
 })
@@ -238,17 +226,25 @@ function ExpandableCard({
   }, [itemId, itemType, toggleSave])
 
   const handleShare = React.useCallback(async (e) => {
-    e.stopPropagation()
+    e?.stopPropagation()
     if (!itemId) return
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const path = itemType === 'project'
       ? `/ilkomgallery/project/${itemId}`
       : `/news/${generateSlug(title)}`
     const url = origin + path
-    await shareItem({ title, url })
+    await shareItem({ title, text: description, url })
     showToast('Tautan berhasil disalin & dibagikan', { type: 'success' })
     recordShare(itemType, itemId) // counter dedup happens inside EngagementContext
-  }, [itemId, itemType, title, recordShare, showToast])
+  }, [itemId, itemType, title, description, recordShare, showToast])
+
+  const shareMeta = React.useMemo(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const path = itemType === 'project'
+      ? `/ilkomgallery/project/${itemId}`
+      : `/news/${generateSlug(title)}`
+    return { title, text: description, url: origin + path }
+  }, [itemType, itemId, title, description])
 
   const scrollPositionRef = React.useRef(0)
   const isExpandedRef = React.useRef(false)
@@ -298,8 +294,8 @@ function ExpandableCard({
   }, [])
 
   const interactionProps = React.useMemo(() => ({
-    liked, saved, counts, onLike: handleLike, onSave: handleSave, onShare: handleShare
-  }),     [liked, saved, counts, handleLike, handleSave, handleShare])
+    liked, saved, counts, onLike: handleLike, onSave: handleSave, onShare: handleShare, shareMeta
+  }),     [liked, saved, counts, handleLike, handleSave, handleShare, shareMeta])
 
   return (
     <>

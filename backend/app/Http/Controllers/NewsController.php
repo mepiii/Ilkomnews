@@ -22,14 +22,19 @@ class NewsController extends BasePublishableController
 
     public function show($id)
     {
-        $news = News::published()
-            ->where(function ($q) use ($id) {
-                $q->where('id', $id)->orWhere('slug', $id);
-            })
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->firstOrFail();
+        // ponytail: dead DB → 404 (same as unknown id), not a 500.
+        try {
+            $news = News::published()
+                ->where(function ($q) use ($id) {
+                    $q->where('id', $id)->orWhere('slug', $id);
+                })
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->firstOrFail();
+        } catch (\Throwable $e) {
+            abort(404);
+        }
 
         try {
             $news->incrementViews();

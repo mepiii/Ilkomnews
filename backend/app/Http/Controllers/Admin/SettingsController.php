@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LlmProvider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class SettingsController extends Controller
 {
     public function index()
     {
-        $providers = LlmProvider::orderBy('priority')->get();
+        // ponytail: DB down → empty provider list, not a 500.
+        try {
+            $providers = LlmProvider::orderBy('priority')->get();
+        } catch (\Throwable $e) {
+            $providers = new Collection();
+        }
 
         return view('admin.settings.index', [
             'providers' => $providers,

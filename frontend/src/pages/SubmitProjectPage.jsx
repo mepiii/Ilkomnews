@@ -358,7 +358,7 @@ const SubmitProjectPage = () => {
 
   return (
     <PageBackground>
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8 overflow-x-hidden">
         <Breadcrumb />
         <PageHeader title="Kirim Proyek" subtitle="Bagikan karya Anda ke galeri ILKOM" />
 
@@ -387,7 +387,7 @@ const SubmitProjectPage = () => {
               <Layers size={16} className="text-[var(--accent)]" />
               <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Kategori Proyek</h3>
             </div>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon
                 const isSelected = form.category === cat.id
@@ -466,7 +466,7 @@ const SubmitProjectPage = () => {
 
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Pilih dari Rekomendasi</label>
                   <select
                     value={selectedTech}
@@ -483,7 +483,7 @@ const SubmitProjectPage = () => {
                   </select>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Atau Tambah Kustom</label>
                   <div className="relative">
                     <input
@@ -604,7 +604,7 @@ const SubmitProjectPage = () => {
               <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Informasi Pembuat</h3>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Nama Lengkap *</label>
                   <input type="text" required value={form.creator_name} onChange={e => update('creator_name', e.target.value)} placeholder="Nama pembuat" className={inputCls} />
@@ -668,7 +668,7 @@ const SubmitProjectPage = () => {
               <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Kolaborator <span className="text-neutral-400 dark:text-neutral-500 font-normal">(opsional)</span></h3>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Nama</label>
                   <input type="text" value={collabName} onChange={e => setCollabName(e.target.value)} placeholder="Nama kolaborator" className={inputCls} />
@@ -762,9 +762,11 @@ const SubmitProjectPage = () => {
                 Sisa kuota hari ini: {Math.round(quota.remaining / 1024)}KB
               </p>
             )}
-            <SlideButton ref={slideButtonRef} onSubmit={() => { slideButtonRef.current?.reset(); setShowConfirm(true); }} disabled={submitting || (quota && quota.is_exceeded)}>
-              Kirim Proyek
-            </SlideButton>
+            <div className="min-w-0">
+              <SlideButton ref={slideButtonRef} onSubmit={() => { slideButtonRef.current?.reset(); setShowConfirm(true); }} disabled={submitting || (quota && quota.is_exceeded)}>
+                Kirim Proyek
+              </SlideButton>
+            </div>
           </div>
         </form>
 
